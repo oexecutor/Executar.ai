@@ -1,5 +1,6 @@
 import type { Config } from "@netlify/functions";
 import { unzipSync } from "fflate";
+import { requireAdminJson } from "../../src/lib/admin-guard.mjs";
 import { json, methodNotAllowed, safeError } from "../../src/lib/http.mjs";
 import { vaultStore } from "../../src/lib/stores.mjs";
 import { BlobVaultService, normalizeVaultPath, VaultProblem } from "../../src/lib/vault.mjs";
@@ -11,6 +12,8 @@ const MAX_SINGLE_FILE_BYTES = 5_000_000;
 
 export default async (request: Request): Promise<Response> => {
   if (request.method !== "POST") return methodNotAllowed(["POST"]);
+  const denied = await requireAdminJson(request);
+  if (denied) return denied;
   try {
     const compressed = new Uint8Array(await request.arrayBuffer());
     if (compressed.byteLength > MAX_ARCHIVE_BYTES) return json({ error: "archive_too_large", limitBytes: MAX_ARCHIVE_BYTES }, { status: 413 });

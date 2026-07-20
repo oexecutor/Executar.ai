@@ -173,10 +173,21 @@
         <button class="tab" type="button" data-tab="documents" aria-selected="false">Documentos</button>
       </nav>
       <div class="header-actions">
-        <span class="connection" id="connection">ACESSO ABERTO</span>
-        
+        <span class="connection" id="connection">CONECTANDO…</span>
+        <button class="button secondary" id="logoutButton" type="button" hidden>Sair</button>
       </div>
     </header>
+
+    <section id="loginSection" hidden style="max-width:360px;margin:64px auto;display:grid;gap:12px;">
+      <h1 style="font-size:1.15rem;margin:0">Entrar no DESK-OS</h1>
+      <p class="lead">Esta instância exige a senha do operador.</p>
+      <form id="loginForm" style="display:grid;gap:12px;">
+        <label for="loginPassword">Senha do operador</label>
+        <input id="loginPassword" name="password" type="password" autocomplete="current-password" required>
+        <button class="button" type="submit">Entrar</button>
+        <p id="loginError" role="alert" style="color:#c0392b;min-height:1.2em;margin:0"></p>
+      </form>
+    </section>
 
     <div id="workspace">
       <section class="page" id="dashboardSection">
@@ -379,6 +390,12 @@
       const response = await fetch(url, options);
       let data = null;
       try { data = await response.json(); } catch { data = {}; }
+      if (response.status === 401) {
+        showLogin();
+        const error = new Error(data?.error?.message || "Autenticação necessária.");
+        error.code = "UNAUTHORIZED";
+        throw error;
+      }
       if (!response.ok) {
         const message = data?.error?.message || data?.message || `Erro ${response.status}`;
         const suggestion = data?.error?.suggestion ? ` ${data.error.suggestion}` : "";
@@ -389,10 +406,45 @@
       return data;
     }
 
-    function showWorkspace() {
-      $("workspace").classList.remove("hidden");
-      $("connection").textContent = "ACESSO ABERTO";
+    function showLogin() {
+      $("workspace").classList.add("hidden");
+      $("loginSection").hidden = false;
+      $("logoutButton").hidden = true;
+      $("connection").textContent = "SESSÃO NECESSÁRIA";
     }
+
+    function showWorkspace() {
+      $("loginSection").hidden = true;
+      $("logoutButton").hidden = false;
+      $("workspace").classList.remove("hidden");
+      $("connection").textContent = "SESSÃO ATIVA";
+    }
+
+    document.getElementById("loginForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      $("loginError").textContent = "";
+      try {
+        const response = await fetch("/api/admin/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password: $("loginPassword").value }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          $("loginError").textContent = data?.error?.message || "Falha ao entrar.";
+          return;
+        }
+        $("loginPassword").value = "";
+        await loadCatalog();
+      } catch {
+        $("loginError").textContent = "Falha de rede ao entrar.";
+      }
+    });
+
+    document.getElementById("logoutButton").addEventListener("click", async () => {
+      try { await fetch("/api/admin/logout", { method: "POST" }); } catch { /* ignore */ }
+      showLogin();
+    });
 
     async function loadCatalog() {
       const data = await api("/api/vault/files");

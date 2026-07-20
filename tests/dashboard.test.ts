@@ -20,10 +20,13 @@ describe("integrated dashboard interface", () => {
     expect(html).toContain("expectedSha256");
     expect(html).toContain('id="fileEditor"');
   });
-  it("opens the workspace without a password form", () => {
-    expect(html).toContain("ACESSO ABERTO");
-    expect(html).not.toContain('id="loginSection"');
-    expect(html).not.toContain("Senha administrativa");
+  // Gate 0.5 (baseline §13, Option B): the open-access model was replaced by
+  // an operator session, so the panel must ship a login flow again.
+  it("ships the operator login flow instead of open access", () => {
+    expect(html).not.toContain("ACESSO ABERTO");
+    expect(html).toContain('id="loginSection"');
+    expect(html).toContain('"/api/admin/login"');
+    expect(html).toContain('"/api/admin/logout"');
   });
 
 });

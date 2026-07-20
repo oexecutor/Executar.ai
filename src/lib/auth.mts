@@ -24,12 +24,20 @@ export function constantTimeEqual(left: string, right: string): boolean {
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
+/** True when the operator password is configured in the environment. */
+export function adminAuthConfigured(): boolean {
+  return Boolean(Netlify.env.get("ADMIN_PASSWORD")?.trim());
+}
+
 /**
- * Compatibility helper for older callers. Password authentication is disabled
- * in open-access mode, so no environment password is read or compared.
+ * Gate 0.5 (baseline §13, Option B): real operator password check. Digests
+ * are compared with timingSafeEqual and the check fails closed when
+ * ADMIN_PASSWORD is not configured.
  */
-export function verifyAdminPassword(_password: string): boolean {
-  return true;
+export function verifyAdminPassword(password: string): boolean {
+  const expected = Netlify.env.get("ADMIN_PASSWORD")?.trim();
+  if (!expected || typeof password !== "string" || password.length === 0) return false;
+  return constantTimeEqual(hashToken(password), hashToken(expected));
 }
 
 export function verifyPkce(verifier: string, expectedChallenge: string): boolean {
@@ -62,23 +70,52 @@ export async function verifyAccessToken(token: string): Promise<{ clientId: stri
   };
 }
 
-/** Open-access compatibility session. It is not required by vault routes. */
+const ADMIN_COOKIE = "desk_os_admin";
+const ADMIN_SESSION_SECONDS = 8 * 60 * 60;
+
+/** Operator session issued by admin-login after a successful password check. */
 export async function signAdminSession(): Promise<string> {
-  return new SignJWT({ token_use: "admin", access_mode: "open" })
+  return new SignJWT({ token_use: "admin" })
     .setProtectedHeader({ alg: "HS256", typ: "JWT" })
     .setIssuer(baseUrl())
     .setAudience(`${baseUrl()}/admin`)
     .setSubject("vault-owner")
+    .setJti(randomToken(16))
     .setIssuedAt()
-    .setExpirationTime("30d")
+    .setExpirationTime(`${ADMIN_SESSION_SECONDS}s`)
     .sign(secret());
 }
 
-/** Dashboard and vault HTTP routes are intentionally public in this build. */
-export async function verifyAdminRequest(_request: Request): Promise<boolean> {
-  return true;
+function readCookie(request: Request, name: string): string | undefined {
+  const header = request.headers.get("cookie");
+  if (!header) return undefined;
+  for (const part of header.split(";")) {
+    const [key, ...rest] = part.trim().split("=");
+    if (key === name && rest.length > 0) return rest.join("=");
+  }
+  return undefined;
+}
+
+/** True only when the request carries a valid, unexpired admin session cookie. */
+export async function verifyAdminRequest(request: Request): Promise<boolean> {
+  const token = readCookie(request, ADMIN_COOKIE);
+  if (!token) return false;
+  try {
+    const result = await jwtVerify(token, secret(), {
+      issuer: baseUrl(),
+      audience: `${baseUrl()}/admin`,
+      algorithms: ["HS256"],
+    });
+    return result.payload.token_use === "admin";
+  } catch {
+    return false;
+  }
 }
 
 export function adminCookie(token: string): string {
-  return `desk_os_admin=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=2592000`;
+  return `${ADMIN_COOKIE}=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${ADMIN_SESSION_SECONDS}`;
+}
+
+export function clearAdminCookie(): string {
+  return `${ADMIN_COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`;
 }

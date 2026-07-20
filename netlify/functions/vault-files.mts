@@ -1,5 +1,6 @@
 import path from "node:path";
 import type { Config } from "@netlify/functions";
+import { requireAdminJson } from "../../src/lib/admin-guard.mjs";
 import { baseUrl } from "../../src/lib/env.mjs";
 import { vaultStore } from "../../src/lib/stores.mjs";
 import { BlobVaultService, VaultProblem } from "../../src/lib/vault.mjs";
@@ -82,6 +83,8 @@ async function parseJson(request: Request): Promise<Record<string, unknown>> {
 }
 
 export default async (request: Request): Promise<Response> => {
+  const denied = await requireAdminJson(request);
+  if (denied) return denied;
   const vault = new BlobVaultService(vaultStore());
   const url = new URL(request.url);
 

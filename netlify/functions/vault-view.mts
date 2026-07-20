@@ -1,4 +1,5 @@
 import type { Config } from "@netlify/functions";
+import { requireAdminHtml } from "../../src/lib/admin-guard.mjs";
 import { baseUrl } from "../../src/lib/env.mjs";
 import { vaultStore } from "../../src/lib/stores.mjs";
 import { BlobVaultService, VaultProblem } from "../../src/lib/vault.mjs";
@@ -22,6 +23,8 @@ function downloadName(filePath: string): string {
 }
 
 export default async (request: Request): Promise<Response> => {
+  const denied = await requireAdminHtml(request);
+  if (denied) return denied;
   const url = new URL(request.url);
   const requestedPath = url.searchParams.get("path")?.trim();
   const vault = new BlobVaultService(vaultStore());

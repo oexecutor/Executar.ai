@@ -1,14 +1,22 @@
-# Security model — open access edition
+# Security model — operator session edition
 
 ## Deliberate configuration
 
-Version 1.6.0 retains the open-access configuration introduced in 1.4.0, controlled binary import from 1.5.0, and generated workflow dashboards.
+Version 1.7.0 replaces the open-access model introduced in 1.4.0 with an authenticated
+operator session (Gate 0.5 of the DESK-OS PM handoff, baseline §13 Option B), while keeping
+controlled binary import from 1.5.0 and generated workflow dashboards from 1.6.0.
 
-- The dashboard and vault HTTP APIs are public.
-- OAuth authorization is automatic after protocol validation and does not ask for a password.
-- Dynamic Client Registration remains available.
-- `ADMIN_PASSWORD` is not used.
-- `MCP_JWT_SECRET` remains an internal signing key required by OAuth token integrity. It is not a login password and is never shown in the interface.
+- The vault HTTP APIs (`/api/vault/*`), the human viewer (`/view`) and the workflow
+  dashboard (`/dashboard`) require an authenticated operator session.
+- The session is issued by `POST /api/admin/login` after checking `ADMIN_PASSWORD`
+  (compared as SHA-256 digests with `timingSafeEqual`) and is carried in a signed JWT
+  cookie: `HttpOnly`, `Secure`, `SameSite=Lax`, 8-hour expiry.
+- Login fails closed: while `ADMIN_PASSWORD` is unset, no session can be created.
+- `/health` remains public and returns no sensitive data.
+- OAuth authorization for `/mcp` is automatic after protocol validation and authenticates
+  the MCP client, not the operator. Dynamic Client Registration remains available.
+- `MCP_JWT_SECRET` signs both OAuth access tokens and operator session cookies. It is not
+  a login password and is never shown in the interface.
 
 ## Remaining safeguards
 
@@ -21,10 +29,13 @@ Version 1.6.0 retains the open-access configuration introduced in 1.4.0, control
 - Hidden paths, `.obsidian`, `.git`, traversal, absolute and null-byte paths are rejected.
 - The MCP exposes no command-execution or permanent-delete tool.
 
-## Exposure warning
+## Exposure notes
 
-Anyone with the public project URL can read, create, edit, import and export the remote vault. Search engines, link sharing, browser history, third-party clients and automated scanners may expose or alter data. Do not store confidential, personal, contractual, health, financial or regulated data in this open instance.
-
+- Anyone with the URL can reach the login form and the OAuth endpoints; everything else
+  requires the operator session or a valid MCP access token.
+- The MCP surface still authenticates *a client*, not a person: any client that completes
+  Dynamic Client Registration and PKCE receives tool access. Treat the MCP URL itself as
+  sensitive until per-actor authorization exists (out of MVP scope, DEC in baseline §13).
 
 ## Binary import safeguards
 
@@ -36,8 +47,7 @@ Anyone with the public project URL can read, create, edit, import and export the
 - MIME type values are syntactically validated.
 - Hidden, internal, absolute and traversal paths remain blocked.
 - Imported ZIP and Skill packages are stored only; the server does not extract, execute or install them.
-- Because the deployment is open access, anyone with the MCP connection can upload binary data and consume storage.
-
+- ZIP import over HTTP now requires the operator session; MCP import requires an OAuth token.
 
 ## Workflow dashboard safeguards
 

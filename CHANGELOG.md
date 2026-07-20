@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.7.0 — 2026-07-20
+
+### Security (Gate 0.5 — DESK-OS PM handoff)
+
+- Replaced the open-access model (1.4.0) with a real operator session:
+  `verifyAdminPassword` compares against `ADMIN_PASSWORD` with `timingSafeEqual`
+  and fails closed while the variable is unset.
+- `POST /api/admin/login` issues a signed JWT session cookie
+  (`HttpOnly`, `Secure`, `SameSite=Lax`, 8 h); `POST /api/admin/logout` clears it.
+- `/api/vault/files|status|import|export` now return `401 UNAUTHORIZED` without a
+  session; `/view` and `/dashboard` render a no-JS login form instead of content.
+- `/mcp` and the OAuth endpoints are unchanged (they already authenticate MCP
+  clients via OAuth 2.1 + PKCE).
+- The panel (`public/index.html`) gained a login/logout flow and no longer
+  announces "ACESSO ABERTO".
+
+### Validation
+
+- TypeScript compilation passed.
+- Seven test files and thirty-one tests passed, including new acceptance tests:
+  unauthenticated vault reads/writes fail with 401.
+
 ## 1.6.0 — 2026-07-19
 
 ### Added
