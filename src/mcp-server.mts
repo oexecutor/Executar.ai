@@ -2,6 +2,8 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { BlobVaultService, MAX_BINARY_IMPORT_BYTES, VaultProblem } from "./lib/vault.mjs";
 import { DeskWorkflowService } from "./lib/desk-workflows.mjs";
+import { DeskOsService } from "./application/desk-os-service.mjs";
+import { registerDeskOsTools } from "./mcp/desk-os-tools.mjs";
 import { WorkflowDashboardService } from "./lib/workflow-dashboard.mjs";
 import { buildVaultBrowserUrl, buildVaultViewUrl } from "./lib/viewer.mjs";
 
@@ -79,8 +81,11 @@ function guarded<T extends Record<string, unknown>>(summary: string, action: (in
   };
 }
 
-export function createMcpServer(vault: BlobVaultService, options: { publicBaseUrl?: string } = {}): McpServer {
-  const server = new McpServer({ name: "desk-os-obsidian-cloud", version: "1.6.0" });
+export function createMcpServer(
+  vault: BlobVaultService,
+  options: { publicBaseUrl?: string; deskOsService?: DeskOsService; actorId?: string } = {},
+): McpServer {
+  const server = new McpServer({ name: "desk-os-obsidian-cloud", version: "1.7.0" });
   const workflows = new DeskWorkflowService(vault);
   const workflowDashboards = new WorkflowDashboardService(vault, options.publicBaseUrl);
   const handle = <T extends Record<string, unknown>>(summary: string, action: (input: T) => Promise<unknown>) => guarded(summary, action, options.publicBaseUrl);
@@ -369,6 +374,11 @@ export function createMcpServer(vault: BlobVaultService, options: { publicBaseUr
     annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
   }, handle("Captura físico-digital registrada.", async (input) => workflows.paperToDigital(input)));
 
+  // Gate 4: the desk_os_* PM catalog is ADDITIVE — the 19 obsidian_*/desk_*
+  // tools above keep working unchanged for existing MCP clients (DEC-002).
+  if (options.deskOsService) {
+    registerDeskOsTools(server, options.deskOsService, options.actorId ?? "mcp-client");
+  }
 
   return server;
 }

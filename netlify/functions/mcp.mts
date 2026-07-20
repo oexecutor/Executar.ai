@@ -5,6 +5,8 @@ import { baseUrl, resourceUrl } from "../../src/lib/env.mjs";
 import { vaultStore } from "../../src/lib/stores.mjs";
 import { BlobVaultService } from "../../src/lib/vault.mjs";
 import { createMcpServer } from "../../src/mcp-server.mjs";
+import { DeskOsService } from "../../src/application/desk-os-service.mjs";
+import { createDeskOsRepositories } from "../../src/repository/vault-adapter.mjs";
 
 function unauthorized(): Response {
   const metadata = `${baseUrl()}/.well-known/oauth-protected-resource/mcp`;
@@ -26,7 +28,13 @@ export default async (request: Request): Promise<Response> => {
     const claims = await verifyAccessToken(token);
     if (!claims.scopes.includes("mcp:tools")) return new Response(JSON.stringify({ error: "insufficient_scope" }), { status: 403 });
 
-    const server = createMcpServer(new BlobVaultService(vaultStore()), { publicBaseUrl: baseUrl() });
+    const store = vaultStore();
+    const vault = new BlobVaultService(store);
+    const server = createMcpServer(vault, {
+      publicBaseUrl: baseUrl(),
+      deskOsService: new DeskOsService(createDeskOsRepositories(store), vault),
+      actorId: claims.clientId,
+    });
     const transport = new WebStandardStreamableHTTPServerTransport({ enableJsonResponse: true });
     await server.connect(transport);
     try {
