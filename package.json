@@ -1,0 +1,56 @@
+{
+  "name": "executar-ai",
+  "version": "1.0.0",
+  "description": "DESK-OS MCP Project Management System",
+  "main": "src/mcp-server.mts",
+  "type": "module",
+  "scripts": {
+    "dev": "netlify dev",
+    "build": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:smoke": "node scripts/smoke-oauth.mjs",
+    "lint": "eslint . --ext .ts,.tsx,.mts",
+    "format": "prettier --write .",
+    "prepare": "husky install",
+    "check": "npm run build && npm test && npm run lint"
+  },
+  "keywords": [
+    "mcp",
+    "desk-os",
+    "automation",
+    "project-management"
+  ],
+  "author": "oexecutor",
+  "license": "MIT",
+  "dependencies": {
+    "@netlify/blobs": "^10.7.9",
+    "@modelcontextprotocol/sdk": "^0.6.0",
+    "zod": "^3.22.0",
+    "jsonwebtoken": "^9.0.0",
+    "crypto-js": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/jsonwebtoken": "^9.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "eslint-config-prettier": "^9.0.0",
+    "husky": "^8.0.0",
+    "lint-staged": "^15.0.0",
+    "prettier": "^3.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0",
+    "netlify-cli": "^17.0.0"
+  },
+  "lint-staged": {
+    "*.{ts,mts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml}": [
+      "prettier --write"
+    ]
+  }
+}
