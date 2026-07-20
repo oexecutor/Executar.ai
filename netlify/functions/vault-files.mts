@@ -3,11 +3,26 @@ import type { Config } from "@netlify/functions";
 import { requireAdminJson } from "../../src/lib/admin-guard.mjs";
 import { baseUrl } from "../../src/lib/env.mjs";
 import { vaultStore } from "../../src/lib/stores.mjs";
-import { BlobVaultService, VaultProblem } from "../../src/lib/vault.mjs";
+import { BlobVaultService, normalizeVaultPath, VaultProblem } from "../../src/lib/vault.mjs";
+import { isDeskOsPath } from "../../src/repository/paths.mjs";
 import { buildVaultDownloadUrl, buildVaultRawUrl, buildVaultViewUrl, contentTypeFor, isTextFile, renderMarkdown } from "../../src/lib/viewer.mjs";
 import type { FileRecord } from "../../src/lib/types.mjs";
 
 const MAX_EDITOR_BYTES = 1_048_576;
+
+/**
+ * DESK-OS operational state (`_desk-os/`) is mutated only through the
+ * repository/application services, never by the generic file editor.
+ */
+function rejectDeskOsWrite(requestedPath: string): void {
+  if (isDeskOsPath(normalizeVaultPath(requestedPath))) {
+    throw new VaultProblem(
+      "RESERVED_PATH",
+      "A área _desk-os/ é reservada ao estado operacional do DESK-OS.",
+      "Use as ferramentas desk_os_* ou a API /api/pm/* para alterar projetos, sprints e tarefas.",
+    );
+  }
+}
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -101,6 +116,7 @@ export default async (request: Request): Promise<Response> => {
     if (request.method === "POST") {
       const input = await parseJson(request);
       const notePath = typeof input.path === "string" ? input.path.trim() : "";
+      rejectDeskOsWrite(notePath);
       const content = typeof input.content === "string" ? input.content : "";
       if (!notePath.toLowerCase().endsWith(".md")) {
         throw new VaultProblem("INVALID_INPUT", "Novos arquivos criados pelo painel precisam ser notas .md.", "Use um caminho como 00_COMECE_AQUI/Nova nota.md.");
@@ -115,6 +131,7 @@ export default async (request: Request): Promise<Response> => {
     if (request.method === "PUT") {
       const input = await parseJson(request);
       const requestedPath = typeof input.path === "string" ? input.path.trim() : "";
+      rejectDeskOsWrite(requestedPath);
       const content = typeof input.content === "string" ? input.content : null;
       const expectedSha256 = typeof input.expectedSha256 === "string" ? input.expectedSha256 : "";
       if (!requestedPath || content === null) {
