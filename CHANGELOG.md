@@ -1,5 +1,28 @@
 # Changelog
 
+## Unreleased — DESK-OS PM core (Gates 1–5 API)
+
+### Added
+
+- Pure domain layer (`src/domain/`) implementing `contracts/domain-model.yaml`:
+  entities, prefixed IDs, status-transition guards, capacity rules (max 3 steps,
+  one active workflow, one dominant delivery/day, dependency-cycle detection),
+  zod schemas and factories.
+- Repository layer (`src/repository/`) over the existing `BlobVaultService`:
+  JSON state under `_desk-os/state/**`, per-type index manifests (fixes the
+  `allRecords()` fan-out for hot reads), optimistic concurrency, idempotency
+  receipts, append-only audit log, labeled pre-apply backups.
+- Shared application services (`src/application/DeskOsService`): Today, board,
+  context search, project/sprint/task lifecycle, evidence taxonomy, and the
+  decomposition workflow (prepare → human approval → apply with backup).
+- 18 additive `desk_os_*` MCP tools from `contracts/mcp-tools.yaml`; the 19
+  legacy `obsidian_*`/`desk_*` tools are untouched.
+- `/api/pm/*` HTTP adapter per `contracts/project-management-api.yaml`,
+  protected by the operator session.
+- GitHub Actions CI (type check + tests). Suite: 12 files / 66 tests.
+- `docs/GATE_PROGRESS.md` tracking gates and open GAPs (frontend UI, e2e,
+  lint, netlify-dev smoke, remaining §11 baseline risks).
+
 ## 1.7.0 — 2026-07-20
 
 ### Security (Gate 0.5 — DESK-OS PM handoff)
