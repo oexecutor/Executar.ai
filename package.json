@@ -1,56 +1,38 @@
 {
-  "name": "executar-ai",
-  "version": "1.0.0",
-  "description": "DESK-OS MCP Project Management System",
-  "main": "src/mcp-server.mts",
+  "name": "@desk-os/obsidian-vault-mcp-netlify",
+  "version": "1.6.0",
+  "private": true,
   "type": "module",
-  "scripts": {
-    "dev": "netlify dev",
-    "build": "tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:smoke": "node scripts/smoke-oauth.mjs",
-    "lint": "eslint . --ext .ts,.tsx,.mts",
-    "format": "prettier --write .",
-    "prepare": "husky install",
-    "check": "npm run build && npm test && npm run lint"
+  "engines": {
+    "node": ">=20"
   },
-  "keywords": [
-    "mcp",
-    "desk-os",
-    "automation",
-    "project-management"
-  ],
-  "author": "oexecutor",
-  "license": "MIT",
+  "scripts": {
+    "build": "tsc --noEmit",
+    "dev": "npx netlify dev",
+    "test": "vitest run",
+    "test:smoke": "node scripts/smoke-oauth.mjs",
+    "check": "npm run build && npm test"
+  },
   "dependencies": {
-    "@netlify/blobs": "^10.7.9",
-    "@modelcontextprotocol/sdk": "^0.6.0",
-    "zod": "^3.22.0",
-    "jsonwebtoken": "^9.0.0",
-    "crypto-js": "^4.1.0"
+    "@modelcontextprotocol/sdk": "1.29.0",
+    "@netlify/blobs": "10.7.9",
+    "@netlify/functions": "5.3.0",
+    "fflate": "0.8.3",
+    "jose": "6.2.3",
+    "yaml": "2.9.0",
+    "zod": "3.25.76"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0",
-    "@types/jsonwebtoken": "^9.0.0",
-    "@typescript-eslint/eslint-plugin": "^6.0.0",
-    "@typescript-eslint/parser": "^6.0.0",
-    "eslint": "^8.0.0",
-    "eslint-config-prettier": "^9.0.0",
-    "husky": "^8.0.0",
-    "lint-staged": "^15.0.0",
-    "prettier": "^3.0.0",
-    "typescript": "^5.0.0",
-    "vitest": "^1.0.0",
-    "netlify-cli": "^17.0.0"
+    "@types/node": "24.0.15",
+    "typescript": "5.8.3",
+    "vitest": "3.2.4"
   },
-  "lint-staged": {
-    "*.{ts,mts,tsx}": [
-      "eslint --fix",
-      "prettier --write"
-    ],
-    "*.{json,md,yml}": [
-      "prettier --write"
-    ]
-  }
+  "overrides": {
+    "@opentelemetry/core": "2.9.0",
+    "@opentelemetry/resources": "2.9.0",
+    "@opentelemetry/sdk-trace-base": "2.9.0",
+    "@opentelemetry/sdk-trace-node": "2.9.0",
+    "rollup": "4.62.2"
+  },
+  "license": "MIT"
 }

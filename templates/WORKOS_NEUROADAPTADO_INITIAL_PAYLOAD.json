@@ -1,0 +1,122 @@
+{
+  "workflowId": "WORKOS-CONSULTORIA",
+  "title": "WorkOS Neuroadaptado — Consultoria",
+  "subtitle": "Status dinâmico gerado a partir do Product Source of Truth",
+  "sourceDocument": "executar-app-ecossistema/06_CONSULTORIA_E_SERVICOS/00_PRODUCT_SOURCE_OF_TRUTH.md",
+  "documentVersion": "0.1.0",
+  "observedAt": "2026-07-19T12:00:00-03:00",
+  "mode": "replace",
+  "gate": {
+    "decision": "PAUSAR",
+    "summary": "Validação interna concluída (n=1, o próprio fundador). Nenhum cliente externo validou o sistema e o modelo comercial ainda não está definido.",
+    "exitCondition": "Concluir um piloto externo e registrar a evidência no vault."
+  },
+  "sources": [
+    { "id": "SRC-001" },
+    { "id": "SRC-002" },
+    { "id": "SRC-003" },
+    { "id": "SRC-004" },
+    { "id": "SRC-005" },
+    { "id": "SRC-006" },
+    { "id": "SRC-007" }
+  ],
+  "areas": [
+    { "id": "01", "label": "Governança", "score": 0 },
+    { "id": "02", "label": "Pesquisa/Evidências", "score": 0 },
+    { "id": "03", "label": "Referências visuais", "score": 0 },
+    { "id": "04", "label": "Executar App", "score": 0 },
+    { "id": "05", "label": "Website/LP", "score": 0 },
+    { "id": "06", "label": "Consultoria", "score": 2 },
+    { "id": "07", "label": "Blog/Editorial", "score": 0 },
+    { "id": "08", "label": "Comunidade", "score": 0 },
+    { "id": "09", "label": "Ebooks", "score": 0 },
+    { "id": "10", "label": "Cursos", "score": 0 },
+    { "id": "11", "label": "Skills/Agentes IA", "score": 0 },
+    { "id": "12", "label": "Workflows", "score": 0 },
+    { "id": "13", "label": "Marketplace", "score": 0 },
+    { "id": "14", "label": "Afiliados", "score": 0 },
+    { "id": "15", "label": "Institucional", "score": 0 },
+    { "id": "16", "label": "Lançamento/GTM", "score": 0 },
+    { "id": "17", "label": "Legal/Regulatório", "score": 0 },
+    { "id": "18", "label": "Stakeholders", "score": 0 },
+    { "id": "19", "label": "Operação Linear", "score": 0 },
+    { "id": "20", "label": "Design System", "score": 0 }
+  ],
+  "decisions": [
+    {
+      "id": "DEC-001",
+      "title": "Produtizar o fluxo como serviço WorkOS Neuroadaptado",
+      "status": "approved",
+      "caveat": "Validação externa pendente (CEV-001)."
+    }
+  ],
+  "gaps": [
+    {
+      "id": "GAP-010",
+      "title": "Capacidade de pagamento do ICP",
+      "impact": "Impede definir preço.",
+      "priority": "high",
+      "status": "open"
+    },
+    {
+      "id": "GAP-011",
+      "title": "Canal de acesso e aquisição de clientes",
+      "impact": "Sem isso não há como vender.",
+      "priority": "high",
+      "status": "open"
+    },
+    {
+      "id": "GAP-012",
+      "title": "Modelo comercial completo — oferta, preço e frequência",
+      "impact": "Bloqueia venda formal.",
+      "priority": "high",
+      "status": "open"
+    },
+    {
+      "id": "GAP-015",
+      "title": "Nenhum cliente externo identificado",
+      "impact": "Bloqueia validação de H-001.",
+      "priority": "high",
+      "status": "open"
+    }
+  ],
+  "counterEvidence": [
+    {
+      "id": "CEV-001",
+      "title": "Validação realizada apenas pelo próprio fundador.",
+      "impact": "Não comprova aderência externa.",
+      "status": "open"
+    },
+    {
+      "id": "CEV-002",
+      "title": "LACUNA — a segunda contraevidência não foi detalhada no HTML de referência.",
+      "status": "open"
+    }
+  ],
+  "risks": [
+    {
+      "id": "RISK-001",
+      "title": "LACUNA — risco aberto sem descrição no HTML de referência.",
+      "level": "high",
+      "status": "open"
+    },
+    {
+      "id": "RISK-002",
+      "title": "LACUNA — risco aberto sem descrição no HTML de referência.",
+      "level": "high",
+      "status": "open"
+    },
+    {
+      "id": "RISK-003",
+      "title": "LACUNA — risco aberto sem descrição no HTML de referência.",
+      "level": "high",
+      "status": "open"
+    }
+  ],
+  "nextAction": "Identificar e concluir um piloto externo.",
+  "ingestionSummary": "Carga inicial baseada no dashboard HTML de referência. Itens não detalhados foram explicitamente marcados como LACUNA.",
+  "sourcePaths": [
+    "executar-app-ecossistema/06_CONSULTORIA_E_SERVICOS/00_PRODUCT_SOURCE_OF_TRUTH.md"
+  ],
+  "writeHistory": true
+}

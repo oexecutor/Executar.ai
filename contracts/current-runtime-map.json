@@ -1,0 +1,118 @@
+{
+  "snapshot_date": "2026-07-20",
+  "netlify_project": "desk-os-vault-mcp-openai",
+  "site_id": "88f72319-6890-45e8-a230-bddaa32fc07d",
+  "production_url": "https://desk-os-vault-mcp-openai.netlify.app",
+  "mcp_url": "https://desk-os-vault-mcp-openai.netlify.app/mcp",
+  "audited_deploy_id": "6a5d3bec2c8afd48f16da2bd",
+  "deploy_type": "api_drop",
+  "repository_linked": false,
+  "runtime": "nodejs20.x",
+  "function_count": 14,
+  "edge_functions": false,
+  "forms_enabled": false,
+  "routes": [
+    {
+      "function": "health",
+      "paths": [
+        "/health"
+      ]
+    },
+    {
+      "function": "mcp",
+      "paths": [
+        "/mcp"
+      ]
+    },
+    {
+      "function": "oauth-metadata",
+      "paths": [
+        "/.well-known/oauth-protected-resource",
+        "/.well-known/oauth-protected-resource/mcp",
+        "/.well-known/oauth-authorization-server"
+      ]
+    },
+    {
+      "function": "oauth-register",
+      "paths": [
+        "/oauth/register"
+      ]
+    },
+    {
+      "function": "oauth-authorize",
+      "paths": [
+        "/oauth/authorize"
+      ]
+    },
+    {
+      "function": "oauth-token",
+      "paths": [
+        "/oauth/token"
+      ]
+    },
+    {
+      "function": "admin-login",
+      "paths": [
+        "/api/admin/login"
+      ]
+    },
+    {
+      "function": "admin-logout",
+      "paths": [
+        "/api/admin/logout"
+      ]
+    },
+    {
+      "function": "vault-status",
+      "paths": [
+        "/api/vault/status"
+      ]
+    },
+    {
+      "function": "vault-files",
+      "paths": [
+        "/api/vault/files"
+      ]
+    },
+    {
+      "function": "vault-import",
+      "paths": [
+        "/api/vault/import"
+      ]
+    },
+    {
+      "function": "vault-export",
+      "paths": [
+        "/api/vault/export"
+      ]
+    },
+    {
+      "function": "vault-view",
+      "paths": [
+        "/view"
+      ]
+    },
+    {
+      "function": "workflow-dashboard",
+      "paths": [
+        "/dashboard"
+      ]
+    }
+  ],
+  "environment_variable_names": [
+    "PUBLIC_BASE_URL",
+    "MCP_JWT_SECRET",
+    "ADMIN_PASSWORD",
+    "obsidian"
+  ],
+  "known_gaps": [
+    "source files",
+    "package.json",
+    "netlify.toml",
+    "current MCP tool schemas",
+    "persistence implementation",
+    "OAuth implementation details",
+    "test suite",
+    "frontend source"
+  ]
+}

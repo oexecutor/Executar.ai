@@ -1,10 +1,9 @@
-import { clearAdminSessionCookie } from "../../src/lib/auth.mjs";
+import type { Config } from "@netlify/functions";
 import { json, methodNotAllowed } from "../../src/lib/http.mjs";
 
-export default async function handler(request: Request): Promise<Response> {
+export default async (request: Request): Promise<Response> => {
   if (request.method !== "POST") return methodNotAllowed(["POST"]);
-  return json(
-    { authenticated: false },
-    { headers: { "Set-Cookie": clearAdminSessionCookie() } },
-  );
-}
+  return json({ authenticated: true, accessMode: "open", passwordRequired: false });
+};
+
+export const config: Config = { path: "/api/admin/logout" };

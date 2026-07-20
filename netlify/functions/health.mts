@@ -1,7 +1,6 @@
-import { json, methodNotAllowed } from "../../src/lib/http.mjs";
-import { deployContext } from "../../src/lib/env.mjs";
+import type { Config } from "@netlify/functions";
+import { json } from "../../src/lib/http.mjs";
 
-export default async function handler(request: Request): Promise<Response> {
-  if (request.method !== "GET") return methodNotAllowed(["GET"]);
-  return json({ status: "ok", service: "desk-os-mcp", context: deployContext() });
-}
+export default async (): Promise<Response> => json({ service: "desk-os-obsidian-mcp", status: "ok", transport: "streamable-http", authentication: "oauth-2.1-pkce" });
+
+export const config: Config = { path: "/health" };

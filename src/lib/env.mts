@@ -1,18 +1,17 @@
 export function requiredEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`Missing required environment variable: ${name}`);
-  }
+  const value = Netlify.env.get(name)?.trim();
+  if (!value) throw new Error(`Missing required Netlify environment variable: ${name}`);
   return value;
 }
 
-export function optionalEnv(name: string): string | undefined {
-  const value = process.env[name];
-  return value === undefined || value === "" ? undefined : value;
+export function baseUrl(): string {
+  return requiredEnv("PUBLIC_BASE_URL").replace(/\/$/, "");
 }
 
-export type DeployContext = "production" | "preview";
+export function resourceUrl(): string {
+  return `${baseUrl()}/mcp`;
+}
 
-export function deployContext(): DeployContext {
-  return process.env.CONTEXT === "production" ? "production" : "preview";
+export function isProduction(): boolean {
+  return Netlify.env.get("CONTEXT") === "production";
 }

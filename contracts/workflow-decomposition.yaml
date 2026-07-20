@@ -1,0 +1,107 @@
+workflow:
+  id: desk-os-project-decomposition
+  version: "1.0.0"
+  execution_mode: claude_skill_orchestrated
+  objective: Transform dispersed context into an approved executable plan.
+
+inputs:
+  required:
+    - project_id
+    - objective
+    - horizon
+    - capacity
+    - source_refs
+  optional:
+    - deadline
+    - constraints
+    - existing_sprint_id
+    - preferred_mode
+
+stages:
+  - id: recover_context
+    actor: CLAUDE
+    tools:
+      - desk_os_get_project
+      - desk_os_search_context
+      - desk_os_get_current_sprint
+    output:
+      - context_bundle
+      - source_refs
+
+  - id: classify_epistemic
+    actor: CLAUDE
+    required_categories:
+      - FACT
+      - EVIDENCE
+      - INFERENCE
+      - HYPOTHESIS
+      - COUNTEREVIDENCE
+      - GAP
+      - DECISION
+
+  - id: frame_project
+    actor: CLAUDE
+    output:
+      - objective
+      - scope_in
+      - scope_out
+      - definition_of_done
+      - deliverables
+      - risks
+
+  - id: decompose
+    actor: CLAUDE
+    constraints:
+      max_steps_per_task: 3
+      observable_task_outcome: true
+      acceptance_criteria_required: true
+
+  - id: capacity_check
+    actor: CLAUDE_AND_SERVER
+    constraints:
+      max_active_workflows_default: 1
+      max_daily_dominant_deliveries_default: 1
+      default_sprint_days: 5
+
+  - id: validate_and_save_proposal
+    actor: MCP_SERVER
+    tool: desk_os_prepare_decomposition
+    mutation_scope: PROPOSAL_ONLY
+
+  - id: human_review
+    actor: USER
+    required: true
+    silence_is_approval: false
+
+  - id: apply
+    actor: MCP_SERVER
+    tool: desk_os_apply_decomposition
+    preconditions:
+      - approved_by_user == true
+      - proposal_version_matches
+      - backup_created
+      - no_dependency_cycle
+    guarantees:
+      - atomic_or_rolled_back
+      - idempotent
+      - audited
+
+outputs:
+  proposal:
+    - proposal_id
+    - assumptions
+    - gaps
+    - risks
+    - project_patch
+    - sprint_drafts
+    - task_drafts
+    - evidence_drafts
+    - capacity_check
+    - warnings
+  applied:
+    - project_id
+    - sprint_ids
+    - task_ids
+    - evidence_ids
+    - audit_id
+    - backup_ref

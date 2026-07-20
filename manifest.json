@@ -1,0 +1,182 @@
+{
+  "package": "DESK_OS_MCP_PM_HANDOFF",
+  "version": "1.0.0",
+  "created_at": "2026-07-20",
+  "owner": "Leonardo Batista",
+  "target_executor": "Claude Code Pro",
+  "target_project": "desk-os-vault-mcp-openai",
+  "mission": "Evolve the current vault MCP into a shared project-management core with MCP and web interfaces.",
+  "production_deploy_allowed": false,
+  "files": [
+    {
+      "path": "00_START_HERE.md",
+      "sha256": "f93f3e40790e018fb0603561a8eaf6f093d526664fece3634a10f002b6b6efca",
+      "bytes": 2122
+    },
+    {
+      "path": "AGENTS.md",
+      "sha256": "befc0ed17ca26eb0c02e0d15c33652ee44f865a49a48c9645173e14ff443e9f1",
+      "bytes": 2487
+    },
+    {
+      "path": "README.md",
+      "sha256": "1a9d686dc41e27904ee848d338ebd97041abeafbabe1f66687aa0ea98bfda0ed",
+      "bytes": 2165
+    },
+    {
+      "path": "contracts/.env.example",
+      "sha256": "d6c03f9ec6085180c9c3c02a966f28b05207d2070e4d9e740b1e4f59e5202eb9",
+      "bytes": 621
+    },
+    {
+      "path": "contracts/current-runtime-map.json",
+      "sha256": "1e4fef633a7f9526e3ede90102a58341067f23ffae953f9fe8a2de068507866d",
+      "bytes": 2314
+    },
+    {
+      "path": "contracts/domain-model.yaml",
+      "sha256": "ead1933de7424b113340168bb32a85a9c18b1c8ac93803447eed1af2caa4e1e0",
+      "bytes": 6365
+    },
+    {
+      "path": "contracts/domain-types.ts",
+      "sha256": "c63fb82f6d2757f6fd36f54190baa6bd0c77e5b6e7ccb0cac6c949782061bf05",
+      "bytes": 2310
+    },
+    {
+      "path": "contracts/example-project.json",
+      "sha256": "b04aaf083da0c70a82929460a8cfb9c77696eeac70d6f0bcf32cfdcaa21819e0",
+      "bytes": 987
+    },
+    {
+      "path": "contracts/example-sprint.json",
+      "sha256": "157edc40c2f6d2a0481af62e6a3da3c5f61357935850cc2e145eac3f16febe9e",
+      "bytes": 984
+    },
+    {
+      "path": "contracts/mcp-tools.yaml",
+      "sha256": "76a23a5ac4cc656a817ff816a298fc8a162863e7e556fc3906979ee5c138e7f8",
+      "bytes": 7328
+    },
+    {
+      "path": "contracts/project-management-api.yaml",
+      "sha256": "434b3e9e0d9b94407b6c182a80899bb82566147380dd962d098f742047080f27",
+      "bytes": 1677
+    },
+    {
+      "path": "contracts/workflow-decomposition.yaml",
+      "sha256": "21eb60112a4177cc7bc04c328881a629ff0daf3d45e5639434d0bf0bde06e419",
+      "bytes": 2109
+    },
+    {
+      "path": "docs/01_CURRENT_STATE.md",
+      "sha256": "36ec22de09a43d8519649333cfdc7e7126fb1f2a798e6e6770f34ec54356cfb7",
+      "bytes": 2250
+    },
+    {
+      "path": "docs/02_PRODUCT_VISION_AND_SCOPE.md",
+      "sha256": "ae0a9dc04494a37123fe690bbe30704dd5fb898e47a20bd319eb63b52a7c8720",
+      "bytes": 2922
+    },
+    {
+      "path": "docs/03_CAPABILITY_MAP.md",
+      "sha256": "2b76101b5084a025d60823eeddbb89998bcc0ed1cabf193ed2bd996bab476f7e",
+      "bytes": 1711
+    },
+    {
+      "path": "docs/04_TARGET_ARCHITECTURE.md",
+      "sha256": "112bf4342c3002b0db1b0f36ae745463cf1d8bd5568efcd8f5d062079fbb87bf",
+      "bytes": 3846
+    },
+    {
+      "path": "docs/05_DOMAIN_MODEL.md",
+      "sha256": "ed23d75563caea7d883654574e89332cc33ad20053739a8a016d8e269773d08c",
+      "bytes": 1420
+    },
+    {
+      "path": "docs/06_MCP_TOOL_CATALOG.md",
+      "sha256": "f425e54a893e391924991bb69996e73aa3a08583805c1bcc942f83f081c2d933",
+      "bytes": 2071
+    },
+    {
+      "path": "docs/07_DECOMPOSITION_WORKFLOW.md",
+      "sha256": "0e1d6e6cf461ee9b46ff4645e77b75900e607fef37ca26e1e4156738170136c8",
+      "bytes": 3123
+    },
+    {
+      "path": "docs/08_FRONTEND_UX_SPEC.md",
+      "sha256": "b84a270d88862938239d6f7ecc5ae55d68a8bda61f7f288f519cc8730270f3cb",
+      "bytes": 3018
+    },
+    {
+      "path": "docs/09_SECURITY_AND_GOVERNANCE.md",
+      "sha256": "c3c13d9fac4ecd992962103f2ac93a6694019a5e697711c870d34b47f51bf3ea",
+      "bytes": 2258
+    },
+    {
+      "path": "docs/10_IMPLEMENTATION_PLAN.md",
+      "sha256": "7dde2c351175d4b7ccd656d08a12bee057799feea92ecd0e46550a1f65cf737e",
+      "bytes": 3026
+    },
+    {
+      "path": "docs/11_ACCEPTANCE_TESTS.md",
+      "sha256": "c4a500599aa6ea2d297961d9312b84eb6ed28fbcd41a7f322b9315e5e8993402",
+      "bytes": 2448
+    },
+    {
+      "path": "docs/12_DEPLOY_RUNBOOK.md",
+      "sha256": "09204ab03b61d5204b17d82eac6cbfad5179da6d2c77b64738c9c6ddc5044541",
+      "bytes": 2043
+    },
+    {
+      "path": "docs/13_DECISIONS_GAPS_ASSUMPTIONS.md",
+      "sha256": "afce80aee19dfa576983240972c486ad3e538327d72c5017db8628a2b811001d",
+      "bytes": 2215
+    },
+    {
+      "path": "docs/14_TRACEABILITY_MATRIX.md",
+      "sha256": "bcce4b11df5962547e16e0450ae686cd2630b07421b08fd3ce947e5c809ef709",
+      "bytes": 1245
+    },
+    {
+      "path": "docs/15_CLAUDE_SKILL_MCP_BRIDGE.md",
+      "sha256": "1440727e02cf11ee63fdfffc9b48c13f8d2f83632bb568c195afc046b6542582",
+      "bytes": 2366
+    },
+    {
+      "path": "plans/BACKLOG_MVP.md",
+      "sha256": "356ab1a1f95cbd6e2759add38e686e5ed4f3eaae7560552247f6436623c8b493",
+      "bytes": 1870
+    },
+    {
+      "path": "plans/DEPLOY_GATES.md",
+      "sha256": "7e85679257de99bd7371c8efc8c70b2a95fab9bd1976456eb8adfad7645c536e",
+      "bytes": 711
+    },
+    {
+      "path": "plans/RELEASE_PLAN.md",
+      "sha256": "4d9b0a0b5bc55f7a18b3a9e83f029054578802fdeeadc608b0ad26a11ce666b7",
+      "bytes": 770
+    },
+    {
+      "path": "prompts/CLAUDE_CODE_MASTER_PROMPT.md",
+      "sha256": "638601f9da3129213ee15e5764d952459ee50d676788f89078bf3be50f9937ed",
+      "bytes": 4431
+    },
+    {
+      "path": "prompts/FIRST_RUN_CHECKLIST.md",
+      "sha256": "32d1ae322e2f2ba41d1fd6801e749af417891b22156f0e223b6aecb88844b488",
+      "bytes": 700
+    },
+    {
+      "path": "prompts/REVIEW_PROMPT.md",
+      "sha256": "76cf70edb0e689b238eada2af30521e1f0356527bc6c0c4439e82a8084f45c63",
+      "bytes": 816
+    },
+    {
+      "path": "references/README_CURRENT_MCP_AUDIT.md",
+      "sha256": "3adf249a5e8e1902d778aa25702499f069e662a018bfe4100e1cdfbe36c07df2",
+      "bytes": 15651
+    }
+  ]
+}

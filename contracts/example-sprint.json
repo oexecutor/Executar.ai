@@ -1,0 +1,39 @@
+{
+  "id": "spr_mcp_pm_001",
+  "project_id": "prj_desk_os_mcp",
+  "title": "Sprint 1 — núcleo operacional",
+  "goal": "Entregar domínio, persistência e fluxo mínimo Kanban/MCP.",
+  "status": "PLANNED",
+  "start_date": "2026-07-20",
+  "end_date": "2026-07-24",
+  "capacity_hours": 15,
+  "wip_limit": 1,
+  "tasks": [
+    {
+      "id": "tsk_baseline",
+      "title": "Estabelecer baseline reproduzível",
+      "outcome": "Código atual versionado, testado e documentado.",
+      "status": "READY",
+      "priority": "CRITICAL",
+      "position": 1,
+      "steps": [
+        {
+          "id": "stp_recover",
+          "title": "Recuperar e inspecionar fonte",
+          "status": "TODO"
+        },
+        {
+          "id": "stp_test",
+          "title": "Executar build e smoke tests",
+          "status": "TODO"
+        },
+        {
+          "id": "stp_commit",
+          "title": "Criar commit baseline",
+          "status": "TODO"
+        }
+      ]
+    }
+  ],
+  "version": 1
+}

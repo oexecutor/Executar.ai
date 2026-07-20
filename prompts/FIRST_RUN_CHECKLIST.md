@@ -1,0 +1,22 @@
+# Claude Code First-Run Checklist
+
+- [ ] Read `AGENTS.md`.
+- [ ] Read the complete handoff.
+- [ ] Confirm actual source directory.
+- [ ] Confirm Git status and remote.
+- [ ] Confirm Netlify site link.
+- [ ] Identify package manager.
+- [ ] Identify MCP SDK/version.
+- [ ] Identify frontend framework.
+- [ ] Identify storage implementation.
+- [ ] Identify OAuth implementation.
+- [ ] Identify current environment variables by name only.
+- [ ] Run install.
+- [ ] Run build.
+- [ ] Run tests.
+- [ ] Run local server.
+- [ ] Smoke test current routes.
+- [ ] Inventory current MCP tools.
+- [ ] Create `docs/IMPLEMENTATION_BASELINE.md`.
+- [ ] Create baseline commit.
+- [ ] Confirm production was not changed.

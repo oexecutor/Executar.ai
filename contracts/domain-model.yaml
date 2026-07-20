@@ -1,0 +1,193 @@
+schema_version: "1.0.0"
+
+enums:
+  project_status: [IDEA, PLANNED, ACTIVE, ON_HOLD, COMPLETED, ARCHIVED]
+  sprint_status: [DRAFT, PLANNED, ACTIVE, REVIEW, COMPLETED, CANCELLED]
+  task_status: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE, CANCELLED]
+  priority: [NONE, LOW, MEDIUM, HIGH, CRITICAL]
+  epistemic_type:
+    - FACT
+    - EVIDENCE
+    - INFERENCE
+    - HYPOTHESIS
+    - COUNTEREVIDENCE
+    - GAP
+    - DECISION
+  actor_type: [USER, ADMIN, MCP_CLIENT, SYSTEM]
+
+defaults:
+  max_steps_per_task: 3
+  max_active_workflows: 1
+  max_daily_dominant_deliveries: 1
+  sprint_days: 5
+  kanban_columns: [BACKLOG, READY, IN_PROGRESS, BLOCKED, DONE]
+
+entities:
+  Workspace:
+    required: [id, name, owner_id, version, created_at, updated_at]
+    fields:
+      id: {type: string, pattern: "^wsp_"}
+      name: {type: string, minLength: 1, maxLength: 120}
+      owner_id: {type: string}
+      settings:
+        type: object
+        fields:
+          max_active_workflows: {type: integer, minimum: 1, default: 1}
+          max_steps_per_task: {type: integer, minimum: 1, maximum: 3, default: 3}
+          week_days: {type: array, items: string}
+      version: {type: integer, minimum: 1}
+      created_at: {type: datetime}
+      updated_at: {type: datetime}
+
+  Project:
+    required:
+      - id
+      - workspace_id
+      - title
+      - objective
+      - definition_of_done
+      - status
+      - version
+      - created_at
+      - updated_at
+    fields:
+      id: {type: string, pattern: "^prj_"}
+      workspace_id: {type: string, pattern: "^wsp_"}
+      title: {type: string, minLength: 1, maxLength: 200}
+      objective: {type: string, minLength: 1}
+      context: {type: string}
+      scope_in: {type: array, items: string}
+      scope_out: {type: array, items: string}
+      definition_of_done: {type: array, minItems: 1, items: string}
+      status: {ref: project_status}
+      priority: {ref: priority}
+      owner_id: {type: string}
+      start_at: {type: date, nullable: true}
+      due_at: {type: date, nullable: true}
+      tags: {type: array, items: string}
+      note_refs: {type: array, items: string}
+      evidence_refs: {type: array, items: string}
+      version: {type: integer, minimum: 1}
+      created_at: {type: datetime}
+      updated_at: {type: datetime}
+      archived_at: {type: datetime, nullable: true}
+
+  Sprint:
+    required:
+      - id
+      - project_id
+      - title
+      - goal
+      - status
+      - start_date
+      - end_date
+      - version
+    fields:
+      id: {type: string, pattern: "^spr_"}
+      project_id: {type: string, pattern: "^prj_"}
+      title: {type: string, minLength: 1, maxLength: 160}
+      goal: {type: string, minLength: 1}
+      status: {ref: sprint_status}
+      start_date: {type: date}
+      end_date: {type: date}
+      capacity_hours: {type: number, minimum: 0, nullable: true}
+      wip_limit: {type: integer, minimum: 1, default: 1}
+      review_summary: {type: string, nullable: true}
+      version: {type: integer, minimum: 1}
+      created_at: {type: datetime}
+      updated_at: {type: datetime}
+
+  Task:
+    required:
+      - id
+      - project_id
+      - title
+      - outcome
+      - status
+      - priority
+      - position
+      - steps
+      - version
+    constraints:
+      - "steps.length <= workspace.settings.max_steps_per_task"
+      - "BLOCKED requires blocked_reason"
+      - "DONE should include completion_evidence or explicit override reason"
+    fields:
+      id: {type: string, pattern: "^tsk_"}
+      project_id: {type: string, pattern: "^prj_"}
+      sprint_id: {type: string, pattern: "^spr_", nullable: true}
+      deliverable_id: {type: string, pattern: "^del_", nullable: true}
+      title: {type: string, minLength: 1, maxLength: 200}
+      outcome: {type: string, minLength: 1}
+      description: {type: string}
+      acceptance_criteria: {type: array, items: string}
+      status: {ref: task_status}
+      priority: {ref: priority}
+      position: {type: number}
+      estimate_minutes: {type: integer, minimum: 0, nullable: true}
+      due_at: {type: datetime, nullable: true}
+      dominant_date: {type: date, nullable: true}
+      blocked_reason: {type: string, nullable: true}
+      dependency_ids: {type: array, items: string}
+      steps:
+        type: array
+        maxItems: 3
+        items:
+          type: object
+          required: [id, title, status]
+          fields:
+            id: {type: string, pattern: "^stp_"}
+            title: {type: string, minLength: 1, maxLength: 160}
+            status: {enum: [TODO, DOING, DONE]}
+      completion_evidence: {type: array, items: string}
+      version: {type: integer, minimum: 1}
+      created_at: {type: datetime}
+      updated_at: {type: datetime}
+      completed_at: {type: datetime, nullable: true}
+
+  EvidenceRecord:
+    required: [id, project_id, type, statement, source_refs, confidence, created_at]
+    fields:
+      id: {type: string, pattern: "^(evd_|dec_)"}
+      project_id: {type: string, pattern: "^prj_"}
+      task_id: {type: string, pattern: "^tsk_", nullable: true}
+      type: {ref: epistemic_type}
+      statement: {type: string, minLength: 1}
+      source_refs: {type: array, items: string}
+      confidence: {enum: [LOW, MEDIUM, HIGH]}
+      implications: {type: string}
+      created_by: {type: string}
+      created_at: {type: datetime}
+
+  DecompositionProposal:
+    required:
+      - id
+      - project_id
+      - status
+      - source_refs
+      - assumptions
+      - gaps
+      - changes
+      - version
+    fields:
+      id: {type: string, pattern: "^prop_"}
+      project_id: {type: string, pattern: "^prj_"}
+      status: {enum: [DRAFT, VALIDATED, APPROVED, APPLIED, REJECTED, EXPIRED]}
+      source_refs: {type: array, items: string}
+      assumptions: {type: array, items: string}
+      gaps: {type: array, items: string}
+      risks: {type: array, items: string}
+      capacity_check: {type: object}
+      changes:
+        type: object
+        fields:
+          project_patch: {type: object}
+          sprint_drafts: {type: array}
+          task_drafts: {type: array}
+          evidence_drafts: {type: array}
+      approved_by: {type: string, nullable: true}
+      approved_at: {type: datetime, nullable: true}
+      applied_audit_id: {type: string, nullable: true}
+      version: {type: integer, minimum: 1}
+      created_at: {type: datetime}
+      updated_at: {type: datetime}
