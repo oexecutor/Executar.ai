@@ -4,6 +4,11 @@ import { strToU8, zipSync } from "fflate";
 const base = process.env.SMOKE_BASE_URL;
 if (!base) throw new Error("SMOKE_BASE_URL is required");
 
+// Gate 0.5: /api/vault/*, /view and /dashboard now require an operator
+// session. Without SMOKE_ADMIN_PASSWORD this script only exercises the
+// OAuth/MCP flow (which was never gated) and skips the vault-HTTP checks.
+const adminPassword = process.env.SMOKE_ADMIN_PASSWORD;
+
 const verifier = crypto.randomBytes(48).toString("base64url");
 const challenge = crypto.createHash("sha256").update(verifier).digest("base64url");
 const redirectUri = "http://localhost:4567/callback";
@@ -11,7 +16,7 @@ const redirectUri = "http://localhost:4567/callback";
 const registration = await fetch(`${base}/oauth/register`, {
   method: "POST",
   headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ client_name: "DESK-OS open-access smoke test", redirect_uris: [redirectUri] }),
+  body: JSON.stringify({ client_name: "DESK-OS smoke test", redirect_uris: [redirectUri] }),
 }).then(async (response) => {
   if (!response.ok) throw new Error(`Registration failed: ${response.status} ${await response.text()}`);
   return response.json();
@@ -61,15 +66,45 @@ async function mcp(body) {
 const initialized = await mcp({ jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "smoke", version: "1.0.0" } } });
 if (initialized.result?.serverInfo?.name !== "desk-os-obsidian-cloud") throw new Error("Unexpected MCP server identity");
 const tools = await mcp({ jsonrpc: "2.0", id: 2, method: "tools/list", params: {} });
-if (!tools.result?.tools?.some((tool) => tool.name === "obsidian_vault_info")) throw new Error("Expected tool not found");
+const toolNames = tools.result?.tools?.map((tool) => tool.name) ?? [];
+if (!toolNames.includes("obsidian_vault_info")) throw new Error("Expected legacy tool not found");
+if (!toolNames.includes("desk_os_get_system_status")) throw new Error("Expected desk_os_* tool not found");
 
-const archive = zipSync({ "SmokeVault/": new Uint8Array(), "SmokeVault/Projects/Smoke.md": strToU8("# Smoke\n\nRemote vault works.") });
-const imported = await fetch(`${base}/api/vault/import`, { method: "POST", headers: { "Content-Type": "application/zip" }, body: archive });
-if (!imported.ok || (await imported.json()).imported !== 1) throw new Error("Vault import failed");
-const status = await fetch(`${base}/api/vault/status`);
-if (!status.ok) throw new Error("Vault status failed");
-const vaultStatus = await status.json();
-const exported = await fetch(`${base}/api/vault/export`);
-if (!exported.ok || !(exported.headers.get("content-type") ?? "").includes("application/zip")) throw new Error("Vault export failed");
+const status = await mcp({ jsonrpc: "2.0", id: 3, method: "tools/call", params: { name: "desk_os_get_system_status", arguments: {} } });
+if (status.result?.isError) throw new Error(`desk_os_get_system_status failed: ${JSON.stringify(status.result)}`);
 
-console.log(JSON.stringify({ oauth: "open", mcp: "ok", tools: tools.result.tools.length, dashboard: "open", importExport: "ok", vault: vaultStatus }, null, 2));
+let vaultChecks = "skipped (SMOKE_ADMIN_PASSWORD not set)";
+if (adminPassword) {
+  const login = await fetch(`${base}/api/admin/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password: adminPassword }),
+  });
+  if (!login.ok) throw new Error(`Admin login failed: ${login.status} ${await login.text()}`);
+  const setCookie = login.headers.get("set-cookie");
+  if (!setCookie) throw new Error("Admin login did not return a session cookie");
+  const cookie = setCookie.split(";")[0];
+
+  const archive = zipSync({ "SmokeVault/": new Uint8Array(), "SmokeVault/Projects/Smoke.md": strToU8("# Smoke\n\nRemote vault works.") });
+  const imported = await fetch(`${base}/api/vault/import`, {
+    method: "POST",
+    headers: { "Content-Type": "application/zip", Cookie: cookie },
+    body: archive,
+  });
+  if (!imported.ok || (await imported.json()).imported !== 1) throw new Error("Vault import failed");
+
+  const vaultStatusResponse = await fetch(`${base}/api/vault/status`, { headers: { Cookie: cookie } });
+  if (!vaultStatusResponse.ok) throw new Error("Vault status failed");
+  const vaultStatus = await vaultStatusResponse.json();
+
+  const exported = await fetch(`${base}/api/vault/export`, { headers: { Cookie: cookie } });
+  if (!exported.ok || !(exported.headers.get("content-type") ?? "").includes("application/zip")) throw new Error("Vault export failed");
+
+  const unauthenticated = await fetch(`${base}/api/vault/status`);
+  if (unauthenticated.status !== 401) throw new Error(`Expected 401 without a session, got ${unauthenticated.status}`);
+
+  await fetch(`${base}/api/admin/logout`, { method: "POST", headers: { Cookie: cookie } });
+  vaultChecks = { importExport: "ok", vault: vaultStatus };
+}
+
+console.log(JSON.stringify({ oauth: "ok", mcp: "ok", tools: toolNames.length, deskOsTools: toolNames.filter((name) => name.startsWith("desk_os_")).length, vaultChecks }, null, 2));
