@@ -1,0 +1,419 @@
+:root {
+  color-scheme: light;
+  --ink: #1a1a1a;
+  --muted: #55575c;
+  --surface: #ffffff;
+  --surface-alt: #f4f4f5;
+  --line: #d8d8db;
+  --accent: #14532d;
+  --accent-contrast: #ffffff;
+  --danger: #7a1f1f;
+  --focus: #1155cc;
+  font-size: 16px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: var(--ink);
+  background: var(--surface-alt);
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+
+/* No core flow ever scrolls horizontally; content reflows instead. */
+.shell {
+  min-height: 100%;
+  max-width: 100%;
+}
+
+a,
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+
+.brand {
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.nav {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+}
+
+.nav-link {
+  background: none;
+  border: 1px solid transparent;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--muted);
+}
+
+.nav-link[aria-current="page"] {
+  color: var(--ink);
+  background: var(--surface-alt);
+  border-color: var(--line);
+  font-weight: 600;
+}
+
+.content {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px 20px 64px;
+}
+
+.page-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.lead {
+  color: var(--muted);
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.dominant-panel {
+  border-left: 4px solid var(--accent);
+}
+
+.dominant-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.today-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.task-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.task-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.task-line:last-child {
+  border-bottom: none;
+}
+
+.task-title {
+  font-weight: 500;
+}
+
+.task-meta {
+  color: var(--muted);
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+/* Kanban columns reflow (grid auto-fit) instead of scrolling horizontally. */
+.board-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.board-column {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.board-column h2 {
+  font-size: 0.95rem;
+  margin: 0 0 12px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.column-count {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.task-card-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.task-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  background: var(--surface-alt);
+}
+
+.task-card-title {
+  margin: 0 0 4px;
+  font-weight: 600;
+}
+
+.task-card-meta {
+  margin: 0 0 8px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.task-card-blocked {
+  margin: 0 0 8px;
+  font-size: 0.8rem;
+  color: var(--danger);
+}
+
+.task-card-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.button {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 10px 16px;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.button.small {
+  min-height: 36px;
+  padding: 6px 10px;
+}
+
+.button.secondary {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.warning-banner {
+  background: #fff3cd;
+  border: 1px solid #e2c46b;
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: #4a3b00;
+}
+
+.form-error {
+  color: var(--danger);
+  min-height: 1.2em;
+  margin: 8px 0 0;
+}
+
+.stacked-form {
+  display: grid;
+  gap: 4px;
+}
+
+.stacked-form label {
+  margin-top: 10px;
+  font-weight: 600;
+}
+
+.stacked-form input {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px 12px;
+  min-height: 44px;
+}
+
+.stacked-form .button {
+  margin-top: 16px;
+  width: fit-content;
+}
+
+.login-screen {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.login-form {
+  width: 100%;
+  max-width: 340px;
+  display: grid;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 28px;
+}
+
+.login-form label {
+  margin-top: 8px;
+  font-weight: 600;
+}
+
+.login-form input {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px 12px;
+  min-height: 44px;
+}
+
+.login-form .button {
+  margin-top: 16px;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  z-index: 10;
+}
+
+.modal {
+  background: var(--surface);
+  border-radius: 10px;
+  padding: 24px;
+  width: 100%;
+  max-width: 420px;
+  max-height: 90vh;
+  overflow-y: auto;
+  display: grid;
+  gap: 6px;
+}
+
+.task-form label {
+  margin-top: 10px;
+  font-weight: 600;
+}
+
+.task-form input,
+.task-form select {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px 12px;
+  min-height: 44px;
+}
+
+.steps-fieldset {
+  border: none;
+  padding: 0;
+  margin: 10px 0 0;
+  display: grid;
+  gap: 6px;
+}
+
+.steps-fieldset legend {
+  font-weight: 600;
+  padding: 0;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media print {
+  .app-header,
+  .task-card-actions,
+  .modal-backdrop {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+  .panel,
+  .board-column {
+    border: 1px solid #999;
+    break-inside: avoid;
+  }
+}
