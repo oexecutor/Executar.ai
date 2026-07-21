@@ -48,7 +48,7 @@ function collectViewLinks(value: unknown, links = new Map<string, string>()): Ma
 }
 
 function markdownLabel(value: string): string {
-  return value.replace(/[\[\]\n\r]/g, " ").trim();
+  return value.replace(/[[\]\n\r]/g, " ").trim();
 }
 
 function ok(summary: string, result: unknown, publicBaseUrl?: string) {

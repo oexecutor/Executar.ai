@@ -11,7 +11,8 @@
     "dev": "npx netlify dev",
     "test": "vitest run",
     "test:smoke": "node scripts/smoke-oauth.mjs",
-    "check": "npm run build && npm test"
+    "lint": "eslint . --ext .ts,.mts --max-warnings 0",
+    "check": "npm run build && npm test && npm run lint"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.29.0",
@@ -24,8 +25,12 @@
   },
   "devDependencies": {
     "@types/node": "24.0.15",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^9.1.0",
     "typescript": "5.8.3",
-    "vitest": "3.2.4"
+    "vitest": "3.2.6"
   },
   "overrides": {
     "@opentelemetry/core": "2.9.0",

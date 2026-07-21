@@ -30,7 +30,6 @@ import {
   createProjectInput,
   createSprintInput,
   createTaskInput,
-  createTaskStepInput,
   prepareProposalInput,
 } from "../domain/schemas.mjs";
 import { makeEvidence, makeProject, makeProposal, makeSprint, makeStep, makeTask } from "../domain/factories.mjs";
