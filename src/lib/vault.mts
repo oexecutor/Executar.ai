@@ -116,8 +116,48 @@ export function normalizeVaultPath(input: string): string {
   return normalized;
 }
 
+/**
+ * Vault-relative prefix reserved for DESK-OS PM operational state
+ * (src/repository/vault-adapter.mts writes projects/sprints/tasks/evidence
+ * there). Mirrored in src/repository/paths.mts as DESK_OS_ROOT; a test in
+ * tests/reserved-path-guard.test.ts asserts the two never drift apart.
+ *
+ * Kept separate from ALWAYS_PROTECTED because that set also blocks READS
+ * (`.obsidian`, `.git`, `.mcp-trash` are private editor internals); reading
+ * `_desk-os/` stays allowed (it is admin/OAuth-gated structured PM data,
+ * not secret), only WRITES/MOVES/DELETES to it are blocked here unless the
+ * caller explicitly opts in.
+ */
+const DESK_OS_RESERVED_PREFIX = "_desk-os";
+
+function isReservedSystemPath(normalizedPath: string): boolean {
+  return normalizedPath === DESK_OS_RESERVED_PREFIX || normalizedPath.startsWith(`${DESK_OS_RESERVED_PREFIX}/`);
+}
+
 export class BlobVaultService {
-  constructor(private readonly store: Store) {}
+  constructor(
+    private readonly store: Store,
+    private readonly options: { allowReservedPaths?: boolean } = {},
+  ) {}
+
+  /**
+   * Every write/move/delete primitive funnels through here. Blocks mutation
+   * of the reserved DESK-OS prefix unless the caller was constructed with
+   * `allowReservedPaths: true` (only src/repository/vault-adapter.mts does
+   * this) — so the legacy obsidian_ and desk_ MCP tools, vault-import, and
+   * the generic vault-files HTTP API can never create, edit, move, or
+   * delete DESK-OS PM state and bypass its index/audit/idempotency
+   * guarantees.
+   */
+  private assertWritable(normalizedPath: string): void {
+    if (!this.options.allowReservedPaths && isReservedSystemPath(normalizedPath)) {
+      throw new VaultProblem(
+        "PROTECTED_PATH",
+        `"${DESK_OS_RESERVED_PREFIX}/" is reserved for DESK-OS PM operational state.`,
+        "Use the desk_os_* MCP tools or the /api/pm/* HTTP API instead of raw vault writes.",
+      );
+    }
+  }
 
   async putBytes(
     relativePath: string,
@@ -126,6 +166,7 @@ export class BlobVaultService {
     metadata: { mimeType?: string; originalName?: string } = {},
   ): Promise<FileRecord> {
     const normalized = normalizeVaultPath(relativePath);
+    this.assertWritable(normalized);
     const record: FileRecord = {
       path: normalized,
       data: Buffer.from(bytes).toString("base64"),
@@ -355,6 +396,8 @@ export class BlobVaultService {
     const source = normalizeVaultPath(input.source);
     const destination = normalizeVaultPath(input.destination);
     if (source === destination) throw new VaultProblem("INVALID_INPUT", "Source and destination are identical.", "Choose a different destination.");
+    // Deletes the source directly (not via putBytes/trash), so it needs its own guard.
+    this.assertWritable(source);
     const current = await this.getRecord(source);
     if (!(input.overwrite ?? false)) await this.assertMissing(destination);
     else await this.trashIfPresent(destination);
@@ -376,6 +419,7 @@ export class BlobVaultService {
 
   async trash(relativePath: string): Promise<Record<string, unknown>> {
     const current = await this.getRecord(relativePath);
+    this.assertWritable(current.path);
     const trashId = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
     const record: TrashRecord = { trashId, originalPath: current.path, trashedAt: new Date().toISOString(), file: current };
     await this.store.setJSON(trashKey(trashId), record);

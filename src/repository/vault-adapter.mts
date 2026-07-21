@@ -59,7 +59,9 @@ class VaultStateStore {
   readonly vault: BlobVaultService;
 
   constructor(private readonly store: Store) {
-    this.vault = new BlobVaultService(store);
+    // The only caller allowed to write inside _desk-os/ — see the guard
+    // comment on BlobVaultService.assertWritable in src/lib/vault.mts.
+    this.vault = new BlobVaultService(store, { allowReservedPaths: true });
   }
 
   async readJson<T>(path: string): Promise<T | null> {

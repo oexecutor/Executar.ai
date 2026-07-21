@@ -113,7 +113,8 @@ describe("desk-os vault repository (Gate 2)", () => {
     await repos.projects.create(project, writeOptions("k1"));
 
     // Simulate a lost/corrupt index and verify recovery from state files.
-    const vault = new BlobVaultService(store);
+    // (allowReservedPaths: true — only the repository layer itself gets this.)
+    const vault = new BlobVaultService(store, { allowReservedPaths: true });
     await vault.putText("_desk-os/index/projects.json", JSON.stringify({ schemaVersion: "0.0.0" }));
     const summaries = await repos.projects.summaries();
     expect(summaries).toHaveLength(1);

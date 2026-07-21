@@ -4,11 +4,19 @@ import { requireAdminJson } from "../../src/lib/admin-guard.mjs";
 import { json, methodNotAllowed, safeError } from "../../src/lib/http.mjs";
 import { vaultStore } from "../../src/lib/stores.mjs";
 import { BlobVaultService, normalizeVaultPath, VaultProblem } from "../../src/lib/vault.mjs";
+import { isDeskOsPath } from "../../src/repository/paths.mjs";
 
 const MAX_ARCHIVE_BYTES = 6_000_000;
 const MAX_FILES = 2_000;
 const MAX_UNCOMPRESSED_BYTES = 50_000_000;
 const MAX_SINGLE_FILE_BYTES = 5_000_000;
+
+let storeFactory = vaultStore;
+
+/** Tests inject an in-memory store; production uses Netlify Blobs. */
+export function setVaultStoreForTesting(factory: typeof vaultStore | null): void {
+  storeFactory = factory ?? vaultStore;
+}
 
 export default async (request: Request): Promise<Response> => {
   if (request.method !== "POST") return methodNotAllowed(["POST"]);
@@ -29,6 +37,7 @@ export default async (request: Request): Promise<Response> => {
       const withoutRoot = explicitRoot && rawPath.startsWith(`${explicitRoot}/`) ? rawPath.slice(explicitRoot.length + 1) : rawPath;
       try {
         const normalized = normalizeVaultPath(withoutRoot);
+        if (isDeskOsPath(normalized)) { skipped.push({ path: normalized, reason: "reserved_path" }); continue; }
         if (bytes.byteLength > MAX_SINGLE_FILE_BYTES) { skipped.push({ path: normalized, reason: "file_too_large" }); continue; }
         totalBytes += bytes.byteLength;
         if (totalBytes > MAX_UNCOMPRESSED_BYTES) return json({ error: "uncompressed_archive_too_large" }, { status: 413 });
@@ -38,7 +47,7 @@ export default async (request: Request): Promise<Response> => {
       }
     }
     if (candidates.length > MAX_FILES) return json({ error: "too_many_files", limit: MAX_FILES }, { status: 413 });
-    const vault = new BlobVaultService(vaultStore());
+    const vault = new BlobVaultService(storeFactory());
     let created = 0;
     let updated = 0;
     for (const candidate of candidates) {
