@@ -1,4 +1,13 @@
+import { existsSync } from "node:fs";
 import { defineConfig } from "@playwright/test";
+
+// Some sandboxed dev environments ship a pre-installed chromium at this
+// fixed path and block downloading a fresh one; CI (and most local setups)
+// don't have it and rely on `playwright install` populating the normal
+// ~/.cache/ms-playwright instead. Only override when that path is actually
+// present, so CI keeps using Playwright's own browser resolution.
+const SANDBOX_CHROMIUM = "/opt/pw-browsers/chromium";
+const executablePath = existsSync(SANDBOX_CHROMIUM) ? SANDBOX_CHROMIUM : undefined;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -9,9 +18,6 @@ export default defineConfig({
   use: {
     baseURL: "http://localhost:4173",
     trace: "retain-on-failure",
-    // Pre-installed browser in this environment; avoids downloading a
-    // fresh chromium_headless_shell revision that may not match the
-    // pinned @playwright/test version.
-    launchOptions: { executablePath: "/opt/pw-browsers/chromium", args: ["--no-sandbox"] },
+    launchOptions: { executablePath, args: ["--no-sandbox"] },
   },
 });
