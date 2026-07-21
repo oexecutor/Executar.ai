@@ -10,6 +10,42 @@ const ALWAYS_PROTECTED = new Set([".obsidian", ".git", ".mcp-trash"]);
 const MAX_READ_BYTES = 1_048_576;
 const MAX_SEARCH_FILES = 2_000;
 const MAX_SEARCH_RESULTS = 100;
+const MAX_REGEX_PATTERN_LENGTH = 200;
+const MAX_REGEX_LINE_CHARS = 2_000;
+const MAX_SEARCH_MILLIS = 4_000;
+
+/**
+ * Rejects the two textbook catastrophic-backtracking shapes:
+ *   1. a quantified group that itself contains a quantifier, e.g.
+ *      `(a+)+`, `(a*)+`, `([a-z]+)*`;
+ *   2. a quantified group containing alternation, e.g. `(a|a)+`, `(a|ab)*`
+ *      — ambiguous branches let the engine explore exponentially many
+ *      ways to split the same input across repetitions.
+ * This is a heuristic, not a full static analyzer — it blocks the exploit
+ * shapes behind most real ReDoS reports without needing a regex-parser
+ * dependency. Combined with the pattern-length cap, per-line input cap,
+ * and time budget below, it keeps `obsidian_search_notes`'s regex mode
+ * from hanging a function invocation (baseline §11.1).
+ */
+const NESTED_QUANTIFIER_PATTERN = /\([^()]*[+*][^()]*\)[+*{]/;
+const QUANTIFIED_ALTERNATION_PATTERN = /\([^()]*\|[^()]*\)[+*{]/;
+
+function assertSafeRegexPattern(pattern: string): void {
+  if (pattern.length > MAX_REGEX_PATTERN_LENGTH) {
+    throw new VaultProblem(
+      "INVALID_REGEX",
+      `Regular expressions are limited to ${MAX_REGEX_PATTERN_LENGTH} characters.`,
+      "Narrow the pattern or search with regex=false for literal text.",
+    );
+  }
+  if (NESTED_QUANTIFIER_PATTERN.test(pattern) || QUANTIFIED_ALTERNATION_PATTERN.test(pattern)) {
+    throw new VaultProblem(
+      "UNSAFE_REGEX",
+      "This pattern can cause catastrophic backtracking.",
+      "Avoid a quantified group that contains another quantifier or alternation, e.g. rewrite (a+)+ as a+ and (a|ab)+ as a+b?.",
+    );
+  }
+}
 export const MAX_BINARY_IMPORT_BYTES = 4_000_000;
 
 export class VaultProblem extends Error {
@@ -369,6 +405,7 @@ export class BlobVaultService {
 
   async search(input: { query: string; folder?: string; caseSensitive?: boolean; regex?: boolean; limit?: number }): Promise<Record<string, unknown>> {
     if (!input.query) throw new VaultProblem("INVALID_INPUT", "Search query cannot be empty.", "Provide literal text or a regular expression.");
+    if (input.regex) assertSafeRegexPattern(input.query);
     let matcher: RegExp;
     try {
       const source = input.regex ? input.query : input.query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -380,16 +417,27 @@ export class BlobVaultService {
     const notes = (await this.allRecords()).filter((file) => file.path.toLowerCase().endsWith(".md") && (!folder || file.path.startsWith(`${folder}/`))).slice(0, MAX_SEARCH_FILES);
     const matches: Array<{ path: string; line: number; snippet: string }> = [];
     const limit = Math.min(input.limit ?? 25, MAX_SEARCH_RESULTS);
+    // Regex mode only: bound the input fed to the engine per line and cap
+    // total wall-clock time across files, so a slow-but-not-rejected
+    // pattern can't hang the invocation on a large vault (baseline §11.1).
+    const deadline = input.regex ? Date.now() + MAX_SEARCH_MILLIS : Number.POSITIVE_INFINITY;
+    let timedOut = false;
     for (const note of notes) {
+      if (input.regex && Date.now() > deadline) {
+        timedOut = true;
+        break;
+      }
       const lines = textContent(note).split(/\r?\n/);
       for (let index = 0; index < lines.length; index += 1) {
+        const line = lines[index] ?? "";
+        const candidate = input.regex ? line.slice(0, MAX_REGEX_LINE_CHARS) : line;
         matcher.lastIndex = 0;
-        if (matcher.test(lines[index] ?? "")) matches.push({ path: note.path, line: index + 1, snippet: (lines[index] ?? "").slice(0, 500) });
+        if (matcher.test(candidate)) matches.push({ path: note.path, line: index + 1, snippet: line.slice(0, 500) });
         if (matches.length >= limit) break;
       }
       if (matches.length >= limit) break;
     }
-    return { matches, filesScanned: notes.length, truncated: matches.length >= limit };
+    return { matches, filesScanned: notes.length, truncated: matches.length >= limit || timedOut };
   }
 
   async move(input: { source: string; destination: string; overwrite?: boolean }): Promise<Record<string, unknown>> {
