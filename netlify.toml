@@ -1,5 +1,8 @@
 [build]
-  command = "npm run build"
+  # Installs and builds the web/ React app into public/app/ (a net-new
+  # addition — public/index.html stays the stable vault browser, DEC-002),
+  # then type-checks the backend as before.
+  command = "npm run install:web && npm run build:web && npm run build"
   publish = "public"
 
 [build.environment]

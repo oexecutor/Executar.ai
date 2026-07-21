@@ -4,3 +4,9 @@ node_modules/
 *.log
 coverage/
 .DS_Store
+
+# web/ (Vite React app): build output is generated into public/app/ at
+# build time (npm run build:web), not committed, same as any other dist/.
+public/app/
+web/test-results/
+web/playwright-report/

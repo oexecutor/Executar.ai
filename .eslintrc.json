@@ -26,6 +26,7 @@
     "plans/",
     "prompts/",
     "references/",
+    "web/",
     "*.js"
   ]
 }

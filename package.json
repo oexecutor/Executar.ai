@@ -12,7 +12,12 @@
     "test": "vitest run",
     "test:smoke": "node scripts/smoke-oauth.mjs",
     "lint": "eslint . --ext .ts,.mts --max-warnings 0",
-    "check": "npm run build && npm test && npm run lint"
+    "check": "npm run build && npm test && npm run lint",
+    "build:web": "npm --prefix web run build",
+    "install:web": "npm --prefix web install",
+    "test:web": "npm --prefix web test",
+    "test:web:e2e": "npm --prefix web run test:e2e",
+    "lint:web": "npm --prefix web run lint"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.29.0",
