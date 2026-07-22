@@ -1,4 +1,4 @@
-import type { Store } from "@netlify/blobs";
+import type { KvStore as Store } from "../lib/kv-store.mjs";
 import { BlobVaultService, VaultProblem } from "../lib/vault.mjs";
 import { DomainError } from "../domain/errors.mjs";
 import { newId } from "../domain/ids.mjs";

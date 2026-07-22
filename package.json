@@ -1,5 +1,5 @@
 {
-  "name": "@desk-os/obsidian-vault-mcp-netlify",
+  "name": "@desk-os/obsidian-vault-mcp",
   "version": "1.6.0",
   "private": true,
   "type": "module",
@@ -9,7 +9,7 @@
   "scripts": {
     "build": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
-    "dev": "npx netlify dev",
+    "dev": "npx vercel dev",
     "test": "vitest run",
     "test:smoke": "node scripts/smoke-oauth.mjs",
     "lint": "eslint . --ext .ts,.mts --max-warnings 0",
@@ -22,8 +22,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.29.0",
-    "@netlify/blobs": "10.7.9",
-    "@netlify/functions": "5.3.0",
+    "@neondatabase/serverless": "^1.1.0",
     "fflate": "0.8.3",
     "jose": "6.2.3",
     "yaml": "2.9.0",

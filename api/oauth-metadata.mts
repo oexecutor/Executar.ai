@@ -1,6 +1,5 @@
-import type { Config } from "@netlify/functions";
-import { baseUrl, resourceUrl } from "../../src/lib/env.mjs";
-import { corsPreflight, json, safeError, withCors } from "../../src/lib/http.mjs";
+import { baseUrl, resourceUrl } from "../src/lib/env.mjs";
+import { corsPreflight, json, safeError, withCors } from "../src/lib/http.mjs";
 
 export default async (request: Request): Promise<Response> => {
   if (request.method === "OPTIONS") return corsPreflight(["GET"]);
@@ -28,12 +27,4 @@ export default async (request: Request): Promise<Response> => {
   } catch (error) {
     return withCors(safeError(error));
   }
-};
-
-export const config: Config = {
-  path: [
-    "/.well-known/oauth-protected-resource",
-    "/.well-known/oauth-protected-resource/mcp",
-    "/.well-known/oauth-authorization-server",
-  ],
 };

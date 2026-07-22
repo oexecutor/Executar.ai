@@ -11,8 +11,8 @@ into `public/app/` and is served alongside it from the same Netlify site.
 
 ```bash
 npm install                 # from this directory
-npm run dev                 # vite dev server, proxies /api to localhost:8888
-                             # (run `netlify dev` at the repo root separately)
+npm run dev                 # vite dev server, proxies /api to localhost:3000
+                             # (run `vercel dev` at the repo root separately)
 ```
 
 ## Checks

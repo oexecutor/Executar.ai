@@ -1,9 +1,8 @@
-import type { Config } from "@netlify/functions";
-import { hashToken, randomToken, signAccessToken, verifyPkce } from "../../src/lib/auth.mjs";
-import { resourceUrl } from "../../src/lib/env.mjs";
-import { corsPreflight, json, methodNotAllowed, safeError, withCors } from "../../src/lib/http.mjs";
-import { oauthStore } from "../../src/lib/stores.mjs";
-import type { AuthorizationCode, RefreshGrant } from "../../src/lib/types.mjs";
+import { hashToken, randomToken, signAccessToken, verifyPkce } from "../src/lib/auth.mjs";
+import { resourceUrl } from "../src/lib/env.mjs";
+import { corsPreflight, json, methodNotAllowed, safeError, withCors } from "../src/lib/http.mjs";
+import { oauthStore } from "../src/lib/stores.mjs";
+import type { AuthorizationCode, RefreshGrant } from "../src/lib/types.mjs";
 
 async function issue(clientId: string, scope: string, resource: string): Promise<Response> {
   const access = await signAccessToken({ clientId, scope });
@@ -49,5 +48,3 @@ export default async (request: Request): Promise<Response> => {
   if (request.method !== "POST") return withCors(methodNotAllowed(["POST"]));
   return withCors(await handle(request));
 };
-
-export const config: Config = { path: "/oauth/token" };

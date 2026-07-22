@@ -1,8 +1,7 @@
 import crypto from "node:crypto";
-import type { Config } from "@netlify/functions";
-import { corsPreflight, json, methodNotAllowed, safeError, withCors } from "../../src/lib/http.mjs";
-import { oauthStore } from "../../src/lib/stores.mjs";
-import type { OAuthClient } from "../../src/lib/types.mjs";
+import { corsPreflight, json, methodNotAllowed, safeError, withCors } from "../src/lib/http.mjs";
+import { oauthStore } from "../src/lib/stores.mjs";
+import type { OAuthClient } from "../src/lib/types.mjs";
 
 function validRedirect(uri: string): boolean {
   try {
@@ -43,5 +42,3 @@ export default async (request: Request): Promise<Response> => {
     return withCors(safeError(error));
   }
 };
-
-export const config: Config = { path: "/oauth/register" };

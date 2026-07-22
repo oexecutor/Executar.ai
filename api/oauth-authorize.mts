@@ -1,9 +1,8 @@
-import type { Config } from "@netlify/functions";
-import { corsPreflight, html, methodNotAllowed, safeError, withCors } from "../../src/lib/http.mjs";
-import { hashToken, randomToken } from "../../src/lib/auth.mjs";
-import { oauthStore } from "../../src/lib/stores.mjs";
-import { resourceUrl } from "../../src/lib/env.mjs";
-import type { AuthorizationCode, OAuthClient } from "../../src/lib/types.mjs";
+import { corsPreflight, html, methodNotAllowed, safeError, withCors } from "../src/lib/http.mjs";
+import { hashToken, randomToken } from "../src/lib/auth.mjs";
+import { oauthStore } from "../src/lib/stores.mjs";
+import { resourceUrl } from "../src/lib/env.mjs";
+import type { AuthorizationCode, OAuthClient } from "../src/lib/types.mjs";
 
 type Params = Record<string, string>;
 
@@ -54,5 +53,3 @@ export default async (request: Request): Promise<Response> => {
     return withCors(safeError(error));
   }
 };
-
-export const config: Config = { path: "/oauth/authorize" };

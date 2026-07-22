@@ -1,15 +1,14 @@
-import { getDeployStore, getStore, type Store } from "@netlify/blobs";
+import { PostgresKvStore, type KvStore } from "./kv-store.mjs";
 import { isProduction } from "./env.mjs";
 
-function scopedStore(productionName: string, previewName: string): Store {
-  if (isProduction()) return getStore({ name: productionName, consistency: "strong" });
-  return getDeployStore({ name: previewName, consistency: "strong" });
+function scopedStore(productionNamespace: string, previewNamespace: string): KvStore {
+  return new PostgresKvStore(isProduction() ? productionNamespace : previewNamespace);
 }
 
-export function vaultStore(): Store {
+export function vaultStore(): KvStore {
   return scopedStore("obsidian-vault-production", "obsidian-vault-preview");
 }
 
-export function oauthStore(): Store {
+export function oauthStore(): KvStore {
   return scopedStore("obsidian-oauth-production", "obsidian-oauth-preview");
 }

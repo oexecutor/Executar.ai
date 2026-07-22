@@ -1,7 +1,6 @@
-import type { Config } from "@netlify/functions";
-import { adminAuthConfigured, adminCookie, signAdminSession, verifyAdminPassword } from "../../src/lib/auth.mjs";
-import { json, methodNotAllowed } from "../../src/lib/http.mjs";
-import { loginPage } from "../../src/lib/admin-guard.mjs";
+import { adminAuthConfigured, adminCookie, signAdminSession, verifyAdminPassword } from "../src/lib/auth.mjs";
+import { json, methodNotAllowed } from "../src/lib/http.mjs";
+import { loginPage } from "../src/lib/admin-guard.mjs";
 
 interface Credentials {
   password: string;
@@ -32,7 +31,7 @@ export default async (request: Request): Promise<Response> => {
         error: {
           code: "AUTH_NOT_CONFIGURED",
           message: "Autenticação do operador não está configurada.",
-          suggestion: "Defina a variável de ambiente ADMIN_PASSWORD no Netlify.",
+          suggestion: "Defina a variável de ambiente ADMIN_PASSWORD no Vercel.",
         },
       },
       { status: 503 },
@@ -53,5 +52,3 @@ export default async (request: Request): Promise<Response> => {
   }
   return json({ authenticated: true, accessMode: "admin-session" }, { headers: { "Set-Cookie": cookie } });
 };
-
-export const config: Config = { path: "/api/admin/login" };

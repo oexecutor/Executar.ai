@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   adminCookie,
   clearAdminCookie,
@@ -9,28 +9,23 @@ import {
   verifyAdminRequest,
   verifyPkce,
 } from "../src/lib/auth.mjs";
-import loginHandler from "../netlify/functions/admin-login.mjs";
-import logoutHandler from "../netlify/functions/admin-logout.mjs";
-import vaultFilesHandler from "../netlify/functions/vault-files.mjs";
-import vaultStatusHandler from "../netlify/functions/vault-status.mjs";
-import vaultImportHandler from "../netlify/functions/vault-import.mjs";
-import vaultExportHandler from "../netlify/functions/vault-export.mjs";
-import vaultViewHandler from "../netlify/functions/vault-view.mjs";
-import workflowDashboardHandler from "../netlify/functions/workflow-dashboard.mjs";
-
-const env: Record<string, string | undefined> = {};
-
-function stubNetlifyEnv(): void {
-  (globalThis as Record<string, unknown>).Netlify = {
-    env: { get: (name: string) => env[name] },
-  };
-}
+import loginHandler from "../api/admin-login.mjs";
+import logoutHandler from "../api/admin-logout.mjs";
+import vaultFilesHandler from "../api/vault-files.mjs";
+import vaultStatusHandler from "../api/vault-status.mjs";
+import vaultImportHandler from "../api/vault-import.mjs";
+import vaultExportHandler from "../api/vault-export.mjs";
+import vaultViewHandler from "../api/vault-view.mjs";
+import workflowDashboardHandler from "../api/workflow-dashboard.mjs";
 
 beforeEach(() => {
-  env.PUBLIC_BASE_URL = "https://example.test";
-  env.MCP_JWT_SECRET = "unit-test-secret-with-at-least-32-characters!!";
-  env.ADMIN_PASSWORD = "correct-horse-battery";
-  stubNetlifyEnv();
+  vi.stubEnv("PUBLIC_BASE_URL", "https://example.test");
+  vi.stubEnv("MCP_JWT_SECRET", "unit-test-secret-with-at-least-32-characters!!");
+  vi.stubEnv("ADMIN_PASSWORD", "correct-horse-battery");
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
 });
 
 describe("OAuth helpers", () => {
@@ -54,7 +49,7 @@ describe("admin password (Gate 0.5)", () => {
   });
 
   it("fails closed when ADMIN_PASSWORD is not configured", () => {
-    env.ADMIN_PASSWORD = undefined;
+    vi.stubEnv("ADMIN_PASSWORD", undefined);
     expect(verifyAdminPassword("anything")).toBe(false);
   });
 });
@@ -101,7 +96,7 @@ describe("admin session", () => {
     );
     expect(wrong.status).toBe(401);
 
-    env.ADMIN_PASSWORD = undefined;
+    vi.stubEnv("ADMIN_PASSWORD", undefined);
     const unconfigured = await loginHandler(
       new Request("https://example.test/api/admin/login", {
         method: "POST",

@@ -1,9 +1,9 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { BlobVaultService } from "../src/lib/vault.mjs";
 import { createMcpServer } from "../src/mcp-server.mjs";
-import vaultImportHandler, { setVaultStoreForTesting } from "../netlify/functions/vault-import.mjs";
+import vaultImportHandler, { setVaultStoreForTesting } from "../api/vault-import.mjs";
 import { adminCookie, signAdminSession } from "../src/lib/auth.mjs";
 import { memoryStore } from "./helpers/memory-store.js";
 
@@ -161,16 +161,16 @@ describe("legacy obsidian_* MCP tools cannot reach _desk-os/ (end-to-end over MC
 });
 
 describe("/api/vault/import cannot plant files inside _desk-os/", () => {
-  afterEach(() => setVaultStoreForTesting(null));
+  afterEach(() => {
+    setVaultStoreForTesting(null);
+    vi.unstubAllEnvs();
+  });
 
   it("skips a zip entry targeting _desk-os/ instead of importing it", async () => {
     const { zipSync, strToU8 } = await import("fflate");
-    const env: Record<string, string | undefined> = {
-      PUBLIC_BASE_URL: "https://example.test",
-      MCP_JWT_SECRET: "unit-test-secret-with-at-least-32-characters!!",
-      ADMIN_PASSWORD: "correct-horse-battery",
-    };
-    (globalThis as Record<string, unknown>).Netlify = { env: { get: (name: string) => env[name] } };
+    vi.stubEnv("PUBLIC_BASE_URL", "https://example.test");
+    vi.stubEnv("MCP_JWT_SECRET", "unit-test-secret-with-at-least-32-characters!!");
+    vi.stubEnv("ADMIN_PASSWORD", "correct-horse-battery");
     const cookie = adminCookie(await signAdminSession()).split(";")[0] ?? "";
     setVaultStoreForTesting(() => memoryStore());
 

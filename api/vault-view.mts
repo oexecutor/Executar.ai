@@ -1,9 +1,8 @@
-import type { Config } from "@netlify/functions";
-import { requireAdminHtml } from "../../src/lib/admin-guard.mjs";
-import { baseUrl } from "../../src/lib/env.mjs";
-import { vaultStore } from "../../src/lib/stores.mjs";
-import { BlobVaultService, VaultProblem } from "../../src/lib/vault.mjs";
-import { buildVaultBrowserUrl, buildVaultViewUrl, contentTypeFor, isTextFile, renderViewerError } from "../../src/lib/viewer.mjs";
+import { requireAdminHtml } from "../src/lib/admin-guard.mjs";
+import { baseUrl } from "../src/lib/env.mjs";
+import { vaultStore } from "../src/lib/stores.mjs";
+import { BlobVaultService, VaultProblem } from "../src/lib/vault.mjs";
+import { buildVaultBrowserUrl, buildVaultViewUrl, contentTypeFor, isTextFile, renderViewerError } from "../src/lib/viewer.mjs";
 
 function html(body: string, status = 200): Response {
   return new Response(body, {
@@ -66,5 +65,3 @@ export default async (request: Request): Promise<Response> => {
     return html(renderViewerError(500, "O visualizador encontrou um erro inesperado."), 500);
   }
 };
-
-export const config: Config = { path: "/view" };

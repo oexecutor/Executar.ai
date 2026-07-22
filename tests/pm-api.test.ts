@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import pmHandler, { setPmServiceForTesting } from "../netlify/functions/pm.mjs";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import pmHandler, { setPmServiceForTesting } from "../api/pm.mjs";
 import { adminCookie, signAdminSession } from "../src/lib/auth.mjs";
 import { DeskOsService } from "../src/application/desk-os-service.mjs";
 import { createDeskOsRepositories } from "../src/repository/vault-adapter.mjs";
@@ -7,11 +7,6 @@ import { BlobVaultService } from "../src/lib/vault.mjs";
 import { memoryStore } from "./helpers/memory-store.js";
 
 const BASE = "https://example.test/api/pm";
-const env: Record<string, string | undefined> = {
-  PUBLIC_BASE_URL: "https://example.test",
-  MCP_JWT_SECRET: "unit-test-secret-with-at-least-32-characters!!",
-  ADMIN_PASSWORD: "correct-horse-battery",
-};
 
 let cookie = "";
 
@@ -32,7 +27,9 @@ async function data<T>(response: Response): Promise<T> {
 }
 
 beforeEach(async () => {
-  (globalThis as Record<string, unknown>).Netlify = { env: { get: (name: string) => env[name] } };
+  vi.stubEnv("PUBLIC_BASE_URL", "https://example.test");
+  vi.stubEnv("MCP_JWT_SECRET", "unit-test-secret-with-at-least-32-characters!!");
+  vi.stubEnv("ADMIN_PASSWORD", "correct-horse-battery");
   const store = memoryStore();
   setPmServiceForTesting(() => new DeskOsService(createDeskOsRepositories(store), new BlobVaultService(store)));
   cookie = adminCookie(await signAdminSession()).split(";")[0] ?? "";
@@ -40,6 +37,7 @@ beforeEach(async () => {
 
 afterEach(() => {
   setPmServiceForTesting(null);
+  vi.unstubAllEnvs();
 });
 
 describe("/api/pm HTTP adapter (Gate 5, API half)", () => {

@@ -11,5 +11,5 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["netlify/functions/**/*.mts", "src/**/*.mts", "tests/**/*.ts"]
+  "include": ["api/**/*.mts", "src/**/*.mts", "tests/**/*.ts"]
 }
