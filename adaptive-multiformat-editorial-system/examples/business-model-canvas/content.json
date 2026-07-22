@@ -1,0 +1,8 @@
+{
+  "document": { "id": "DOC-bmc-acme", "title": "Business Model Canvas — ACME", "style_profile": "classic-swiss-editorial" },
+  "blocks": [
+    { "id": "CB-value", "type": "canvas-block", "priority": "P0", "content": { "block_name": "Proposta de valor", "items": ["Reduz tempo de fechamento em 40%"] }, "representations": { "full": {}, "text_fallback": "Proposta de valor: reduz tempo de fechamento em 40%" }, "status": "APPROVED" },
+    { "id": "CB-segments", "type": "canvas-block", "priority": "P0", "content": { "block_name": "Segmentos", "items": ["PMEs de serviços"] }, "representations": { "full": {}, "text_fallback": "Segmentos: PMEs de serviços" }, "status": "APPROVED" },
+    { "id": "CB-revenue", "type": "canvas-block", "priority": "P1", "content": { "block_name": "Receita", "items": ["Assinatura mensal"] }, "representations": { "full": {}, "text_fallback": "Receita: assinatura mensal" }, "status": "APPROVED" }
+  ]
+}

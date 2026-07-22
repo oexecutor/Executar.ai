@@ -1,0 +1,36 @@
+meta:
+  contract_id: CT-BUDGET
+  title: Orçamento de Conteúdo — AMES
+  version: "1.0"
+  status: APPROVED_FOR_SKILL_DRAFT
+  canonical_source: SRC-01
+  decision_refs: [EDR-002]
+  note: >
+    RISK-001 — estes números são DEFAULTS CONFIGURÁVEIS, não constantes universais.
+    Sobrescrevíveis por input.constraints. Excedê-los aciona FM-002 e a ordem de
+    resolução de overflow (transformation-rules.yaml), nunca redução de fonte.
+
+densities:
+  spacious:    { min_whitespace_ratio: 0.35, use: "superfícies de execução/panfleto/widget" }
+  comfortable: { min_whitespace_ratio: 0.25, use: "análise de negócio/relatório/A4/livro" }
+  compact:     { min_whitespace_ratio: 0.15, use: "apêndices técnicos/cartão" }
+  data-dense:  { min_whitespace_ratio: 0.10, use: "dashboards com tabelas densas" }
+
+budgets:
+  a4:                     { density: comfortable, max_words: 1200, max_metrics: 12, max_charts: 4, max_hierarchy_levels: 4 }
+  book-150x230:           { density: comfortable, max_words: 550,  max_metrics: 6,  max_charts: 2, max_hierarchy_levels: 4 }
+  pamphlet-99x210:        { density: spacious,    max_words: 280,  max_metrics: 3,  max_charts: 1, max_primary_messages: 1, max_benefits: 3 }
+  widget:                 { density: spacious,    max_words: 35,   max_metrics: 1,  max_charts: 1, max_hierarchy_levels: 2 }
+  business-model-canvas:  { density: comfortable, max_words: 900,  max_metrics: 9,  max_charts: 0, max_hierarchy_levels: 3 }
+  card-85.60x53.98:       { density: compact,     max_words: 30,   max_metrics: 2,  max_charts: 0, max_hierarchy_levels: 2 }
+  mobile:                 { density: comfortable, max_words: 400,  max_metrics: 4,  max_charts: 2, max_hierarchy_levels: 3 }
+  desktop:                { density: comfortable, max_words: 1600, max_metrics: 12, max_charts: 6, max_hierarchy_levels: 4 }
+  slide:                  { density: spacious,    max_words: 60,   max_metrics: 4,  max_charts: 1, max_hierarchy_levels: 3 }
+  image-1x1:              { density: spacious,    max_words: 40,   max_metrics: 1,  max_charts: 1, max_hierarchy_levels: 2 }
+  image-4x3:              { density: comfortable, max_words: 60,   max_metrics: 2,  max_charts: 1, max_hierarchy_levels: 2 }
+  image-16x9:             { density: comfortable, max_words: 70,   max_metrics: 3,  max_charts: 1, max_hierarchy_levels: 2 }
+
+on_exceed:
+  error: FM-002
+  action_order: [summarize_P2, hide_lower_priority(P3,P4), substitute_component, paginate, signal_overflow]
+  forbidden: [reduce_font, hide_P0, hide_P1, remove_source]

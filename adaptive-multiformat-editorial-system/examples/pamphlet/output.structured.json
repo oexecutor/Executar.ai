@@ -1,0 +1,5 @@
+{ "run_id": "ex-pamph-01", "format": "pamphlet-99x210", "print_class": "P-1",
+  "sequence": ["HED-hook","CAL-benefit","ACT-cta","QR-access"],
+  "primary_message": "Feche mais rápido. Com menos esforço.",
+  "cta": "Agende uma demonstração", "qr": "https://acme.example/demo",
+  "note": "Produção física exige pipeline P-2 (PDF/X, sangria, preflight)." }

@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ames.local/contracts/skill-input.schema.json",
+  "title": "AMES Skill Input",
+  "description": "CT-INPUT. Entrada de um ciclo single-gate.",
+  "type": "object",
+  "required": ["project_id", "current_gate", "mode", "objective"],
+  "additionalProperties": false,
+  "properties": {
+    "project_id": { "type": "string", "minLength": 1 },
+    "current_gate": { "type": "string", "enum": ["G0", "G1", "G2", "G3", "G4", "G5", "G6", "G7"] },
+    "mode": { "type": "string", "enum": ["SPECIFY", "AUDIT", "ADAPT", "GENERATE", "PACKAGE"] },
+    "objective": { "type": "string", "minLength": 1 },
+    "target_outputs": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["visual", "structured-data", "manifest", "audit-report", "package"] }
+    },
+    "target_formats": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/format" }
+    },
+    "source_format": { "$ref": "#/$defs/format" },
+    "target_format": { "$ref": "#/$defs/format" },
+    "style_profile": { "type": "string", "enum": ["neutral-editorial", "classic-swiss-editorial", "custom"] },
+    "content_sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["uri", "kind"],
+        "additionalProperties": false,
+        "properties": {
+          "uri": { "type": "string" },
+          "kind": { "type": "string", "enum": ["csv", "json", "yaml", "markdown", "image", "html"] },
+          "version": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "tokens_location": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Referência ao contrato de tokens canônico (SRC-04). A skill referencia por ID, não copia (ADR-002, TK-002).",
+      "properties": {
+        "contract_id": { "type": "string" },
+        "uri": { "type": "string" },
+        "version": { "type": "string" }
+      }
+    },
+    "constraints": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "print_class": { "type": "string", "enum": ["none", "P-1", "P-2"] },
+        "max_pages": { "type": ["integer", "null"], "minimum": 1 },
+        "language": { "type": "string" }
+      }
+    },
+    "approval_policy": {
+      "type": "string",
+      "enum": ["require-approval-each-gate", "auto-within-scope", "audit-only"],
+      "default": "require-approval-each-gate"
+    },
+    "known_gaps": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^LAC-[A-Za-z0-9]+$" }
+    }
+  },
+  "$defs": {
+    "format": {
+      "type": "string",
+      "enum": ["a4", "book-150x230", "pamphlet-99x210", "widget", "business-model-canvas", "card-85.60x53.98", "mobile", "desktop", "slide", "image-1x1", "image-4x3", "image-16x9"]
+    }
+  }
+}

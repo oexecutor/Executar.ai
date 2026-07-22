@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ames.local/contracts/audit-finding.schema.json",
+  "title": "AMES Audit Finding",
+  "description": "CT-FINDING. Achado de auditoria (modo AUDIT / gate G6).",
+  "type": "object",
+  "required": ["id", "title", "severity", "certainty", "status", "affected_objects", "principle_violated", "impact", "correction", "acceptance"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string", "pattern": "^FIND-[A-Z0-9-]+$", "description": "ID global estável (EDS-033)." },
+    "title": { "type": "string" },
+    "severity": { "type": "string", "enum": ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO", "NOT_VERIFIABLE"] },
+    "certainty": { "type": "string", "enum": ["CONFIRMED", "INFERRED", "NOT_VERIFIABLE"] },
+    "status": { "type": "string", "enum": ["OPEN", "IN_PROGRESS", "RESOLVED", "WONT_FIX", "DEFERRED"] },
+    "affected_objects": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+    "evidence": { "type": "string" },
+    "principle_violated": { "type": "string", "description": "Princípio/requisito infringido (ex.: EDR-006, SWISS-005)." },
+    "error_code": { "type": ["string", "null"], "description": "Código da taxonomia (ex.: TR-002). Ver error-taxonomy.yaml." },
+    "requirement_refs": { "type": "array", "items": { "type": "string" } },
+    "decision_refs": { "type": "array", "items": { "type": "string" } },
+    "impact": { "type": "string" },
+    "correction": { "type": "string" },
+    "acceptance": { "type": "string", "description": "Critério verificável (ACR-…) que fecha o achado." },
+    "owner": { "type": ["string", "null"] },
+    "due_date": { "type": ["string", "null"], "format": "date" }
+  }
+}

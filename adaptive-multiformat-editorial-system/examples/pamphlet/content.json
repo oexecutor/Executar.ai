@@ -1,0 +1,9 @@
+{
+  "document": { "id": "DOC-pamph-launch", "title": "Panfleto — Lançamento", "style_profile": "classic-swiss-editorial" },
+  "blocks": [
+    { "id": "HED-hook", "type": "heading", "priority": "P0", "content": "Feche mais rápido. Com menos esforço.", "representations": { "full": {}, "print": {}, "text_fallback": "Feche mais rápido. Com menos esforço." }, "status": "APPROVED" },
+    { "id": "CAL-benefit", "type": "callout", "priority": "P1", "content": { "text": "40% menos tempo de fechamento" }, "epistemic_class": "EVIDENCE", "representations": { "compact": {}, "print": {}, "text_fallback": "Benefício: 40% menos tempo de fechamento" }, "status": "APPROVED" },
+    { "id": "ACT-cta", "type": "action", "priority": "P0", "content": { "label": "Agende uma demonstração" }, "representations": { "print": {}, "text_fallback": "Chamada: agende uma demonstração" }, "status": "APPROVED" },
+    { "id": "QR-access", "type": "qr", "priority": "P4", "content": { "target_uri": "https://acme.example/demo", "label": "Acesse a demo" }, "representations": { "print": {}, "text_fallback": "Acesse: https://acme.example/demo" }, "status": "APPROVED" }
+  ]
+}

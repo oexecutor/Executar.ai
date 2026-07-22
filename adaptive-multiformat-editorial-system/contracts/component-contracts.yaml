@@ -1,0 +1,193 @@
+meta:
+  contract_id: CT-COMPONENTS
+  title: Contratos de Componentes — AMES
+  version: "1.0"
+  status: APPROVED_FOR_SKILL_DRAFT
+  canonical_source: SRC-01
+  decision_refs: [EDR-004, EDR-005]
+  rules:
+    - "Todo componente declara: id, semantic_role, required_fields, optional_fields, variants, supported_formats, content_limits, accessibility, print_behavior, fallback, substitutions."
+    - "Variantes mínimas: full, compact, minimal, print, interactive."
+    - Tabela larga MUST possuir substituição para formato estreito (CP-002).
+    - Gauge apenas para meta, capacidade ou valor limitado (EDR-005).
+    - Comparação de categorias MUST NOT usar gauge.
+    - Todo gráfico MUST possuir fallback textual (text_fallback).
+    - Toda métrica MUST informar período quando relevante.
+    - Recomendação MUST possuir ação clara.
+    - Fonte (source) MUST NOT ser removida em adaptação.
+
+components:
+  - id: metric
+    semantic_role: indicador quantitativo único
+    required_fields: [value, label]
+    optional_fields: [unit, period, trend, benchmark, source]
+    variants:
+      full: [value, label, unit, period, trend, benchmark, explanation]
+      compact: [value, label, trend]
+      minimal: [value, label]
+      print: [value, label, unit, period]
+      interactive: [value, label, trend, tooltip, drilldown]
+    supported_formats: [a4, book-150x230, pamphlet-99x210, widget, mobile, desktop, slide, business-model-canvas, card-85.60x53.98, image-1x1, image-4x3, image-16x9]
+    content_limits: { value_max_chars: 12, label_max_chars: 40 }
+    accessibility: { text_fallback: required, not_color_only: true }
+    print_behavior: break-inside-avoid
+    fallback: "{{label}}: {{value}}{{unit}} ({{period}})"
+    substitutions: []
+
+  - id: chart
+    semantic_role: relação/tendência entre dados
+    required_fields: [title, series, source, period]
+    optional_fields: [axes, legend, annotations]
+    grammar:
+      - title declara a conclusão (EDR-004)
+      - source e period obrigatórios
+      - rótulos diretos preferidos a legenda
+      - "max_series: 5, max_decimals: 2, max_highlight_colors: 1"
+    variants:
+      full: [axes, legend, series, annotations, source]
+      compact: [main_series, direct_labels, source]
+      minimal: [sparkline]
+      print: [axes, series, source, grayscale_safe]
+      interactive: [series, tooltip, drilldown]
+    supported_formats: [a4, book-150x230, widget, mobile, desktop, slide, image-4x3, image-16x9]
+    content_limits: { max_series: 5 }
+    accessibility: { text_fallback: required, data_table_alternative: required }
+    print_behavior: break-inside-avoid
+    fallback: "Tabela textual de {{series}} — fonte {{source}}, período {{period}}."
+    substitutions: [{ to: metric, when: "space < compact || format in [widget, card]" }]
+
+  - id: table
+    semantic_role: dados tabulares comparáveis
+    required_fields: [columns, rows]
+    optional_fields: [caption, source]
+    variants:
+      full: [all_columns, header, caption, source]
+      compact: [key_columns]
+      minimal: [two_columns]
+      print: [repeat_header_per_page, break-inside-avoid-row]
+      interactive: [sortable, sticky_header]
+    supported_formats: [a4, book-150x230, desktop, mobile]
+    accessibility: { semantic_table: true, th_scope: required, text_fallback: required }
+    print_behavior: repeat-header
+    fallback: lista rótulo-valor por linha
+    substitutions: [{ to: stacked-cards, when: "format in [mobile, pamphlet-99x210, widget]" }]   # CP-002 obrigatório
+
+  - id: gauge
+    semantic_role: valor limitado vs meta/capacidade
+    required_fields: [value, max, label]
+    optional_fields: [target, source]
+    allowed_when: [meta, capacidade, valor com limite conhecido]   # EDR-005
+    forbidden_when: [comparação de categorias, KPI decorativo]
+    variants:
+      full: [arc, value, target, label]
+      compact: [percent, linear-bar, label]
+      minimal: [percent]
+      print: [linear-bar, percent, label]
+      interactive: [arc, tooltip]
+    supported_formats: [a4, widget, desktop, slide]
+    accessibility: { text_fallback: required, not_color_only: true }
+    print_behavior: break-inside-avoid
+    fallback: "{{label}}: {{value}} de {{max}} ({{percent}}%)"
+    substitutions: [{ to: metric, when: "format in [card-85.60x53.98, pamphlet-99x210]" }]
+
+  - id: executive-card
+    semantic_role: bloco de conclusão executiva
+    required_fields: [headline, body]
+    optional_fields: [metric, source, action]
+    variants: { full: [headline, body, metric, source, action], compact: [headline, metric], minimal: [headline], print: [headline, body, source], interactive: [headline, body, expand] }
+    supported_formats: [a4, book-150x230, desktop, slide, image-16x9]
+    accessibility: { heading_semantics: true }
+    print_behavior: break-inside-avoid
+    fallback: "{{headline}} — {{body}}"
+    substitutions: []
+
+  - id: callout
+    semantic_role: destaque contextual
+    required_fields: [text]
+    optional_fields: [title, source, action]
+    variants: { full: [title, text, source, action], compact: [title, text], minimal: [icon, phrase], print: [title, text], interactive: [title, text, dismiss] }
+    supported_formats: [a4, book-150x230, mobile, desktop, widget, slide]
+    accessibility: { not_color_only: true, label_required: true }
+    print_behavior: break-inside-avoid
+    fallback: "Nota: {{text}}"
+    substitutions: [{ to: inline-note, when: "format in [pamphlet-99x210, card-85.60x53.98]" }]
+
+  - id: recommendation
+    semantic_role: ação recomendada
+    required_fields: [statement, action]     # ação clara obrigatória
+    optional_fields: [context, justification, owner, due_date, priority]
+    variants: { full: [context, decision, justification, action], compact: [decision, reason], minimal: [next_action], print: [context, decision, action], interactive: [decision, action, assign] }
+    supported_formats: [a4, book-150x230, mobile, desktop, widget, slide, pamphlet-99x210]
+    accessibility: { label_prox_acao: "Próxima ação", no_low_contrast_italic: true }   # EDS-039
+    print_behavior: break-inside-avoid
+    fallback: "Próxima ação: {{action}}"
+    substitutions: []
+
+  - id: canvas-block
+    semantic_role: bloco do Business Model Canvas
+    required_fields: [block_name, items]
+    optional_fields: [related_metric, source]
+    variants: { full: [block_name, items, related_metric], compact: [block_name, top_items], minimal: [block_name, count], print: [block_name, items], interactive: [block_name, items, expand] }
+    supported_formats: [business-model-canvas, a4, mobile, desktop, slide]
+    accessibility: { linear_alternative: required }    # ACC-005
+    print_behavior: break-inside-avoid
+    fallback: "{{block_name}}: {{items}}"
+    substitutions: [{ to: navigable-block-list, when: "format in [mobile, widget]" }]
+
+  - id: widget
+    semantic_role: componente inserido em container variável
+    required_fields: [primary_value, label]
+    optional_fields: [chart, comparison, comment]
+    responsive_strategy: container-queries
+    variants: { full: [metric, chart, comparison, comment], compact: [metric, mini-chart], minimal: [metric, trend], print: [metric, label], interactive: [metric, chart, tooltip] }
+    supported_formats: [widget, mobile, desktop, a4]
+    accessibility: { text_fallback: required }
+    print_behavior: break-inside-avoid
+    fallback: "{{label}}: {{primary_value}}"
+    substitutions: []
+
+  - id: qr-block
+    semantic_role: acesso a conteúdo P4/expansão
+    required_fields: [target_uri, label]
+    optional_fields: [caption]
+    variants: { full: [qr, label, caption], compact: [qr, label], minimal: [qr], print: [qr, label], interactive: [link] }
+    supported_formats: [a4, book-150x230, pamphlet-99x210, card-85.60x53.98, image-1x1, image-4x3, image-16x9]
+    accessibility: { safe_area_required: true, text_url_adjacent: true }
+    print_behavior: quiet-zone-preserved
+    fallback: "Acesse: {{target_uri}}"
+    substitutions: []
+
+  - id: source-note
+    semantic_role: proveniência de conteúdo
+    required_fields: [source, date]
+    optional_fields: [version, checksum, uri]
+    rules: [NUNCA removida em adaptação]
+    variants: { full: [source, date, version, uri], compact: [source, date], minimal: [source], print: [source, date, version], interactive: [source, link] }
+    supported_formats: [a4, book-150x230, pamphlet-99x210, widget, mobile, desktop, slide, business-model-canvas, card-85.60x53.98, image-1x1, image-4x3, image-16x9]
+    accessibility: { adequate_contrast: true }
+    print_behavior: keep-with-parent
+    fallback: "Fonte: {{source}} ({{date}})"
+    substitutions: []
+
+  - id: navigation
+    semantic_role: sumário/índice/navegação
+    required_fields: [items]
+    optional_fields: [current, progress]
+    variants: { full: [toc, page_numbers], compact: [section_list], minimal: [prev_next], print: [toc, page_numbers], interactive: [tabs, accordion, carousel] }
+    supported_formats: [a4, book-150x230, desktop, mobile, slide, widget]
+    accessibility: { landmarks: true, keyboard: true }
+    print_behavior: repeat-per-section
+    fallback: lista de seções
+    substitutions: [{ to: tabs, when: "format in [mobile, widget]" }]
+
+  - id: code-block
+    semantic_role: identificador técnico / trecho de código
+    required_fields: [content]
+    optional_fields: [language, caption]
+    rules: [monospace limitado a IDs, caminhos, tokens; não dominar leitura editorial (EDS-010)]
+    variants: { full: [content, caption], compact: [content], minimal: [inline], print: [content], interactive: [content, copy] }
+    supported_formats: [a4, book-150x230, desktop, mobile]
+    accessibility: { line_wrap_controlled: true }
+    print_behavior: break-inside-avoid
+    fallback: "{{content}}"
+    substitutions: []

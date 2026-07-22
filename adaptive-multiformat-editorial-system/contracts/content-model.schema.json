@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ames.local/contracts/content-model.schema.json",
+  "title": "AMES Content Model — bloco editorial semântico",
+  "description": "CT-CONTENT. Fonte única de conteúdo. Toda saída visual deriva deste modelo (ADR-001).",
+  "type": "object",
+  "required": ["id", "type", "priority", "content", "representations", "status"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Z]{2,5}-[A-Za-z0-9-]+$",
+      "description": "ID estável e único (DR-003)."
+    },
+    "type": {
+      "type": "string",
+      "enum": ["heading", "paragraph", "metric", "chart", "table", "callout", "recommendation", "evidence", "source", "action", "canvas-block", "code", "image", "qr"]
+    },
+    "title": { "type": "string" },
+    "content": {
+      "description": "Carga do bloco. Estrutura varia por type; nunca vazia para P0/P1.",
+      "type": ["string", "object", "array", "number", "boolean", "null"]
+    },
+    "priority": {
+      "type": "string",
+      "enum": ["P0", "P1", "P2", "P3", "P4"],
+      "description": "Obrigatório (DR-001, CT-001)."
+    },
+    "source": {
+      "type": "object",
+      "description": "Proveniência. Obrigatória para type=metric|chart|table|evidence (EV-002).",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "source_uri": { "type": "string" },
+        "version": { "type": ["string", "null"] },
+        "modified_at": { "type": ["string", "null"], "format": "date-time" },
+        "checksum": { "type": ["string", "null"] }
+      }
+    },
+    "evidence_refs": { "type": "array", "items": { "type": "string" } },
+    "epistemic_class": {
+      "type": "string",
+      "enum": ["FACT", "EVIDENCE", "INFERENCE", "HYPOTHESIS", "COUNTEREVIDENCE", "GAP", "RECOMMENDATION"]
+    },
+    "period": { "type": ["string", "null"] },
+    "unit": { "type": ["string", "null"] },
+    "relationships": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "target"],
+        "additionalProperties": false,
+        "properties": {
+          "type": { "type": "string", "enum": ["DUPLICATES", "EXTENDS", "SUPERSEDES", "INSTANCE_OF", "SHARES_ENGINE_WITH", "CONFLICTS_WITH", "DERIVED_FROM", "EVIDENCED_BY"] },
+          "target": { "type": "string" },
+          "justification": { "type": "string" },
+          "confidence": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH"] }
+        }
+      },
+      "description": "Relações explícitas, nunca implícitas em prosa (AI-002)."
+    },
+    "representations": {
+      "type": "object",
+      "description": "≥1 representação + text_fallback obrigatório (DR-002, CT-002).",
+      "required": ["text_fallback"],
+      "additionalProperties": false,
+      "properties": {
+        "full": { "$ref": "#/$defs/representation" },
+        "compact": { "$ref": "#/$defs/representation" },
+        "minimal": { "$ref": "#/$defs/representation" },
+        "print": { "$ref": "#/$defs/representation" },
+        "interactive": { "$ref": "#/$defs/representation" },
+        "text_fallback": { "type": "string", "minLength": 1 }
+      }
+    },
+    "constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_lines": { "type": "integer", "minimum": 1 },
+        "max_chars": { "type": "integer", "minimum": 1 },
+        "emphasis": { "type": "string", "enum": ["none", "low", "medium", "high"] }
+      }
+    },
+    "format_behaviors": {
+      "type": "object",
+      "description": "Comportamento por formato. Chave = id do perfil; valor = lista de comportamentos declarados (TR-001).",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "representation": { "type": "string", "enum": ["full", "compact", "minimal", "print", "interactive", "text_fallback"] },
+          "behaviors": {
+            "type": "array",
+            "items": { "type": "string", "enum": ["SCALE", "REFLOW", "REPRIORITIZE", "SUBSTITUTE", "PAGINATE"] }
+          },
+          "visible": { "type": "boolean" }
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": ["PROPOSED", "PROVISIONAL", "APPROVED", "SUPERSEDED", "REJECTED"]
+    }
+  },
+  "$defs": {
+    "representation": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "component": { "type": "string" },
+        "variant": { "type": "string", "enum": ["full", "compact", "minimal", "print", "interactive"] }
+      }
+    }
+  }
+}
