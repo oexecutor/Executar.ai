@@ -2,8 +2,10 @@ manifest_version: "1.0"
 package: adaptive-multiformat-editorial-system
 skill_version: "1.0.0"
 contract_version: "1.0"
-generated_at: "2026-07-22T22:05:40+00:00"
-file_count: 86
+generated_at: "2026-07-22T22:29:50+00:00"
+file_count: 87
+entry_point: SKILL.md
+distribution: claude.ai Agent Skill (diretório .zip; SKILL.md na raiz)
 formats_covered: [a4, book-150x230, pamphlet-99x210, widget, business-model-canvas, card-85.60x53.98, mobile, desktop, slide, image-1x1, image-4x3, image-16x9]
 modes: [SPECIFY, AUDIT, ADAPT, GENERATE, PACKAGE]
 gates: [G0, G1, G2, G3, G4, G5, G6, G7]
@@ -15,13 +17,13 @@ limitations:
   - P-2 (PDF/X, CMYK, ICC, preflight) exige pipeline externo nao incluido (ADR-006).
   - Identificacao forense de fonte tipografica fora de escopo (LAC-FONT).
   - Schemas validados com jsonschema Draft 2020-12; fixtures e exemplos passam.
-run_instructions: "Ler SKILL.md; preencher templates/START_CYCLE_INPUT.yaml; validar contra contracts/skill-input.schema.json; executar um gate por ciclo (G0..G7); cada saída termina em uma decisão e uma próxima ação."
+run_instructions: "Upload do diretório (zip) como Skill no claude.ai; ou ler SKILL.md, preencher templates/START_CYCLE_INPUT.yaml, validar contra contracts/skill-input.schema.json, executar um gate por ciclo (G0..G7); cada saída termina em uma decisão e uma próxima ação."
 files:
   - { path: 00-HANDOFF-OVERVIEW.md, checksum_sha256: c8db9102c4873c372ce601bfef94cf830065978cbe64e755fae9fe43e576ed56, bytes: 1850 }
   - { path: 01-GOVERNANCE/GLOSSARY.md, checksum_sha256: ac9bdb57be1afd7382df9442ae6084538f5e25ae188309aa545d0a986e1c0993, bytes: 3178 }
   - { path: 01-GOVERNANCE/SOURCE-OF-TRUTH.md, checksum_sha256: d94b2243ae9f3e3e640d34397a28dc0837f33cad28f5efe5851d8c31faef83de, bytes: 4486 }
   - { path: README.md, checksum_sha256: 80ca17cf798b12401e4086d383ead35b832f78855e867139d7f238cc5c6f909e, bytes: 2797 }
-  - { path: SKILL.md, checksum_sha256: 9d6f76c5c1cd0befc7a32ada1bace8a2ac9f2bb1e87c493aa106f9b21a228452, bytes: 6683 }
+  - { path: SKILL.md, checksum_sha256: 89a61030dfd472016e38e52b009694ff6719a8336d997b9f26c41f52058f5a3f, bytes: 7534 }
   - { path: contracts/acceptance-criteria.yaml, checksum_sha256: e3595586143b2714771164d37fea483317fb86241d4dd20ef25f18ff08a3f6ca, bytes: 3234 }
   - { path: contracts/audit-finding.schema.json, checksum_sha256: 121d6db246b7ed1960deeeaf67fc75745c01e63e8628e58d4d6de2a75e570e9b, bytes: 1746 }
   - { path: contracts/component-contracts.yaml, checksum_sha256: 5fc95045c1de07135043d3c99cd3560a6dbc16da4f074ae936958828d2a8a474, bytes: 9814 }
@@ -76,6 +78,7 @@ files:
   - { path: prompts/AUDIT_PROMPT.md, checksum_sha256: 5f0bb89ede717cb0800b9764568d26f328d5b3f4294901dd1959288967deb35e, bytes: 1088 }
   - { path: prompts/GENERATION_PROMPT.md, checksum_sha256: 4c9d0bcef0199d509338281a4a414d2066ab0363937d8c8f277441e6b4748262, bytes: 805 }
   - { path: prompts/MASTER_PROMPT.md, checksum_sha256: c01826143624adacb2105c7860f6e64d79f933592df4c421b380a1eaff76f24d, bytes: 1603 }
+  - { path: references/SKILL-STANDALONE.md, checksum_sha256: 785a150bc4b94117cc471020f259cb8917b9f583c9be80d70d3455daa842986e, bytes: 11213 }
   - { path: references/SOURCES.md, checksum_sha256: 797e743849cbf43350c1f13b7b7481c3edc05930a8fd73665e6241da0e3183bd, bytes: 2044 }
   - { path: specs/ACCESSIBILITY_SPEC.md, checksum_sha256: bdc05ace62fc07376f02c5c7b48785bbe819e5c1d54f7406522b925f0e259812, bytes: 949 }
   - { path: specs/AI_AGENT_SPEC.md, checksum_sha256: 500a6a7dbba3fad246ade0be2942b618d08553975231a5eac7158c186b7e1c76, bytes: 939 }

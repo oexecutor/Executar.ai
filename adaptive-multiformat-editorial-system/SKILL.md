@@ -1,18 +1,29 @@
 ---
 name: adaptive-multiformat-editorial-system
-display_name: Sistema Editorial Responsivo e Adaptativo Multiformato
-version: 1.0.0
-language: pt-BR
-type: contract-driven-editorial-skill
-execution_model: single-gate
-status: draft
-description: >
-  Especifica, gera, adapta, audita e empacota sistemas editoriais responsivos e
-  adaptativos multiformato a partir de UMA única fonte de conteúdo, UMA arquitetura
-  semântica, UM conjunto de tokens e componentes compartilhados. Não trata A4, livro,
-  panfleto, widget, dashboard, Business Model Canvas, mobile, desktop, slide ou cartão
-  como templates independentes: todos consomem o mesmo motor editorial.
+description: >-
+  Motor editorial contract-driven que especifica, gera, adapta, audita e empacota sistemas
+  editoriais para múltiplos formatos (A4, livro, panfleto, widget, dashboard, Business Model
+  Canvas, cartão, mobile, desktop, slide, imagens 1:1/4:3/16:9) a partir de UMA única fonte de
+  conteúdo, semântica, tokens e componentes. Use quando precisar publicar o mesmo conteúdo em
+  vários formatos sem recriá-lo, adaptar composição entre formatos, auditar um layout/artefato
+  editorial, ou preparar impressão — sem reduzir fonte para caber, sem ocultar conteúdo
+  prioritário, com saída visual sempre acompanhada de dados estruturados. pt-BR.
+license: proprietary
 ---
+
+# Sistema Editorial Responsivo e Adaptativo Multiformato (AMES)
+
+`display_name: Sistema Editorial Responsivo e Adaptativo Multiformato` ·
+`version: 1.0.0` · `language: pt-BR` · `type: contract-driven-editorial-skill` ·
+`execution_model: single-gate` · `status: draft`
+
+## Recursos empacotados (carregados sob demanda)
+Este `SKILL.md` é o ponto de entrada. Consulte os recursos do diretório conforme o gate:
+`contracts/` (schemas + YAMLs), `product/` (PRD/SRS/JTBD), `specs/` (8 specs),
+`decisions/` (ADR/EDR + ADER_INDEX), `templates/`, `tests/`, `examples/`,
+`traceability/`, `prompts/`, `references/`, `01-GOVERNANCE/`. Precedência canônica em
+`01-GOVERNANCE/SOURCE-OF-TRUTH.md`. Variante autossuficiente para colar em chat:
+`references/SKILL-STANDALONE.md`.
 
 # 1. Missão
 
