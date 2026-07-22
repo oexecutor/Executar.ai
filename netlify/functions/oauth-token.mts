@@ -1,7 +1,7 @@
 import type { Config } from "@netlify/functions";
 import { hashToken, randomToken, signAccessToken, verifyPkce } from "../../src/lib/auth.mjs";
 import { resourceUrl } from "../../src/lib/env.mjs";
-import { json, methodNotAllowed, safeError } from "../../src/lib/http.mjs";
+import { corsPreflight, json, methodNotAllowed, safeError, withCors } from "../../src/lib/http.mjs";
 import { oauthStore } from "../../src/lib/stores.mjs";
 import type { AuthorizationCode, RefreshGrant } from "../../src/lib/types.mjs";
 
@@ -13,8 +13,7 @@ async function issue(clientId: string, scope: string, resource: string): Promise
   return json({ access_token: access.token, token_type: "Bearer", expires_in: access.expiresIn, refresh_token: refreshToken, scope });
 }
 
-export default async (request: Request): Promise<Response> => {
-  if (request.method !== "POST") return methodNotAllowed(["POST"]);
+async function handle(request: Request): Promise<Response> {
   try {
     const form = new URLSearchParams(await request.text());
     const grantType = form.get("grant_type");
@@ -43,6 +42,12 @@ export default async (request: Request): Promise<Response> => {
   } catch (error) {
     return safeError(error);
   }
+}
+
+export default async (request: Request): Promise<Response> => {
+  if (request.method === "OPTIONS") return corsPreflight(["POST"]);
+  if (request.method !== "POST") return withCors(methodNotAllowed(["POST"]));
+  return withCors(await handle(request));
 };
 
 export const config: Config = { path: "/oauth/token" };

@@ -1,5 +1,5 @@
 import type { Config } from "@netlify/functions";
-import { html, methodNotAllowed, safeError } from "../../src/lib/http.mjs";
+import { corsPreflight, html, methodNotAllowed, safeError, withCors } from "../../src/lib/http.mjs";
 import { hashToken, randomToken } from "../../src/lib/auth.mjs";
 import { oauthStore } from "../../src/lib/stores.mjs";
 import { resourceUrl } from "../../src/lib/env.mjs";
@@ -27,13 +27,14 @@ function errorPage(message: string): string {
 }
 
 export default async (request: Request): Promise<Response> => {
-  if (!["GET", "POST"].includes(request.method)) return methodNotAllowed(["GET", "POST"]);
+  if (request.method === "OPTIONS") return corsPreflight(["GET", "POST"]);
+  if (!["GET", "POST"].includes(request.method)) return withCors(methodNotAllowed(["GET", "POST"]));
   try {
     const url = new URL(request.url);
     const form = request.method === "POST" ? new URLSearchParams(await request.text()) : undefined;
     const params = readParams(url, form);
     const validation = await validate(params);
-    if (validation.error) return html(errorPage(validation.error), { status: 400 });
+    if (validation.error) return withCors(html(errorPage(validation.error), { status: 400 }));
 
     const code = randomToken(32);
     const record: AuthorizationCode = {
@@ -50,7 +51,7 @@ export default async (request: Request): Promise<Response> => {
     if (params.state) redirect.searchParams.set("state", params.state);
     return Response.redirect(redirect.toString(), 302);
   } catch (error) {
-    return safeError(error);
+    return withCors(safeError(error));
   }
 };
 

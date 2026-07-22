@@ -2,6 +2,7 @@ import type { Config } from "@netlify/functions";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { verifyAccessToken } from "../../src/lib/auth.mjs";
 import { baseUrl, resourceUrl } from "../../src/lib/env.mjs";
+import { corsPreflight, withCors } from "../../src/lib/http.mjs";
 import { vaultStore } from "../../src/lib/stores.mjs";
 import { BlobVaultService } from "../../src/lib/vault.mjs";
 import { createMcpServer } from "../../src/mcp-server.mjs";
@@ -21,12 +22,13 @@ function unauthorized(): Response {
 }
 
 export default async (request: Request): Promise<Response> => {
+  if (request.method === "OPTIONS") return corsPreflight(["POST", "GET", "DELETE"]);
   const auth = request.headers.get("authorization");
-  if (!auth?.startsWith("Bearer ")) return unauthorized();
+  if (!auth?.startsWith("Bearer ")) return withCors(unauthorized());
   try {
     const token = auth.slice(7);
     const claims = await verifyAccessToken(token);
-    if (!claims.scopes.includes("mcp:tools")) return new Response(JSON.stringify({ error: "insufficient_scope" }), { status: 403 });
+    if (!claims.scopes.includes("mcp:tools")) return withCors(new Response(JSON.stringify({ error: "insufficient_scope" }), { status: 403 }));
 
     const store = vaultStore();
     const vault = new BlobVaultService(store);
@@ -44,13 +46,13 @@ export default async (request: Request): Promise<Response> => {
       const headers = new Headers(response.headers);
       headers.set("Cache-Control", "no-store");
       headers.set("X-Content-Type-Options", "nosniff");
-      return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+      return withCors(new Response(response.body, { status: response.status, statusText: response.statusText, headers }));
     } finally {
       await server.close();
     }
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));
-    return unauthorized();
+    return withCors(unauthorized());
   }
 };
 
