@@ -1,23 +1,14 @@
-import { verifyAdminRequest } from "./auth.js";
-import { absoluteUrl, escapeHtml, html, json } from "./http.js";
+import { escapeHtml, html } from "./http.js";
 
 /**
- * Gate 0.5 enforcement helpers. JSON routes answer 401; human HTML routes
- * (/view, /dashboard) answer with a no-JS login form that posts to
- * /api/admin/login and returns to the original page.
+ * Gate 0.5 was an operator-password gate on the JSON/HTML admin, vault, and
+ * pm routes. Disabled at the user's explicit, informed request (confirmed
+ * they understand this makes those routes publicly reachable with no
+ * login — the /mcp OAuth gate is separate and untouched). Both guards now
+ * unconditionally allow the request through.
  */
-export async function requireAdminJson(request: Request): Promise<Response | null> {
-  if (await verifyAdminRequest(request)) return null;
-  return json(
-    {
-      error: {
-        code: "UNAUTHORIZED",
-        message: "Autenticação necessária.",
-        suggestion: "Entre com a senha do operador em POST /api/admin/login.",
-      },
-    },
-    { status: 401 },
-  );
+export async function requireAdminJson(_request: Request): Promise<Response | null> {
+  return null;
 }
 
 export function loginPage(returnTo: string): Response {
@@ -50,8 +41,6 @@ export function loginPage(returnTo: string): Response {
   );
 }
 
-export async function requireAdminHtml(request: Request): Promise<Response | null> {
-  if (await verifyAdminRequest(request)) return null;
-  const url = absoluteUrl(request);
-  return loginPage(url.pathname + url.search);
+export async function requireAdminHtml(_request: Request): Promise<Response | null> {
+  return null;
 }
