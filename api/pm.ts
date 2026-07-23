@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import { requireAdminJson } from "../src/lib/admin-guard.js";
-import { json } from "../src/lib/http.js";
+import { absoluteUrl, json } from "../src/lib/http.js";
 import { vaultStore } from "../src/lib/stores.js";
 import { BlobVaultService, VaultProblem } from "../src/lib/vault.js";
 import { DeskOsService } from "../src/application/desk-os-service.js";
@@ -235,7 +235,7 @@ export default async (request: Request): Promise<Response> => {
   if (denied) return denied;
 
   const requestId = `req_${crypto.randomUUID()}`;
-  const url = new URL(request.url);
+  const url = absoluteUrl(request);
   const subPath = url.pathname.replace(/^\/api\/pm/, "") || "/";
 
   try {

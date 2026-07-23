@@ -1,7 +1,7 @@
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { verifyAccessToken } from "../src/lib/auth.js";
 import { baseUrl, resourceUrl } from "../src/lib/env.js";
-import { corsPreflight, withCors } from "../src/lib/http.js";
+import { corsPreflight, withAbsoluteRequestUrl, withCors } from "../src/lib/http.js";
 import { vaultStore } from "../src/lib/stores.js";
 import { BlobVaultService } from "../src/lib/vault.js";
 import { createMcpServer } from "../src/mcp-server.js";
@@ -39,7 +39,7 @@ export default async (request: Request): Promise<Response> => {
     const transport = new WebStandardStreamableHTTPServerTransport({ enableJsonResponse: true });
     await server.connect(transport);
     try {
-      const response = await transport.handleRequest(request, {
+      const response = await transport.handleRequest(withAbsoluteRequestUrl(request), {
         authInfo: { token, clientId: claims.clientId, scopes: claims.scopes, expiresAt: claims.expiresAt, resource: new URL(resourceUrl()) },
       });
       const headers = new Headers(response.headers);

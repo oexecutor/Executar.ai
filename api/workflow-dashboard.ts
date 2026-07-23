@@ -1,6 +1,7 @@
 import path from "node:path";
 import { requireAdminHtml } from "../src/lib/admin-guard.js";
 import { baseUrl } from "../src/lib/env.js";
+import { absoluteUrl } from "../src/lib/http.js";
 import { vaultStore } from "../src/lib/stores.js";
 import { BlobVaultService, VaultProblem } from "../src/lib/vault.js";
 import { buildWorkflowDashboardUrl, isGeneratedWorkflowDashboard } from "../src/lib/workflow-dashboard.js";
@@ -42,7 +43,7 @@ export default async (request: Request): Promise<Response> => {
   const denied = await requireAdminHtml(request);
   if (denied) return denied;
   const vault = new BlobVaultService(vaultStore());
-  const url = new URL(request.url);
+  const url = absoluteUrl(request);
   const requestedPath = url.searchParams.get("path")?.trim();
 
   try {

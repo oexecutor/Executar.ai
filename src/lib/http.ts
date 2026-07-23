@@ -32,6 +32,35 @@ export function methodNotAllowed(allowed: string[]): Response {
 }
 
 /**
+ * Netlify's Request.url was always an absolute URL; Vercel's Node.js
+ * function runtime hands handlers a Request whose .url is relative
+ * (e.g. "/api/vault/files"), which makes plain `new URL(request.url)`
+ * throw ERR_INVALID_URL. Every route handler that needs pathname/query
+ * should read it through this instead — the placeholder base is never
+ * exposed to a caller, only .pathname/.searchParams are ever read.
+ */
+export function absoluteUrl(request: Request): URL {
+  return new URL(request.url, "http://localhost");
+}
+
+/**
+ * Same problem, but for handing the Request itself to a third-party
+ * library (the MCP SDK's transport) that does its own unguarded
+ * `new URL(req.url)` internally — reconstructs a Request whose .url is
+ * guaranteed absolute, preserving method/headers/body.
+ */
+export function withAbsoluteRequestUrl(request: Request): Request {
+  if (/^https?:\/\//i.test(request.url)) return request;
+  const url = absoluteUrl(request).toString();
+  const init: RequestInit & { duplex?: "half" } = { method: request.method, headers: request.headers };
+  if (request.method !== "GET" && request.method !== "HEAD") {
+    init.body = request.body;
+    init.duplex = "half";
+  }
+  return new Request(url, init);
+}
+
+/**
  * OAuth (RFC 8414/7591) and MCP endpoints are reached cross-origin from the
  * MCP client (e.g. claude.ai), which the MCP authorization spec expects
  * servers to support via CORS. First-party endpoints (admin/vault/pm) stay

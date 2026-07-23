@@ -2,7 +2,7 @@ import path from "node:path";
 import { unzipSync, zipSync, type UnzipFileInfo } from "fflate";
 import { requireAdminHtml, requireAdminJson } from "../src/lib/admin-guard.js";
 import { baseUrl } from "../src/lib/env.js";
-import { json as httpJson, methodNotAllowed, safeError } from "../src/lib/http.js";
+import { absoluteUrl, json as httpJson, methodNotAllowed, safeError } from "../src/lib/http.js";
 import { vaultStore } from "../src/lib/stores.js";
 import { BlobVaultService, normalizeVaultPath, VaultProblem } from "../src/lib/vault.js";
 import { isDeskOsPath } from "../src/repository/paths.js";
@@ -145,7 +145,7 @@ async function files(request: Request): Promise<Response> {
   const denied = await requireAdminJson(request);
   if (denied) return denied;
   const vault = new BlobVaultService(vaultStore());
-  const url = new URL(request.url);
+  const url = absoluteUrl(request);
 
   try {
     if (request.method === "GET") {
@@ -330,7 +330,7 @@ function downloadName(filePath: string): string {
 async function view(request: Request): Promise<Response> {
   const denied = await requireAdminHtml(request);
   if (denied) return denied;
-  const url = new URL(request.url);
+  const url = absoluteUrl(request);
   const requestedPath = url.searchParams.get("path")?.trim();
   const vault = new BlobVaultService(vaultStore());
 
@@ -373,7 +373,7 @@ async function view(request: Request): Promise<Response> {
 }
 
 export default async (request: Request): Promise<Response> => {
-  const pathname = new URL(request.url).pathname;
+  const pathname = absoluteUrl(request).pathname;
   if (pathname === "/api/vault/status") return status(request);
   if (pathname === "/api/vault/export") return exportZip(request);
   if (pathname === "/api/vault/import") return importZip(request);
