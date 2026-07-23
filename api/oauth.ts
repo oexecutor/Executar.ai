@@ -3,6 +3,8 @@ import { hashToken, randomToken, signAccessToken, verifyPkce } from "../src/lib/
 import { baseUrl, resourceUrl } from "../src/lib/env.js";
 import { absoluteUrl, corsPreflight, html, json, methodNotAllowed, safeError, withCors } from "../src/lib/http.js";
 import { oauthStore } from "../src/lib/stores.js";
+import { getWorkspaceMembershipAsService } from "../src/lib/supabase.js";
+import { getAuthenticatedRequest } from "../src/lib/request-auth.js";
 import type { AuthorizationCode, OAuthClient, RefreshGrant } from "../src/lib/types.js";
 
 /**
@@ -78,6 +80,11 @@ async function authorize(request: Request): Promise<Response> {
   if (!["GET", "POST"].includes(request.method)) return withCors(methodNotAllowed(["GET", "POST"]));
   try {
     const url = absoluteUrl(request);
+    const session = await getAuthenticatedRequest(request);
+    if (!session) {
+      const returnTo = `${url.pathname}${url.search}`;
+      return withCors(Response.redirect(`${baseUrl()}/entrar?return_to=${encodeURIComponent(returnTo)}`, 303));
+    }
     const form = request.method === "POST" ? new URLSearchParams(await request.text()) : undefined;
     const params = readAuthorizeParams(url, form);
     const validation = await validateAuthorize(params);
@@ -86,6 +93,8 @@ async function authorize(request: Request): Promise<Response> {
     const code = randomToken(32);
     const record: AuthorizationCode = {
       clientId: params.client_id!,
+      userId: session.userId,
+      workspaceId: session.workspaceId,
       redirectUri: params.redirect_uri!,
       codeChallenge: params.code_challenge!,
       resource: params.resource!,
@@ -102,10 +111,28 @@ async function authorize(request: Request): Promise<Response> {
   }
 }
 
-async function issueToken(clientId: string, scope: string, resource: string): Promise<Response> {
-  const access = await signAccessToken({ clientId, scope });
+async function issueToken(
+  clientId: string,
+  userId: string,
+  workspaceId: string,
+  scope: string,
+  resource: string,
+): Promise<Response> {
+  const membership = await getWorkspaceMembershipAsService(userId, workspaceId);
+  if (!membership) return json({ error: "invalid_grant", error_description: "Workspace membership is no longer active." }, { status: 400 });
+  if (membership.role === "VIEWER") {
+    return json({ error: "insufficient_role", error_description: "A read-only membership cannot authorize MCP mutations." }, { status: 403 });
+  }
+  const access = await signAccessToken({ clientId, userId, workspaceId, scope });
   const refreshToken = randomToken(48);
-  const grant: RefreshGrant = { clientId, scope, resource, expiresAt: Date.now() + 30 * 24 * 60 * 60_000 };
+  const grant: RefreshGrant = {
+    clientId,
+    userId,
+    workspaceId,
+    scope,
+    resource,
+    expiresAt: Date.now() + 30 * 24 * 60 * 60_000,
+  };
   await oauthStore().setJSON(`refresh/${hashToken(refreshToken)}`, grant);
   return json({ access_token: access.token, token_type: "Bearer", expires_in: access.expiresIn, refresh_token: refreshToken, scope });
 }
@@ -123,7 +150,7 @@ async function handleToken(request: Request): Promise<Response> {
       if (form.get("resource") !== record.resource || record.resource !== resourceUrl()) return json({ error: "invalid_target" }, { status: 400 });
       if (!verifyPkce(form.get("code_verifier") ?? "", record.codeChallenge)) return json({ error: "invalid_grant" }, { status: 400 });
       await oauthStore().delete(codeKey);
-      return issueToken(record.clientId, record.scope, record.resource);
+      return issueToken(record.clientId, record.userId, record.workspaceId, record.scope, record.resource);
     }
     if (grantType === "refresh_token") {
       const refresh = form.get("refresh_token") ?? "";
@@ -133,7 +160,7 @@ async function handleToken(request: Request): Promise<Response> {
         return json({ error: "invalid_grant" }, { status: 400 });
       }
       await oauthStore().delete(key);
-      return issueToken(record.clientId, record.scope, record.resource);
+      return issueToken(record.clientId, record.userId, record.workspaceId, record.scope, record.resource);
     }
     return json({ error: "unsupported_grant_type" }, { status: 400 });
   } catch (error) {

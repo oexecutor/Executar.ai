@@ -9,21 +9,24 @@ const SECURITY_HEADERS: Record<string, string> = {
 };
 
 export function json(data: unknown, init: ResponseInit = {}): Response {
+  const headers = new Headers({ "Content-Type": "application/json; charset=utf-8", ...SECURITY_HEADERS });
+  new Headers(init.headers).forEach((value, key) => headers.set(key, value));
   return new Response(JSON.stringify(data), {
     ...init,
-    headers: { "Content-Type": "application/json; charset=utf-8", ...SECURITY_HEADERS, ...(init.headers ?? {}) },
+    headers,
   });
 }
 
 export function html(body: string, init: ResponseInit = {}): Response {
+  const headers = new Headers({
+    "Content-Type": "text/html; charset=utf-8",
+    ...SECURITY_HEADERS,
+    "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'",
+  });
+  new Headers(init.headers).forEach((value, key) => headers.set(key, value));
   return new Response(body, {
     ...init,
-    headers: {
-      "Content-Type": "text/html; charset=utf-8",
-      ...SECURITY_HEADERS,
-      "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'",
-      ...(init.headers ?? {}),
-    },
+    headers,
   });
 }
 

@@ -1,49 +1,55 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  getBrowserSession,
+  loadMemberships,
+  selectWorkspace,
+  signIn,
+} from "../auth";
 import { Login } from "./Login";
+
+vi.mock("../auth", () => ({
+  getBrowserSession: vi.fn(),
+  loadMemberships: vi.fn(),
+  selectWorkspace: vi.fn(),
+  signIn: vi.fn(),
+  signUp: vi.fn(),
+}));
 
 describe("Login", () => {
   beforeEach(() => {
-    vi.stubGlobal("fetch", vi.fn());
+    vi.clearAllMocks();
+    vi.mocked(getBrowserSession).mockResolvedValue(null);
   });
 
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
-  it("has an accessible password field and submit button", () => {
+  it("possui e-mail, senha e ação acessíveis", () => {
     render(<Login onSuccess={vi.fn()} />);
-    expect(screen.getByLabelText("Senha do operador")).toHaveAttribute("type", "password");
-    expect(screen.getByRole("button", { name: "Entrar" })).toBeInTheDocument();
+    expect(screen.getByLabelText("E-mail")).toHaveAttribute("type", "email");
+    expect(screen.getByLabelText("Senha")).toHaveAttribute("type", "password");
+    expect(screen.getByRole("button", { name: /Entrar/ })).toBeInTheDocument();
   });
 
-  it("calls onSuccess after a successful login", async () => {
-    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(new Response(null, { status: 200 }));
+  it("seleciona automaticamente o único workspace após o login", async () => {
+    vi.mocked(signIn).mockResolvedValue({ access_token: "access-token" } as never);
+    vi.mocked(loadMemberships).mockResolvedValue([{
+      workspaceId: "11111111-1111-1111-1111-111111111111",
+      workspaceName: "HQ",
+      workspaceSlug: "hq",
+      role: "OWNER",
+    }]);
+    vi.mocked(selectWorkspace).mockResolvedValue();
     const onSuccess = vi.fn();
     render(<Login onSuccess={onSuccess} />);
 
-    await userEvent.type(screen.getByLabelText("Senha do operador"), "correct-horse");
-    await userEvent.click(screen.getByRole("button", { name: "Entrar" }));
+    await userEvent.type(screen.getByLabelText("E-mail"), "owner@example.com");
+    await userEvent.type(screen.getByLabelText("Senha"), "strong-password");
+    await userEvent.click(screen.getByRole("button", { name: /Entrar/ }));
 
-    await waitFor(() => expect(onSuccess).toHaveBeenCalledTimes(1));
-    expect(fetch).toHaveBeenCalledWith(
-      "/api/admin/login",
-      expect.objectContaining({ method: "POST" }),
-    );
-  });
-
-  it("shows an error message and does not call onSuccess on a wrong password", async () => {
-    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
-      new Response(JSON.stringify({ error: { message: "Senha inválida." } }), { status: 401 }),
-    );
-    const onSuccess = vi.fn();
-    render(<Login onSuccess={onSuccess} />);
-
-    await userEvent.type(screen.getByLabelText("Senha do operador"), "wrong");
-    await userEvent.click(screen.getByRole("button", { name: "Entrar" }));
-
-    expect(await screen.findByRole("alert")).toHaveTextContent("Senha inválida.");
-    expect(onSuccess).not.toHaveBeenCalled();
+    await waitFor(() => expect(selectWorkspace).toHaveBeenCalledWith(
+      "access-token",
+      expect.objectContaining({ workspaceName: "HQ" }),
+    ));
+    expect(onSuccess).toHaveBeenCalledTimes(1);
   });
 });

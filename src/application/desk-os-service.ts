@@ -272,7 +272,7 @@ export class DeskOsService {
 
   async createProject(rawInput: unknown, idempotencyKey: string, context: ActorContext) {
     const input = parseWith(createProjectInput, rawInput);
-    const project = makeProject(input);
+    const project = makeProject(input, context.workspaceId, context.actorId);
     return this.repos.projects.create(project, writeOptions(context, idempotencyKey));
   }
 

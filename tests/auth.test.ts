@@ -2,9 +2,13 @@ import crypto from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   adminCookie,
+  appCookie,
+  clearAppCookie,
   clearAdminCookie,
   hashToken,
   signAdminSession,
+  signAppSession,
+  verifyAppSession,
   verifyAdminPassword,
   verifyAdminRequest,
   verifyPkce,
@@ -22,6 +26,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllEnvs();
+  vi.unstubAllGlobals();
 });
 
 describe("OAuth helpers", () => {
@@ -67,7 +72,29 @@ describe("admin session", () => {
     expect(await verifyAdminRequest(garbage)).toBe(false);
   });
 
-  it("login sets an HttpOnly/Secure/SameSite=Lax cookie for the right password", async () => {
+  it("round-trips a workspace-bound application session", async () => {
+    const token = await signAppSession({
+      userId: "usr_1",
+      email: "owner@example.test",
+      workspaceId: "11111111-1111-1111-1111-111111111111",
+      workspaceName: "HQ",
+      role: "OWNER",
+    });
+    const cookie = appCookie(token);
+    expect(cookie).toContain("HttpOnly");
+    expect(cookie).toContain("Secure");
+    expect(cookie).toContain("SameSite=Lax");
+    const request = new Request("https://example.test/api/executar/projects", {
+      headers: { cookie: cookie.split(";")[0] ?? "" },
+    });
+    expect(await verifyAppSession(request)).toMatchObject({
+      userId: "usr_1",
+      workspaceName: "HQ",
+      role: "OWNER",
+    });
+  });
+
+  it("retires the public operator-password login", async () => {
     const response = await loginHandler(
       new Request("https://example.test/api/admin/login", {
         method: "POST",
@@ -75,47 +102,58 @@ describe("admin session", () => {
         body: JSON.stringify({ password: "correct-horse-battery" }),
       }),
     );
-    expect(response.status).toBe(200);
-    const cookie = response.headers.get("set-cookie") ?? "";
-    expect(cookie).toContain("HttpOnly");
-    expect(cookie).toContain("Secure");
-    expect(cookie).toContain("SameSite=Lax");
+    expect(response.status).toBe(410);
+    expect(await response.json()).toMatchObject({ error: { code: "LEGACY_LOGIN_RETIRED" } });
   });
 
-  it("login rejects a wrong password with 401 and reports 503 when unconfigured", async () => {
-    const wrong = await loginHandler(
-      new Request("https://example.test/api/admin/login", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ password: "wrong" }),
-      }),
-    );
-    expect(wrong.status).toBe(401);
-
-    vi.stubEnv("ADMIN_PASSWORD", undefined);
-    const unconfigured = await loginHandler(
-      new Request("https://example.test/api/admin/login", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ password: "anything" }),
-      }),
-    );
-    expect(unconfigured.status).toBe(503);
-  });
-
-  it("logout clears the session cookie", async () => {
+  it("logout clears the application session cookie", async () => {
     const response = await logoutHandler(
-      new Request("https://example.test/api/admin/logout", { method: "POST" }),
+      new Request("https://example.test/api/auth/logout", { method: "POST" }),
     );
     expect(response.headers.get("set-cookie")).toContain("Max-Age=0");
+    expect(clearAppCookie()).toContain("Max-Age=0");
     expect(clearAdminCookie()).toContain("Max-Age=0");
   });
 });
 
-describe("admin guard (Gate 0.5, disabled at the user's explicit, informed request)", () => {
-  it("requireAdminJson and requireAdminHtml let every request through unconditionally", async () => {
+describe("workspace authentication guard", () => {
+  it("fails closed without a session and accepts a signed workspace session", async () => {
     const { requireAdminJson, requireAdminHtml } = await import("../src/lib/admin-guard.js");
-    expect(await requireAdminJson(new Request("https://example.test/api/vault/status"))).toBeNull();
-    expect(await requireAdminHtml(new Request("https://example.test/view"))).toBeNull();
+    expect((await requireAdminJson(new Request("https://example.test/api/vault/status")))?.status).toBe(401);
+    expect((await requireAdminHtml(new Request("https://example.test/view")))?.status).toBe(303);
+
+    const token = await signAppSession({
+      userId: "usr_1",
+      email: null,
+      workspaceId: "11111111-1111-1111-1111-111111111111",
+      workspaceName: "HQ",
+      role: "EDITOR",
+    });
+    const authenticated = new Request("https://example.test/api/vault/status", {
+      headers: { cookie: appCookie(token).split(";")[0] ?? "" },
+    });
+    expect(await requireAdminJson(authenticated)).toBeNull();
+  });
+
+  it("revalidates a cookie membership and fails closed after revocation", async () => {
+    vi.stubEnv("SUPABASE_URL", "https://project.supabase.co");
+    vi.stubEnv("SUPABASE_PUBLISHABLE_KEY", "publishable-test-key");
+    vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "service-role-test-key");
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify([]), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    })));
+    const token = await signAppSession({
+      userId: "usr_revoked",
+      email: "revoked@example.test",
+      workspaceId: "11111111-1111-1111-1111-111111111111",
+      workspaceName: "HQ",
+      role: "OWNER",
+    });
+    const request = new Request("https://example.test/api/executar/projects", {
+      headers: { cookie: appCookie(token).split(";")[0] ?? "" },
+    });
+    const { requireAdminJson } = await import("../src/lib/admin-guard.js");
+    expect((await requireAdminJson(request))?.status).toBe(401);
   });
 });

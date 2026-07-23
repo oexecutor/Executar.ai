@@ -6,6 +6,8 @@ import { DeskOsService } from "./application/desk-os-service.js";
 import { registerDeskOsTools } from "./mcp/desk-os-tools.js";
 import { WorkflowDashboardService } from "./lib/workflow-dashboard.js";
 import { buildVaultBrowserUrl, buildVaultViewUrl } from "./lib/viewer.js";
+import { ExecutarService } from "./executar/service.js";
+import { registerExecutarTools } from "./executar/mcp-tools.js";
 
 const relativePath = z.string().min(1).describe("Vault-relative path using forward slashes. Never use an absolute path.");
 const notePath = z.string().endsWith(".md").describe("Vault-relative Markdown path ending in .md.");
@@ -83,7 +85,13 @@ function guarded<T extends Record<string, unknown>>(summary: string, action: (in
 
 export function createMcpServer(
   vault: BlobVaultService,
-  options: { publicBaseUrl?: string; deskOsService?: DeskOsService; actorId?: string } = {},
+  options: {
+    publicBaseUrl?: string;
+    deskOsService?: DeskOsService;
+    executarService?: ExecutarService;
+    actorId?: string;
+    workspaceId?: string;
+  } = {},
 ): McpServer {
   const server = new McpServer({ name: "desk-os-obsidian-cloud", version: "1.7.0" });
   const workflows = new DeskWorkflowService(vault);
@@ -377,7 +385,10 @@ export function createMcpServer(
   // Gate 4: the desk_os_* PM catalog is ADDITIVE — the 19 obsidian_*/desk_*
   // tools above keep working unchanged for existing MCP clients (DEC-002).
   if (options.deskOsService) {
-    registerDeskOsTools(server, options.deskOsService, options.actorId ?? "mcp-client");
+    registerDeskOsTools(server, options.deskOsService, options.actorId ?? "mcp-client", options.workspaceId);
+  }
+  if (options.executarService) {
+    registerExecutarTools(server, options.executarService);
   }
 
   return server;

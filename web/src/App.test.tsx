@@ -1,42 +1,45 @@
 import { render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "./App";
+import { getJson } from "./api";
+import { getBrowserSession, restoreWorkspaceFromAppSession, selectedWorkspace } from "./auth";
+
+vi.mock("./api", () => ({ getJson: vi.fn() }));
+vi.mock("./auth", () => ({
+  getBrowserSession: vi.fn(),
+  restoreWorkspaceFromAppSession: vi.fn(),
+  selectedWorkspace: vi.fn(),
+  signOut: vi.fn(),
+}));
 
 describe("App", () => {
   beforeEach(() => {
-    vi.stubGlobal("fetch", vi.fn());
+    vi.clearAllMocks();
+    vi.mocked(restoreWorkspaceFromAppSession).mockResolvedValue(null);
+    localStorage.clear();
   });
 
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
-  it("shows the login screen when the session check gets a 401", async () => {
-    (fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
-      new Response(JSON.stringify({ error: { message: "unauthorized" } }), { status: 401 }),
-    );
+  it("mostra autenticação quando não existe sessão Supabase", async () => {
+    vi.mocked(getBrowserSession).mockResolvedValue(null);
+    vi.mocked(selectedWorkspace).mockReturnValue(null);
     render(<App />);
-    expect(await screen.findByRole("heading", { name: "DESK-OS" })).toBeInTheDocument();
-    expect(screen.getByLabelText("Senha do operador")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /Seu contexto/i })).toBeInTheDocument();
+    expect(screen.getByLabelText("E-mail")).toBeInTheDocument();
   });
 
-  it("shows the authenticated shell (Hoje/Sprint nav) when the session check succeeds", async () => {
-    (fetch as ReturnType<typeof vi.fn>).mockImplementation((url: string) => {
-      if (url === "/api/pm/status") return Promise.resolve(new Response(JSON.stringify({ ok: true, data: {} })));
-      if (url === "/api/pm/today")
-        return Promise.resolve(
-          new Response(
-            JSON.stringify({
-              ok: true,
-              data: { date: "2026-07-21", sprint: null, dominantDelivery: null, nextAction: null, inProgress: [], ready: [], blocked: [], warnings: [] },
-            }),
-          ),
-        );
-      return Promise.resolve(new Response(JSON.stringify({ ok: true, data: {} })));
-    });
+  it("abre o workspace quando sessão e workspace são válidos", async () => {
+    const workspace = {
+      workspaceId: "11111111-1111-1111-1111-111111111111",
+      workspaceName: "HQ",
+      workspaceSlug: "hq",
+      role: "OWNER" as const,
+    };
+    vi.mocked(restoreWorkspaceFromAppSession).mockResolvedValue(workspace);
+    vi.mocked(selectedWorkspace).mockReturnValue(workspace);
+    vi.mocked(getJson).mockResolvedValue([]);
     render(<App />);
-    expect(await screen.findByRole("button", { name: "Sair" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Hoje" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Sprint" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Execução em foco." })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Visão geral" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("button", { name: "Portfólio" })).toBeInTheDocument();
   });
 });

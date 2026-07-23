@@ -8,6 +8,7 @@ import { BlobVaultService, normalizeVaultPath, VaultProblem } from "../src/lib/v
 import { isDeskOsPath } from "../src/repository/paths.js";
 import { buildVaultBrowserUrl, buildVaultDownloadUrl, buildVaultRawUrl, buildVaultViewUrl, contentTypeFor, isTextFile, renderMarkdown, renderViewerError } from "../src/lib/viewer.js";
 import type { FileRecord } from "../src/lib/types.js";
+import { canWriteWorkspace, getAuthenticatedRequest } from "../src/lib/request-auth.js";
 
 /**
  * status/export/import/files/view live in one function, dispatched by
@@ -21,7 +22,7 @@ async function status(request: Request): Promise<Response> {
   const denied = await requireAdminJson(request);
   if (denied) return denied;
   try {
-    return httpJson(await new BlobVaultService(vaultStore()).info());
+    return httpJson(await new BlobVaultService(await scopedStore(request)).info());
   } catch (error) {
     return safeError(error);
   }
@@ -33,7 +34,7 @@ async function exportZip(request: Request): Promise<Response> {
   if (denied) return denied;
   try {
     const files: Record<string, Uint8Array> = {};
-    for (const record of await new BlobVaultService(vaultStore()).allRecords()) {
+    for (const record of await new BlobVaultService(await scopedStore(request)).allRecords()) {
       files[`DESK-OS-OBSIDIAN/${record.path}`] = Buffer.from(record.data, "base64");
     }
     const archive = zipSync(files, { level: 6 });
@@ -144,7 +145,12 @@ async function parseJson(request: Request): Promise<Record<string, unknown>> {
 async function files(request: Request): Promise<Response> {
   const denied = await requireAdminJson(request);
   if (denied) return denied;
-  const vault = new BlobVaultService(vaultStore());
+  const auth = await getAuthenticatedRequest(request);
+  if (!auth) return filesJson({ error: { code: "UNAUTHORIZED", message: "Sessão inválida." } }, 401);
+  if (request.method !== "GET" && !canWriteWorkspace(auth)) {
+    return filesJson({ error: { code: "FORBIDDEN", message: "Seu perfil é somente leitura." } }, 403);
+  }
+  const vault = new BlobVaultService(await scopedStore(request));
   const url = absoluteUrl(request);
 
   try {
@@ -258,6 +264,12 @@ function evaluateEntries(compressed: Uint8Array) {
 
 let storeFactory = vaultStore;
 
+async function scopedStore(request: Request) {
+  const auth = await getAuthenticatedRequest(request);
+  if (!auth) throw new VaultProblem("UNAUTHORIZED", "Sessão inválida.", "Entre novamente no EXECUTA.AI.");
+  return storeFactory({ workspaceId: auth.workspaceId, accessToken: auth.accessToken });
+}
+
 /** Tests inject an in-memory store; production uses Vercel Postgres. */
 export function setVaultStoreForTesting(factory: typeof vaultStore | null): void {
   storeFactory = factory ?? vaultStore;
@@ -267,6 +279,11 @@ async function importZip(request: Request): Promise<Response> {
   if (request.method !== "POST") return methodNotAllowed(["POST"]);
   const denied = await requireAdminJson(request);
   if (denied) return denied;
+  const auth = await getAuthenticatedRequest(request);
+  if (!auth) return httpJson({ error: { code: "UNAUTHORIZED", message: "Sessão inválida." } }, { status: 401 });
+  if (!canWriteWorkspace(auth)) {
+    return httpJson({ error: { code: "FORBIDDEN", message: "Seu perfil é somente leitura." } }, { status: 403 });
+  }
   try {
     const compressed = new Uint8Array(await request.arrayBuffer());
     if (compressed.byteLength > MAX_ARCHIVE_BYTES) return httpJson({ error: "archive_too_large", limitBytes: MAX_ARCHIVE_BYTES }, { status: 413 });
@@ -296,7 +313,7 @@ async function importZip(request: Request): Promise<Response> {
         skipped.push({ path: rawPath, reason: error instanceof VaultProblem ? error.code : "invalid_path" });
       }
     }
-    const vault = new BlobVaultService(storeFactory());
+    const vault = new BlobVaultService(await scopedStore(request));
     let created = 0;
     let updated = 0;
     for (const candidate of candidates) {
@@ -332,7 +349,7 @@ async function view(request: Request): Promise<Response> {
   if (denied) return denied;
   const url = absoluteUrl(request);
   const requestedPath = url.searchParams.get("path")?.trim();
-  const vault = new BlobVaultService(vaultStore());
+  const vault = new BlobVaultService(await scopedStore(request));
 
   try {
     if (!requestedPath) return Response.redirect(buildVaultBrowserUrl(baseUrl()), 302);

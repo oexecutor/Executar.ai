@@ -7,6 +7,9 @@ import { BlobVaultService } from "../src/lib/vault.js";
 import { createMcpServer } from "../src/mcp-server.js";
 import { DeskOsService } from "../src/application/desk-os-service.js";
 import { createDeskOsRepositories } from "../src/repository/vault-adapter.js";
+import { ExecutarStore } from "../src/executar/store.js";
+import { ExecutarService } from "../src/executar/service.js";
+import { getWorkspaceMembershipAsService } from "../src/lib/supabase.js";
 
 function unauthorized(): Response {
   const metadata = `${baseUrl()}/.well-known/oauth-protected-resource/mcp`;
@@ -28,13 +31,23 @@ export default async (request: Request): Promise<Response> => {
     const token = auth.slice(7);
     const claims = await verifyAccessToken(token);
     if (!claims.scopes.includes("mcp:tools")) return withCors(new Response(JSON.stringify({ error: "insufficient_scope" }), { status: 403 }));
+    const membership = await getWorkspaceMembershipAsService(claims.userId, claims.workspaceId);
+    if (!membership) return withCors(unauthorized());
+    if (membership.role === "VIEWER") {
+      return withCors(new Response(JSON.stringify({ error: "insufficient_role" }), {
+        status: 403,
+        headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
+      }));
+    }
 
-    const store = vaultStore();
+    const store = vaultStore({ workspaceId: claims.workspaceId });
     const vault = new BlobVaultService(store);
     const server = createMcpServer(vault, {
       publicBaseUrl: baseUrl(),
       deskOsService: new DeskOsService(createDeskOsRepositories(store), vault),
-      actorId: claims.clientId,
+      executarService: new ExecutarService(new ExecutarStore(store)),
+      actorId: claims.userId,
+      workspaceId: claims.workspaceId,
     });
     const transport = new WebStandardStreamableHTTPServerTransport({ enableJsonResponse: true });
     await server.connect(transport);

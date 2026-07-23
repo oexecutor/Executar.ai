@@ -1,96 +1,126 @@
-# DESK-OS Obsidian Cloud MCP — Netlify
+# EXECUTA.AI
 
-Servidor MCP remoto e painel web integrado para trabalhar com um espelho em nuvem de um vault do Obsidian pelo Claude.ai, inclusive no iPad e iPhone.
+PWA multiusuário para transformar contexto em execução verificável. O produto reúne:
 
-## Produção
+- motor canônico de projetos com 3 fases, 9 áreas, 36 itens e 81 ações;
+- portfólio, Hoje, projeto em Plano/Lista/Tabela, Kanban e documentos;
+- autenticação Supabase, memberships e isolamento por workspace;
+- APIs HTTP e MCP operando sobre o mesmo estado;
+- vault de documentos, evidências, importação e exportação;
+- landing pública e workspace autenticado com a identidade EXECUTA.AI.
 
-| Campo | Valor |
-| --- | --- |
-| Projeto Netlify | `desk-os-vault-mcp-openai` |
-| Site ID | `88f72319-6890-45e8-a230-bddaa32fc07d` |
-| Aplicação | `https://desk-os-vault-mcp-openai.netlify.app` |
-| MCP | `https://desk-os-vault-mcp-openai.netlify.app/mcp` |
-| API de arquivos | `https://desk-os-vault-mcp-openai.netlify.app/api/vault/files` |
-| Dashboards vivos | `https://desk-os-vault-mcp-openai.netlify.app/dashboard` |
+## Estado
 
-## Versão 1.6.0 — ingestão de workflow e dashboard vivo
+A Fase 4 entrega a fundação funcional em uma branch de Preview. Ela não autoriza publicação em produção. A promoção só pode ocorrer depois de:
 
-Esta edição adiciona `desk_ingest_workflow_dashboard`, uma ferramenta de integração que recebe o estado estruturado de qualquer workflow e mantém um dashboard HTML vivo dentro do vault.
+1. aplicar e validar a migração Supabase;
+2. configurar os secrets do Preview;
+3. executar a suíte completa e a homologação humana;
+4. registrar a aprovação de lançamento.
 
-O catálogo passa a ter **19 ferramentas MCP**:
+Consulte [docs/PHASE_4_IMPLEMENTATION.md](docs/PHASE_4_IMPLEMENTATION.md) e [docs/PARITY_MATRIX_PHASE_4.md](docs/PARITY_MATRIX_PHASE_4.md).
 
-- 13 operações do vault;
-- 6 workflows DESK-OS.
+## Arquitetura
 
-A cada ingestão, a ferramenta:
+```text
+Cloud / agente ── OAuth + MCP ─┐
+                              ├── API e serviços EXECUTA ── Supabase Postgres + RLS
+PWA / usuário ── Supabase Auth ┘                    └────── Vault e evidências
+```
 
-- atualiza itens por IDs estáveis ou substitui um snapshot completo;
-- recalcula fontes, decisões aprovadas, lacunas, contraevidências e riscos;
-- gera um painel responsivo inspirado no dashboard WorkOS Neuroadaptado;
-- salva `WORKFLOW_STATUS.json`, `STATUS_DASHBOARD.html` e `DASHBOARD.md`;
-- cria um snapshot histórico para auditoria;
-- devolve um `dashboardUrl` clicável;
-- protege atualizações concorrentes com `expectedStateSha256` quando informado.
+O motor, a API, o MCP e o front-end compartilham o mesmo contrato de projeto e o mesmo `workspace_id`. A API de compatibilidade `/api/pm/*` permanece disponível durante a migração incremental.
 
-O dashboard principal do vault agora detecta automaticamente painéis em `DESK-OS/Dashboards/Workflows/` e os mostra na seção **Dashboards dinâmicos**.
+## Identidade visual
 
-Consulte `docs/WORKFLOW_DASHBOARD_1_6.md` e o payload inicial em `templates/WORKOS_NEUROADAPTADO_INITIAL_PAYLOAD.json`.
+A fonte visual de autoridade é a identidade EXECUTA.AI: fundo cinza, acento laranja, preto e branco. O Forge Visual Canvas orienta composição, hierarquia, responsividade e qualidade SaaS. Tokens CSS são derivados dessa combinação e são uma implementação versionada, não a fonte única de verdade.
 
-## Versão 1.5.0 — importação binária pelo Claude
+## Desenvolvimento
 
-Esta edição mantém o acesso aberto da v1.4.0 e adiciona a ferramenta MCP `obsidian_import_binary` para armazenar pacotes ZIP, Skills, PDFs, imagens e outros binários recebidos como Base64. O catálogo passa a ter **18 ferramentas MCP**.
+Requisitos: Node.js 20 ou superior e um projeto Supabase.
 
-A importação binária:
+```bash
+npm ci
+npm --prefix web ci
+cp .env.example .env.local
+npm run build
+npm test
+npm run lint
+npm --prefix web run build
+npm --prefix web test
+npm --prefix web run lint
+```
 
-- preserva os bytes originais;
-- registra MIME type, nome original, tamanho e SHA-256;
-- limita o arquivo a 4.000.000 bytes decodificados;
-- não descompacta nem executa o pacote;
-- exige confirmação da revisão para substituir um caminho existente;
-- move a versão substituída para a lixeira recuperável.
+Para desenvolvimento integrado com as Vercel Functions:
 
-Esta edição também remove todas as solicitações de senha ao usuário:
+```bash
+npx vercel dev
+```
 
-- Dashboard abre diretamente.
-- Notas e documentos podem ser lidos e editados sem login.
-- Importação e exportação não exigem sessão.
-- OAuth valida cliente, redirect URI, recurso e PKCE, mas não pede senha.
-- `ADMIN_PASSWORD` deixou de ser usada e deve ser removida da Netlify.
-- `MCP_JWT_SECRET` permanece apenas como chave criptográfica interna para assinar tokens do protocolo; ela nunca é solicitada ao usuário.
+## Supabase
 
-## Fluxo de uso
+A migração inicial está em:
 
-1. Abra o painel diretamente.
-2. Consulte métricas e importe um ZIP, quando necessário.
-3. Abra a aba **Notas** ou **Documentos**.
-4. Navegue por pastas ou pesquise pelo caminho.
-5. Abra um arquivo para ler.
-6. Em arquivos de texto de até 1 MB, selecione **Editar**.
-7. Salve; o servidor compara o SHA-256 antes de aceitar a atualização.
-8. Em caso de conflito, reabra o arquivo e reconcilie as alterações.
-9. Exporte um ZIP antes de substituir o vault local do Obsidian.
+```text
+supabase/migrations/202607230001_phase4_workspace_rls.sql
+```
 
-## Aviso de acesso
+Ela cria:
 
-Qualquer pessoa que conheça o endereço público poderá ler, criar, editar, importar e exportar o vault remoto. Não use esta edição para dados privados, confidenciais ou regulados.
+- `workspaces`;
+- `workspace_memberships`;
+- `kv_store` escopado por workspace;
+- `oauth_kv_store` separado e acessível apenas pelo servidor;
+- funções de autorização;
+- políticas RLS para leitura de membros e escrita de `OWNER`, `ADMIN` e `EDITOR`;
+- workspace pessoal automático no cadastro.
+
+Aplicação controlada:
+
+```bash
+supabase link --project-ref SEU_PROJECT_REF
+supabase db push --dry-run
+supabase db push
+supabase test db
+```
+
+Nunca aplique a migração diretamente em produção sem backup, ensaio e aceite.
+Se existir um `kv_store` legado sem `workspace_id`, a migração o preserva como
+`legacy_kv_store`; o conteúdo operacional deverá ser associado a um workspace
+por um procedimento de migração de dados aprovado.
+
+## Variáveis
+
+Use `.env.example` como referência:
+
+- `PUBLIC_BASE_URL`;
+- `MCP_JWT_SECRET`;
+- `SUPABASE_URL`;
+- `SUPABASE_PUBLISHABLE_KEY`;
+- `SUPABASE_SERVICE_ROLE_KEY` somente no servidor;
+- `DATABASE_URL` para o registro OAuth durante a migração.
+
+Nenhuma chave de IA ou `service_role` deve usar prefixo `VITE_` ou chegar ao navegador.
+
+## Contratos expostos
+
+- aplicação: `/app`;
+- login: `/entrar`;
+- API canônica: `/api/executar/*`;
+- API de compatibilidade: `/api/pm/*`;
+- vault: `/api/vault/*`;
+- MCP: `/mcp`;
+- OAuth: `/oauth/*`;
+- metadados OAuth: `/.well-known/*`.
+
+As 11 ferramentas `executar_*` cobrem validação, criação, leitura, status, próximas tarefas, ações, checkpoints, exportação, reset e exclusão. Ferramentas destrutivas exigem confirmação explícita.
 
 ## Publicação
 
-```bash
-npx netlify login
-npx netlify link --id 88f72319-6890-45e8-a230-bddaa32fc07d
-npx netlify deploy --build --prod
-```
-
-
-## Uso pelo Claude — arquivo binário
+O fluxo oficial é:
 
 ```text
-Use o ZIP anexado sem alterar seus bytes.
-Importe com obsidian_import_binary para:
-98_MODELOS/Skills/minha-skill.zip
-MIME type: application/zip
-Depois retorne SHA-256 e hiperlink.
+branch → pull request → Vercel Preview → migração/configuração Preview
+→ testes → homologação → aprovação humana → produção
 ```
 
-Consulte `docs/BINARY_IMPORT_1_5.md` para o contrato completo e as limitações do cliente Claude.
+Rollback antes da produção consiste em fechar o PR e remover o Preview. Depois da promoção, reverta o commit de release e restaure o backup do banco conforme o runbook de lançamento.

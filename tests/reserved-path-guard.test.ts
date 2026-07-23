@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { BlobVaultService } from "../src/lib/vault.js";
 import { createMcpServer } from "../src/mcp-server.js";
 import vaultImportHandler, { setVaultStoreForTesting } from "../api/vault.js";
-import { adminCookie, signAdminSession } from "../src/lib/auth.js";
+import { adminCookie, appCookie, signAdminSession, signAppSession } from "../src/lib/auth.js";
 import { memoryStore } from "./helpers/memory-store.js";
 
 /**
@@ -164,6 +164,28 @@ describe("/api/vault/import cannot plant files inside _desk-os/", () => {
   afterEach(() => {
     setVaultStoreForTesting(null);
     vi.unstubAllEnvs();
+  });
+
+  it("blocks vault writes from a VIEWER membership", async () => {
+    vi.stubEnv("PUBLIC_BASE_URL", "https://example.test");
+    vi.stubEnv("MCP_JWT_SECRET", "unit-test-secret-with-at-least-32-characters!!");
+    setVaultStoreForTesting(() => memoryStore());
+    const cookie = appCookie(await signAppSession({
+      userId: "usr_viewer",
+      email: "viewer@example.test",
+      workspaceId: "11111111-1111-1111-1111-111111111111",
+      workspaceName: "HQ",
+      role: "VIEWER",
+    })).split(";")[0] ?? "";
+    const response = await vaultImportHandler(
+      new Request("https://example.test/api/vault/files", {
+        method: "POST",
+        headers: { cookie, "content-type": "application/json" },
+        body: JSON.stringify({ path: "notes/blocked.md", content: "# blocked" }),
+      }),
+    );
+    expect(response.status).toBe(403);
+    expect(await response.json()).toMatchObject({ error: { code: "FORBIDDEN" } });
   });
 
   it("skips a zip entry targeting _desk-os/ instead of importing it", async () => {

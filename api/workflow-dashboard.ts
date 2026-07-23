@@ -5,6 +5,7 @@ import { absoluteUrl } from "../src/lib/http.js";
 import { vaultStore } from "../src/lib/stores.js";
 import { BlobVaultService, VaultProblem } from "../src/lib/vault.js";
 import { buildWorkflowDashboardUrl, isGeneratedWorkflowDashboard } from "../src/lib/workflow-dashboard.js";
+import { getAuthenticatedRequest } from "../src/lib/request-auth.js";
 
 const DASHBOARD_ROOT = "DESK-OS/Dashboards/Workflows/";
 
@@ -42,7 +43,9 @@ function listPage(items: Array<{ path: string; modifiedAt: string }>): string {
 export default async (request: Request): Promise<Response> => {
   const denied = await requireAdminHtml(request);
   if (denied) return denied;
-  const vault = new BlobVaultService(vaultStore());
+  const auth = await getAuthenticatedRequest(request);
+  if (!auth) return new Response(errorPage("Sessão expirada", "Entre novamente no EXECUTA.AI."), { status: 401, headers: headers() });
+  const vault = new BlobVaultService(vaultStore({ workspaceId: auth.workspaceId, accessToken: auth.accessToken }));
   const url = absoluteUrl(request);
   const requestedPath = url.searchParams.get("path")?.trim();
 
