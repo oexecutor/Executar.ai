@@ -1,9 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import oauthRegisterHandler from "../api/oauth-register.js";
-import oauthTokenHandler from "../api/oauth-token.js";
-import oauthMetadataHandler from "../api/oauth-metadata.js";
-import oauthAuthorizeHandler from "../api/oauth-authorize.js";
+import oauthHandler from "../api/oauth.js";
 import mcpHandler from "../api/mcp.js";
+
+const oauthRegisterHandler = oauthHandler;
+const oauthTokenHandler = oauthHandler;
+const oauthMetadataHandler = oauthHandler;
+const oauthAuthorizeHandler = oauthHandler;
 
 /**
  * The MCP authorization spec expects a client that may run in a browser
