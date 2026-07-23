@@ -3,7 +3,7 @@ import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { BlobVaultService } from "../src/lib/vault.mjs";
 import { createMcpServer } from "../src/mcp-server.mjs";
-import vaultImportHandler, { setVaultStoreForTesting } from "../api/vault-import.mjs";
+import vaultImportHandler, { setVaultStoreForTesting } from "../api/vault-import.js";
 import { adminCookie, signAdminSession } from "../src/lib/auth.mjs";
 import { memoryStore } from "./helpers/memory-store.js";
 

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { safeError } from "../src/lib/http.mjs";
 import { VaultProblem } from "../src/lib/vault.mjs";
-import oauthTokenHandler from "../api/oauth-token.mjs";
+import oauthTokenHandler from "../api/oauth-token.js";
 
 /**
  * baseline §11.6: safeError previously wrote error.message straight into
