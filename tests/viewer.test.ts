@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { buildVaultViewUrl, renderMarkdown, renderVaultBrowser, renderVaultFile } from "../src/lib/viewer.mjs";
-import type { FileRecord } from "../src/lib/types.mjs";
+import { buildVaultViewUrl, renderMarkdown, renderVaultBrowser, renderVaultFile } from "../src/lib/viewer.js";
+import type { FileRecord } from "../src/lib/types.js";
 
 describe("secure vault viewer", () => {
   const baseUrl = "https://desk-os-vault-mcp-openai.netlify.app";

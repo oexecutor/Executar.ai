@@ -1,4 +1,4 @@
-import { VaultProblem } from "./vault.mjs";
+import { VaultProblem } from "./vault.js";
 
 const SECURITY_HEADERS: Record<string, string> = {
   "Cache-Control": "no-store",

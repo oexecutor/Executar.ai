@@ -5,7 +5,7 @@ import type {
   Project,
   Sprint,
   Task,
-} from "../domain/entities.mjs";
+} from "../domain/entities.js";
 
 /** Mirrors contracts/domain-types.ts RepositoryWriteOptions. */
 export interface RepositoryWriteOptions {

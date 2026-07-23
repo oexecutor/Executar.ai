@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { DeskOsService } from "../src/application/desk-os-service.mjs";
-import type { ActorContext } from "../src/application/context.mjs";
-import { createDeskOsRepositories } from "../src/repository/vault-adapter.mjs";
-import { BlobVaultService } from "../src/lib/vault.mjs";
+import { DeskOsService } from "../src/application/desk-os-service.js";
+import type { ActorContext } from "../src/application/context.js";
+import { createDeskOsRepositories } from "../src/repository/vault-adapter.js";
+import { BlobVaultService } from "../src/lib/vault.js";
 import { memoryStore } from "./helpers/memory-store.js";
 
 const actor: ActorContext = { actorType: "ADMIN", actorId: "leonardo", requestId: "req_test" };

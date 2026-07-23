@@ -1,6 +1,6 @@
-import { DomainError } from "./errors.mjs";
-import { DOMAIN_DEFAULTS } from "./entities.mjs";
-import type { Sprint, Task, TaskStep } from "./entities.mjs";
+import { DomainError } from "./errors.js";
+import { DOMAIN_DEFAULTS } from "./entities.js";
+import type { Sprint, Task, TaskStep } from "./entities.js";
 
 export function assertStepLimit(steps: readonly unknown[] | readonly TaskStep[], max = DOMAIN_DEFAULTS.maxStepsPerTask): void {
   if (steps.length > max) {

@@ -1,5 +1,5 @@
-import { PostgresKvStore, type KvStore } from "./kv-store.mjs";
-import { isProduction } from "./env.mjs";
+import { PostgresKvStore, type KvStore } from "./kv-store.js";
+import { isProduction } from "./env.js";
 
 function scopedStore(productionNamespace: string, previewNamespace: string): KvStore {
   return new PostgresKvStore(isProduction() ? productionNamespace : previewNamespace);

@@ -1,11 +1,11 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { BlobVaultService, MAX_BINARY_IMPORT_BYTES, VaultProblem } from "./lib/vault.mjs";
-import { DeskWorkflowService } from "./lib/desk-workflows.mjs";
-import { DeskOsService } from "./application/desk-os-service.mjs";
-import { registerDeskOsTools } from "./mcp/desk-os-tools.mjs";
-import { WorkflowDashboardService } from "./lib/workflow-dashboard.mjs";
-import { buildVaultBrowserUrl, buildVaultViewUrl } from "./lib/viewer.mjs";
+import { BlobVaultService, MAX_BINARY_IMPORT_BYTES, VaultProblem } from "./lib/vault.js";
+import { DeskWorkflowService } from "./lib/desk-workflows.js";
+import { DeskOsService } from "./application/desk-os-service.js";
+import { registerDeskOsTools } from "./mcp/desk-os-tools.js";
+import { WorkflowDashboardService } from "./lib/workflow-dashboard.js";
+import { buildVaultBrowserUrl, buildVaultViewUrl } from "./lib/viewer.js";
 
 const relativePath = z.string().min(1).describe("Vault-relative path using forward slashes. Never use an absolute path.");
 const notePath = z.string().endsWith(".md").describe("Vault-relative Markdown path ending in .md.");

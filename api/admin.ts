@@ -1,6 +1,13 @@
-import { adminAuthConfigured, adminCookie, signAdminSession, verifyAdminPassword } from "../src/lib/auth.mjs";
-import { json, methodNotAllowed } from "../src/lib/http.mjs";
-import { loginPage } from "../src/lib/admin-guard.mjs";
+import { adminAuthConfigured, adminCookie, clearAdminCookie, signAdminSession, verifyAdminPassword } from "../src/lib/auth.js";
+import { json, methodNotAllowed } from "../src/lib/http.js";
+import { loginPage } from "../src/lib/admin-guard.js";
+
+/**
+ * login + logout live in one function, dispatched by pathname, to stay
+ * under Vercel's 12-function Hobby-plan cap — see api/oauth.ts and
+ * api/vault.ts for the same pattern. Each section is otherwise unchanged
+ * from its own former file.
+ */
 
 interface Credentials {
   password: string;
@@ -23,7 +30,7 @@ async function readCredentials(request: Request): Promise<Credentials> {
   return { password: typeof body.password === "string" ? body.password : "", returnTo: null, isForm: false };
 }
 
-export default async (request: Request): Promise<Response> => {
+async function login(request: Request): Promise<Response> {
   if (request.method !== "POST") return methodNotAllowed(["POST"]);
   if (!adminAuthConfigured()) {
     return json(
@@ -51,4 +58,15 @@ export default async (request: Request): Promise<Response> => {
     return new Response(null, { status: 303, headers: { Location: returnTo, "Set-Cookie": cookie } });
   }
   return json({ authenticated: true, accessMode: "admin-session" }, { headers: { "Set-Cookie": cookie } });
+}
+
+async function logout(request: Request): Promise<Response> {
+  if (request.method !== "POST") return methodNotAllowed(["POST"]);
+  return json({ authenticated: false }, { headers: { "Set-Cookie": clearAdminCookie() } });
+}
+
+export default async (request: Request): Promise<Response> => {
+  const pathname = new URL(request.url).pathname;
+  if (pathname === "/api/admin/logout") return logout(request);
+  return login(request);
 };

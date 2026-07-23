@@ -1,6 +1,6 @@
 import path from "node:path";
 import { stringify } from "yaml";
-import { BlobVaultService, VaultProblem } from "./vault.mjs";
+import { BlobVaultService, VaultProblem } from "./vault.js";
 
 const DEFAULT_ROOT = "DESK-OS";
 const MAX_LIST_ITEMS = 100;

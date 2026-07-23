@@ -1,6 +1,6 @@
 import path from "node:path";
-import { BlobVaultService, VaultProblem } from "./vault.mjs";
-import { buildVaultViewUrl } from "./viewer.mjs";
+import { BlobVaultService, VaultProblem } from "./vault.js";
+import { buildVaultViewUrl } from "./viewer.js";
 
 const DEFAULT_ROOT = "DESK-OS/Dashboards/Workflows";
 const MAX_ITEMS = 100;

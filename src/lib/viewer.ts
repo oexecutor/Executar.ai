@@ -1,8 +1,8 @@
 import path from "node:path";
-import type { FileRecord } from "./types.mjs";
+import type { FileRecord } from "./types.js";
 
 const TEXT_EXTENSIONS = new Set([
-  ".md", ".markdown", ".txt", ".csv", ".tsv", ".json", ".yaml", ".yml", ".xml", ".html", ".htm", ".css", ".js", ".mjs", ".cjs", ".ts", ".tsx", ".jsx", ".toml", ".ini", ".log",
+  ".md", ".markdown", ".txt", ".csv", ".tsv", ".json", ".yaml", ".yml", ".xml", ".html", ".htm", ".css", ".js", ".js", ".cjs", ".ts", ".tsx", ".jsx", ".toml", ".ini", ".log",
 ]);
 
 export function escapeHtml(value: unknown): string {

@@ -1,4 +1,4 @@
-import { newId } from "./ids.mjs";
+import { newId } from "./ids.js";
 import type {
   DecompositionProposal,
   EvidenceRecord,
@@ -6,14 +6,14 @@ import type {
   Sprint,
   Task,
   TaskStep,
-} from "./entities.mjs";
+} from "./entities.js";
 import type {
   AddEvidenceInput,
   CreateProjectInput,
   CreateSprintInput,
   CreateTaskInput,
   PrepareProposalInput,
-} from "./schemas.mjs";
+} from "./schemas.js";
 
 function nowIso(): string {
   return new Date().toISOString();

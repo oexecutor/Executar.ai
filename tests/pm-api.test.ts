@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import pmHandler, { setPmServiceForTesting } from "../api/pm.mjs";
-import { adminCookie, signAdminSession } from "../src/lib/auth.mjs";
-import { DeskOsService } from "../src/application/desk-os-service.mjs";
-import { createDeskOsRepositories } from "../src/repository/vault-adapter.mjs";
-import { BlobVaultService } from "../src/lib/vault.mjs";
+import pmHandler, { setPmServiceForTesting } from "../api/pm.js";
+import { adminCookie, signAdminSession } from "../src/lib/auth.js";
+import { DeskOsService } from "../src/application/desk-os-service.js";
+import { createDeskOsRepositories } from "../src/repository/vault-adapter.js";
+import { BlobVaultService } from "../src/lib/vault.js";
 import { memoryStore } from "./helpers/memory-store.js";
 
 const BASE = "https://example.test/api/pm";

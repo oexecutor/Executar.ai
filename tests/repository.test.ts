@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { createDeskOsRepositories } from "../src/repository/vault-adapter.mjs";
-import { makeEvidence, makeProject, makeSprint, makeTask } from "../src/domain/factories.mjs";
-import { addEvidenceInput, createProjectInput, createSprintInput, createTaskInput } from "../src/domain/schemas.mjs";
-import { BlobVaultService } from "../src/lib/vault.mjs";
+import { createDeskOsRepositories } from "../src/repository/vault-adapter.js";
+import { makeEvidence, makeProject, makeSprint, makeTask } from "../src/domain/factories.js";
+import { addEvidenceInput, createProjectInput, createSprintInput, createTaskInput } from "../src/domain/schemas.js";
+import { BlobVaultService } from "../src/lib/vault.js";
 import { memoryStore } from "./helpers/memory-store.js";
 
 function writeOptions(key: string) {

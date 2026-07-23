@@ -1,9 +1,9 @@
 import path from "node:path";
-import { requireAdminHtml } from "../src/lib/admin-guard.mjs";
-import { baseUrl } from "../src/lib/env.mjs";
-import { vaultStore } from "../src/lib/stores.mjs";
-import { BlobVaultService, VaultProblem } from "../src/lib/vault.mjs";
-import { buildWorkflowDashboardUrl, isGeneratedWorkflowDashboard } from "../src/lib/workflow-dashboard.mjs";
+import { requireAdminHtml } from "../src/lib/admin-guard.js";
+import { baseUrl } from "../src/lib/env.js";
+import { vaultStore } from "../src/lib/stores.js";
+import { BlobVaultService, VaultProblem } from "../src/lib/vault.js";
+import { buildWorkflowDashboardUrl, isGeneratedWorkflowDashboard } from "../src/lib/workflow-dashboard.js";
 
 const DASHBOARD_ROOT = "DESK-OS/Dashboards/Workflows/";
 

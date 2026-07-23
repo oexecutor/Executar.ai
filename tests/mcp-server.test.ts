@@ -1,9 +1,9 @@
-import type { KvStore as Store } from "../src/lib/kv-store.mjs";
+import type { KvStore as Store } from "../src/lib/kv-store.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { afterEach, describe, expect, it } from "vitest";
-import { BlobVaultService } from "../src/lib/vault.mjs";
-import { createMcpServer } from "../src/mcp-server.mjs";
+import { BlobVaultService } from "../src/lib/vault.js";
+import { createMcpServer } from "../src/mcp-server.js";
 
 function memoryStore(): Store {
   const values = new Map<string, unknown>();

@@ -1,12 +1,12 @@
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
-import { verifyAccessToken } from "../src/lib/auth.mjs";
-import { baseUrl, resourceUrl } from "../src/lib/env.mjs";
-import { corsPreflight, withCors } from "../src/lib/http.mjs";
-import { vaultStore } from "../src/lib/stores.mjs";
-import { BlobVaultService } from "../src/lib/vault.mjs";
-import { createMcpServer } from "../src/mcp-server.mjs";
-import { DeskOsService } from "../src/application/desk-os-service.mjs";
-import { createDeskOsRepositories } from "../src/repository/vault-adapter.mjs";
+import { verifyAccessToken } from "../src/lib/auth.js";
+import { baseUrl, resourceUrl } from "../src/lib/env.js";
+import { corsPreflight, withCors } from "../src/lib/http.js";
+import { vaultStore } from "../src/lib/stores.js";
+import { BlobVaultService } from "../src/lib/vault.js";
+import { createMcpServer } from "../src/mcp-server.js";
+import { DeskOsService } from "../src/application/desk-os-service.js";
+import { createDeskOsRepositories } from "../src/repository/vault-adapter.js";
 
 function unauthorized(): Response {
   const metadata = `${baseUrl()}/.well-known/oauth-protected-resource/mcp`;

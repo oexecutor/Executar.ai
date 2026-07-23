@@ -9,7 +9,7 @@ import {
   SPRINT_STATUSES,
   STEP_STATUSES,
   TASK_STATUSES,
-} from "./entities.mjs";
+} from "./entities.js";
 
 const isoDateTime = z.string().datetime({ offset: true });
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Expected an ISO date (YYYY-MM-DD)");

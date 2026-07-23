@@ -5,16 +5,16 @@ import {
   assertNoDependencyCycle,
   assertStepLimit,
   findDependencyCycle,
-} from "../src/domain/capacity.mjs";
-import { DomainError } from "../src/domain/errors.mjs";
-import { isEntityId, newId } from "../src/domain/ids.mjs";
+} from "../src/domain/capacity.js";
+import { DomainError } from "../src/domain/errors.js";
+import { isEntityId, newId } from "../src/domain/ids.js";
 import {
   assertProjectTransition,
   assertSprintTransition,
   assertTaskTransition,
-} from "../src/domain/transitions.mjs";
-import { addEvidenceInput, createProjectInput, createTaskInput, projectSchema } from "../src/domain/schemas.mjs";
-import { makeProject, makeTask } from "../src/domain/factories.mjs";
+} from "../src/domain/transitions.js";
+import { addEvidenceInput, createProjectInput, createTaskInput, projectSchema } from "../src/domain/schemas.js";
+import { makeProject, makeTask } from "../src/domain/factories.js";
 
 describe("ids", () => {
   it("generates prefixed ids and validates both generated and contract ids", () => {

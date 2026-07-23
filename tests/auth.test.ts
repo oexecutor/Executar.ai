@@ -8,15 +8,18 @@ import {
   verifyAdminPassword,
   verifyAdminRequest,
   verifyPkce,
-} from "../src/lib/auth.mjs";
-import loginHandler from "../api/admin-login.mjs";
-import logoutHandler from "../api/admin-logout.mjs";
-import vaultFilesHandler from "../api/vault-files.mjs";
-import vaultStatusHandler from "../api/vault-status.mjs";
-import vaultImportHandler from "../api/vault-import.mjs";
-import vaultExportHandler from "../api/vault-export.mjs";
-import vaultViewHandler from "../api/vault-view.mjs";
-import workflowDashboardHandler from "../api/workflow-dashboard.mjs";
+} from "../src/lib/auth.js";
+import adminHandler from "../api/admin.js";
+import vaultHandler from "../api/vault.js";
+import workflowDashboardHandler from "../api/workflow-dashboard.js";
+
+const loginHandler = adminHandler;
+const logoutHandler = adminHandler;
+const vaultFilesHandler = vaultHandler;
+const vaultStatusHandler = vaultHandler;
+const vaultImportHandler = vaultHandler;
+const vaultExportHandler = vaultHandler;
+const vaultViewHandler = vaultHandler;
 
 beforeEach(() => {
   vi.stubEnv("PUBLIC_BASE_URL", "https://example.test");
