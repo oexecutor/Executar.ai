@@ -1,5 +1,5 @@
 import { verifyAdminRequest } from "./auth.js";
-import { escapeHtml, html, json } from "./http.js";
+import { absoluteUrl, escapeHtml, html, json } from "./http.js";
 
 /**
  * Gate 0.5 enforcement helpers. JSON routes answer 401; human HTML routes
@@ -52,6 +52,6 @@ export function loginPage(returnTo: string): Response {
 
 export async function requireAdminHtml(request: Request): Promise<Response | null> {
   if (await verifyAdminRequest(request)) return null;
-  const url = new URL(request.url);
+  const url = absoluteUrl(request);
   return loginPage(url.pathname + url.search);
 }

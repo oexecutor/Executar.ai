@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import { hashToken, randomToken, signAccessToken, verifyPkce } from "../src/lib/auth.js";
 import { baseUrl, resourceUrl } from "../src/lib/env.js";
-import { corsPreflight, html, json, methodNotAllowed, safeError, withCors } from "../src/lib/http.js";
+import { absoluteUrl, corsPreflight, html, json, methodNotAllowed, safeError, withCors } from "../src/lib/http.js";
 import { oauthStore } from "../src/lib/stores.js";
 import type { AuthorizationCode, OAuthClient, RefreshGrant } from "../src/lib/types.js";
 
@@ -77,7 +77,7 @@ async function authorize(request: Request): Promise<Response> {
   if (request.method === "OPTIONS") return corsPreflight(["GET", "POST"]);
   if (!["GET", "POST"].includes(request.method)) return withCors(methodNotAllowed(["GET", "POST"]));
   try {
-    const url = new URL(request.url);
+    const url = absoluteUrl(request);
     const form = request.method === "POST" ? new URLSearchParams(await request.text()) : undefined;
     const params = readAuthorizeParams(url, form);
     const validation = await validateAuthorize(params);
@@ -150,7 +150,7 @@ async function token(request: Request): Promise<Response> {
 async function metadata(request: Request): Promise<Response> {
   if (request.method === "OPTIONS") return corsPreflight(["GET"]);
   try {
-    const pathname = new URL(request.url).pathname;
+    const pathname = absoluteUrl(request).pathname;
     if (pathname.includes("oauth-protected-resource")) {
       return withCors(json({
         resource: resourceUrl(),
@@ -176,7 +176,7 @@ async function metadata(request: Request): Promise<Response> {
 }
 
 export default async (request: Request): Promise<Response> => {
-  const pathname = new URL(request.url).pathname;
+  const pathname = absoluteUrl(request).pathname;
   if (pathname === "/oauth/register") return register(request);
   if (pathname === "/oauth/authorize") return authorize(request);
   if (pathname === "/oauth/token") return token(request);

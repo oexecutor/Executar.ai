@@ -1,5 +1,5 @@
 import { adminAuthConfigured, adminCookie, clearAdminCookie, signAdminSession, verifyAdminPassword } from "../src/lib/auth.js";
-import { json, methodNotAllowed } from "../src/lib/http.js";
+import { absoluteUrl, json, methodNotAllowed } from "../src/lib/http.js";
 import { loginPage } from "../src/lib/admin-guard.js";
 
 /**
@@ -66,7 +66,7 @@ async function logout(request: Request): Promise<Response> {
 }
 
 export default async (request: Request): Promise<Response> => {
-  const pathname = new URL(request.url).pathname;
+  const pathname = absoluteUrl(request).pathname;
   if (pathname === "/api/admin/logout") return logout(request);
   return login(request);
 };
