@@ -41,9 +41,9 @@ afterEach(() => {
 });
 
 describe("/api/pm HTTP adapter (Gate 5, API half)", () => {
-  it("requires the operator session", async () => {
+  it("does not require an operator session (Gate 0.5 disabled at the user's request)", async () => {
     const response = await pmHandler(new Request(`${BASE}/status`));
-    expect(response.status).toBe(401);
+    expect(response.status).toBe(200);
   });
 
   it("serves system status and 404s unknown routes", async () => {

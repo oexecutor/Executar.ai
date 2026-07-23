@@ -10,16 +10,9 @@ import {
   verifyPkce,
 } from "../src/lib/auth.js";
 import adminHandler from "../api/admin.js";
-import vaultHandler from "../api/vault.js";
-import workflowDashboardHandler from "../api/workflow-dashboard.js";
 
 const loginHandler = adminHandler;
 const logoutHandler = adminHandler;
-const vaultFilesHandler = vaultHandler;
-const vaultStatusHandler = vaultHandler;
-const vaultImportHandler = vaultHandler;
-const vaultExportHandler = vaultHandler;
-const vaultViewHandler = vaultHandler;
 
 beforeEach(() => {
   vi.stubEnv("PUBLIC_BASE_URL", "https://example.test");
@@ -119,38 +112,10 @@ describe("admin session", () => {
   });
 });
 
-describe("vault routes require authentication (baseline §9 acceptance)", () => {
-  it("JSON vault routes answer 401 without a session", async () => {
-    const base = "https://example.test";
-    expect((await vaultFilesHandler(new Request(`${base}/api/vault/files`))).status).toBe(401);
-    expect(
-      (
-        await vaultFilesHandler(
-          new Request(`${base}/api/vault/files`, {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({ path: "a.md", content: "x" }),
-          }),
-        )
-      ).status,
-    ).toBe(401);
-    expect((await vaultStatusHandler(new Request(`${base}/api/vault/status`))).status).toBe(401);
-    expect(
-      (await vaultImportHandler(new Request(`${base}/api/vault/import`, { method: "POST" }))).status,
-    ).toBe(401);
-    expect((await vaultExportHandler(new Request(`${base}/api/vault/export`))).status).toBe(401);
-  });
-
-  it("HTML routes answer with a login form instead of content", async () => {
-    for (const [handler, path] of [
-      [vaultViewHandler, "/view"],
-      [workflowDashboardHandler, "/dashboard"],
-    ] as const) {
-      const response = await handler(new Request(`https://example.test${path}`));
-      expect(response.status).toBe(401);
-      const body = await response.text();
-      expect(body).toContain("/api/admin/login");
-      expect(body).not.toContain("STATUS_DASHBOARD");
-    }
+describe("admin guard (Gate 0.5, disabled at the user's explicit, informed request)", () => {
+  it("requireAdminJson and requireAdminHtml let every request through unconditionally", async () => {
+    const { requireAdminJson, requireAdminHtml } = await import("../src/lib/admin-guard.js");
+    expect(await requireAdminJson(new Request("https://example.test/api/vault/status"))).toBeNull();
+    expect(await requireAdminHtml(new Request("https://example.test/view"))).toBeNull();
   });
 });
