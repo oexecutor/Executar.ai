@@ -1,5 +1,5 @@
-import { DomainError } from "./errors.mjs";
-import type { ProjectStatus, SprintStatus, Task, TaskStatus } from "./entities.mjs";
+import { DomainError } from "./errors.js";
+import type { ProjectStatus, SprintStatus, Task, TaskStatus } from "./entities.js";
 
 const PROJECT_TRANSITIONS: Record<ProjectStatus, ProjectStatus[]> = {
   IDEA: ["PLANNED", "ARCHIVED"],

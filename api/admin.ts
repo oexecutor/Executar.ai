@@ -1,6 +1,6 @@
-import { adminAuthConfigured, adminCookie, clearAdminCookie, signAdminSession, verifyAdminPassword } from "../src/lib/auth.mjs";
-import { json, methodNotAllowed } from "../src/lib/http.mjs";
-import { loginPage } from "../src/lib/admin-guard.mjs";
+import { adminAuthConfigured, adminCookie, clearAdminCookie, signAdminSession, verifyAdminPassword } from "../src/lib/auth.js";
+import { json, methodNotAllowed } from "../src/lib/http.js";
+import { loginPage } from "../src/lib/admin-guard.js";
 
 /**
  * login + logout live in one function, dispatched by pathname, to stay

@@ -1,7 +1,7 @@
-import type { KvStore as Store } from "../src/lib/kv-store.mjs";
+import type { KvStore as Store } from "../src/lib/kv-store.js";
 import { describe, expect, it } from "vitest";
-import { BlobVaultService } from "../src/lib/vault.mjs";
-import { WorkflowDashboardService, isGeneratedWorkflowDashboard } from "../src/lib/workflow-dashboard.mjs";
+import { BlobVaultService } from "../src/lib/vault.js";
+import { WorkflowDashboardService, isGeneratedWorkflowDashboard } from "../src/lib/workflow-dashboard.js";
 
 function memoryStore(): Store {
   const values = new Map<string, unknown>();

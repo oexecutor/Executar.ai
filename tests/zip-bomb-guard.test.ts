@@ -1,7 +1,7 @@
 import { zipSync } from "fflate";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import vaultImportHandler, { setVaultStoreForTesting } from "../api/vault.js";
-import { adminCookie, signAdminSession } from "../src/lib/auth.mjs";
+import { adminCookie, signAdminSession } from "../src/lib/auth.js";
 import { memoryStore } from "./helpers/memory-store.js";
 
 /**

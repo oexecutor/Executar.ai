@@ -1,7 +1,7 @@
-import type { KvStore as Store } from "../lib/kv-store.mjs";
-import { BlobVaultService, VaultProblem } from "../lib/vault.mjs";
-import { DomainError } from "../domain/errors.mjs";
-import { newId } from "../domain/ids.mjs";
+import type { KvStore as Store } from "../lib/kv-store.js";
+import { BlobVaultService, VaultProblem } from "../lib/vault.js";
+import { DomainError } from "../domain/errors.js";
+import { newId } from "../domain/ids.js";
 import type {
   AuditEvent,
   DecompositionProposal,
@@ -9,7 +9,7 @@ import type {
   Project,
   Sprint,
   Task,
-} from "../domain/entities.mjs";
+} from "../domain/entities.js";
 import type {
   AuditRepository,
   BackupService,
@@ -17,7 +17,7 @@ import type {
   EntityRepository,
   RepositoryWriteOptions,
   WriteResult,
-} from "./interfaces.mjs";
+} from "./interfaces.js";
 import {
   auditIndexPath,
   auditPath,
@@ -27,7 +27,7 @@ import {
   stateFolder,
   statePath,
   type RecordType,
-} from "./paths.mjs";
+} from "./paths.js";
 
 const SCHEMA_VERSION = "1.0.0";
 const AUDIT_INDEX_LIMIT = 500;

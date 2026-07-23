@@ -1,8 +1,8 @@
 import crypto from "node:crypto";
 import path from "node:path";
-import type { KvStore as Store } from "./kv-store.mjs";
+import type { KvStore as Store } from "./kv-store.js";
 import { parse, stringify } from "yaml";
-import type { FileRecord, TrashRecord } from "./types.mjs";
+import type { FileRecord, TrashRecord } from "./types.js";
 
 const FILE_PREFIX = "file/";
 const TRASH_PREFIX = "trash/";

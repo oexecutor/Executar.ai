@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { DomainError } from "../domain/errors.mjs";
+import { DomainError } from "../domain/errors.js";
 import {
   DOMAIN_DEFAULTS,
   EPISTEMIC_TYPES,
@@ -13,30 +13,30 @@ import {
   type Sprint,
   type Task,
   type TaskStatus,
-} from "../domain/entities.mjs";
+} from "../domain/entities.js";
 import {
   assertActiveWorkflowLimit,
   assertDominantDeliveryLimit,
   assertNoDependencyCycle,
   assertStepLimit,
-} from "../domain/capacity.mjs";
+} from "../domain/capacity.js";
 import {
   assertProjectTransition,
   assertSprintTransition,
   assertTaskTransition,
-} from "../domain/transitions.mjs";
+} from "../domain/transitions.js";
 import {
   addEvidenceInput,
   createProjectInput,
   createSprintInput,
   createTaskInput,
   prepareProposalInput,
-} from "../domain/schemas.mjs";
-import { makeEvidence, makeProject, makeProposal, makeSprint, makeStep, makeTask } from "../domain/factories.mjs";
-import type { DeskOsRepositories } from "../repository/interfaces.mjs";
-import { statePath } from "../repository/paths.mjs";
-import type { BlobVaultService } from "../lib/vault.mjs";
-import { writeOptions, type ActorContext } from "./context.mjs";
+} from "../domain/schemas.js";
+import { makeEvidence, makeProject, makeProposal, makeSprint, makeStep, makeTask } from "../domain/factories.js";
+import type { DeskOsRepositories } from "../repository/interfaces.js";
+import { statePath } from "../repository/paths.js";
+import type { BlobVaultService } from "../lib/vault.js";
+import { writeOptions, type ActorContext } from "./context.js";
 
 const SCHEMA_VERSION = "1.0.0";
 

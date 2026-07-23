@@ -1,7 +1,7 @@
-import type { KvStore as Store } from "../src/lib/kv-store.mjs";
+import type { KvStore as Store } from "../src/lib/kv-store.js";
 import { describe, expect, it } from "vitest";
-import { DeskWorkflowService } from "../src/lib/desk-workflows.mjs";
-import { BlobVaultService } from "../src/lib/vault.mjs";
+import { DeskWorkflowService } from "../src/lib/desk-workflows.js";
+import { BlobVaultService } from "../src/lib/vault.js";
 
 function memoryStore(): Store {
   const values = new Map<string, unknown>();

@@ -1,10 +1,10 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { afterEach, describe, expect, it } from "vitest";
-import { DeskOsService } from "../src/application/desk-os-service.mjs";
-import { createDeskOsRepositories } from "../src/repository/vault-adapter.mjs";
-import { BlobVaultService } from "../src/lib/vault.mjs";
-import { createMcpServer } from "../src/mcp-server.mjs";
+import { DeskOsService } from "../src/application/desk-os-service.js";
+import { createDeskOsRepositories } from "../src/repository/vault-adapter.js";
+import { BlobVaultService } from "../src/lib/vault.js";
+import { createMcpServer } from "../src/mcp-server.js";
 import { memoryStore } from "./helpers/memory-store.js";
 
 async function connectedClient() {

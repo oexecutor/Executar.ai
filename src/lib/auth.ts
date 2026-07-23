@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import { jwtVerify, SignJWT } from "jose";
-import { baseUrl, requiredEnv, resourceUrl } from "./env.mjs";
+import { baseUrl, requiredEnv, resourceUrl } from "./env.js";
 
 const encoder = new TextEncoder();
 

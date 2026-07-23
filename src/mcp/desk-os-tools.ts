@@ -1,11 +1,11 @@
 import crypto from "node:crypto";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { DeskOsService } from "../application/desk-os-service.mjs";
-import type { ActorContext } from "../application/context.mjs";
-import { DomainError } from "../domain/errors.mjs";
-import { EPISTEMIC_TYPES, PRIORITIES, TASK_STATUSES } from "../domain/entities.mjs";
-import { VaultProblem } from "../lib/vault.mjs";
+import { DeskOsService } from "../application/desk-os-service.js";
+import type { ActorContext } from "../application/context.js";
+import { DomainError } from "../domain/errors.js";
+import { EPISTEMIC_TYPES, PRIORITIES, TASK_STATUSES } from "../domain/entities.js";
+import { VaultProblem } from "../lib/vault.js";
 
 /**
  * The desk_os_* catalog from contracts/mcp-tools.yaml. Registered ALONGSIDE

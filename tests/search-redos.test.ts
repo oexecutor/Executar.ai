@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BlobVaultService } from "../src/lib/vault.mjs";
+import { BlobVaultService } from "../src/lib/vault.js";
 import { memoryStore } from "./helpers/memory-store.js";
 
 /**

@@ -8,7 +8,7 @@ import {
   verifyAdminPassword,
   verifyAdminRequest,
   verifyPkce,
-} from "../src/lib/auth.mjs";
+} from "../src/lib/auth.js";
 import adminHandler from "../api/admin.js";
 import vaultHandler from "../api/vault.js";
 import workflowDashboardHandler from "../api/workflow-dashboard.js";

@@ -1,12 +1,12 @@
 import crypto from "node:crypto";
-import { requireAdminJson } from "../src/lib/admin-guard.mjs";
-import { json } from "../src/lib/http.mjs";
-import { vaultStore } from "../src/lib/stores.mjs";
-import { BlobVaultService, VaultProblem } from "../src/lib/vault.mjs";
-import { DeskOsService } from "../src/application/desk-os-service.mjs";
-import type { ActorContext } from "../src/application/context.mjs";
-import { createDeskOsRepositories } from "../src/repository/vault-adapter.mjs";
-import { DomainError } from "../src/domain/errors.mjs";
+import { requireAdminJson } from "../src/lib/admin-guard.js";
+import { json } from "../src/lib/http.js";
+import { vaultStore } from "../src/lib/stores.js";
+import { BlobVaultService, VaultProblem } from "../src/lib/vault.js";
+import { DeskOsService } from "../src/application/desk-os-service.js";
+import type { ActorContext } from "../src/application/context.js";
+import { createDeskOsRepositories } from "../src/repository/vault-adapter.js";
+import { DomainError } from "../src/domain/errors.js";
 
 /**
  * HTTP adapter for contracts/project-management-api.yaml. Thin by design:

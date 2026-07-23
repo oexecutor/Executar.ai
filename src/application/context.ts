@@ -1,5 +1,5 @@
-import type { ActorType } from "../domain/entities.mjs";
-import type { RepositoryWriteOptions } from "../repository/interfaces.mjs";
+import type { ActorType } from "../domain/entities.js";
+import type { RepositoryWriteOptions } from "../repository/interfaces.js";
 
 /** Who is calling an application service, propagated into every audit event. */
 export interface ActorContext {

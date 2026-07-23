@@ -1,13 +1,13 @@
 import path from "node:path";
 import { unzipSync, zipSync, type UnzipFileInfo } from "fflate";
-import { requireAdminHtml, requireAdminJson } from "../src/lib/admin-guard.mjs";
-import { baseUrl } from "../src/lib/env.mjs";
-import { json as httpJson, methodNotAllowed, safeError } from "../src/lib/http.mjs";
-import { vaultStore } from "../src/lib/stores.mjs";
-import { BlobVaultService, normalizeVaultPath, VaultProblem } from "../src/lib/vault.mjs";
-import { isDeskOsPath } from "../src/repository/paths.mjs";
-import { buildVaultBrowserUrl, buildVaultDownloadUrl, buildVaultRawUrl, buildVaultViewUrl, contentTypeFor, isTextFile, renderMarkdown, renderViewerError } from "../src/lib/viewer.mjs";
-import type { FileRecord } from "../src/lib/types.mjs";
+import { requireAdminHtml, requireAdminJson } from "../src/lib/admin-guard.js";
+import { baseUrl } from "../src/lib/env.js";
+import { json as httpJson, methodNotAllowed, safeError } from "../src/lib/http.js";
+import { vaultStore } from "../src/lib/stores.js";
+import { BlobVaultService, normalizeVaultPath, VaultProblem } from "../src/lib/vault.js";
+import { isDeskOsPath } from "../src/repository/paths.js";
+import { buildVaultBrowserUrl, buildVaultDownloadUrl, buildVaultRawUrl, buildVaultViewUrl, contentTypeFor, isTextFile, renderMarkdown, renderViewerError } from "../src/lib/viewer.js";
+import type { FileRecord } from "../src/lib/types.js";
 
 /**
  * status/export/import/files/view live in one function, dispatched by

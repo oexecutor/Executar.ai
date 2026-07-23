@@ -1,4 +1,4 @@
-import type { KvStore as Store } from "../../src/lib/kv-store.mjs";
+import type { KvStore as Store } from "../../src/lib/kv-store.js";
 
 /** Same in-memory Store fake used by tests/vault.test.ts, shared. */
 export function memoryStore(): Store {

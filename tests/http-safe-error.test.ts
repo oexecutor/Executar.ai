@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { safeError } from "../src/lib/http.mjs";
-import { VaultProblem } from "../src/lib/vault.mjs";
+import { safeError } from "../src/lib/http.js";
+import { VaultProblem } from "../src/lib/vault.js";
 import oauthTokenHandler from "../api/oauth.js";
 
 /**

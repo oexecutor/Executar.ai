@@ -1,6 +1,6 @@
-import type { KvStore as Store } from "../src/lib/kv-store.mjs";
+import type { KvStore as Store } from "../src/lib/kv-store.js";
 import { describe, expect, it } from "vitest";
-import { BlobVaultService, normalizeVaultPath } from "../src/lib/vault.mjs";
+import { BlobVaultService, normalizeVaultPath } from "../src/lib/vault.js";
 
 function memoryStore(): Store {
   const values = new Map<string, unknown>();

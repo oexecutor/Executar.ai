@@ -1,9 +1,9 @@
 import crypto from "node:crypto";
-import { hashToken, randomToken, signAccessToken, verifyPkce } from "../src/lib/auth.mjs";
-import { baseUrl, resourceUrl } from "../src/lib/env.mjs";
-import { corsPreflight, html, json, methodNotAllowed, safeError, withCors } from "../src/lib/http.mjs";
-import { oauthStore } from "../src/lib/stores.mjs";
-import type { AuthorizationCode, OAuthClient, RefreshGrant } from "../src/lib/types.mjs";
+import { hashToken, randomToken, signAccessToken, verifyPkce } from "../src/lib/auth.js";
+import { baseUrl, resourceUrl } from "../src/lib/env.js";
+import { corsPreflight, html, json, methodNotAllowed, safeError, withCors } from "../src/lib/http.js";
+import { oauthStore } from "../src/lib/stores.js";
+import type { AuthorizationCode, OAuthClient, RefreshGrant } from "../src/lib/types.js";
 
 /**
  * All four OAuth endpoints (register/authorize/token/discovery) live in one

@@ -1,5 +1,5 @@
-import { verifyAdminRequest } from "./auth.mjs";
-import { escapeHtml, html, json } from "./http.mjs";
+import { verifyAdminRequest } from "./auth.js";
+import { escapeHtml, html, json } from "./http.js";
 
 /**
  * Gate 0.5 enforcement helpers. JSON routes answer 401; human HTML routes
