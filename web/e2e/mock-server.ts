@@ -24,11 +24,11 @@ function serveStatic(req: IncomingMessage, res: ServerResponse, pathname: string
 }
 
 /**
- * A minimal stand-in for the real Netlify Functions API, implementing just
+ * A minimal stand-in for the real Vercel Functions API, implementing just
  * enough of /api/admin/* and /api/pm/* to drive the real React app through
  * a full login -> Today -> create project -> board -> create/move/edit
  * task -> logout cycle in a real browser (Playwright), without needing
- * `netlify dev` (which this sandbox's proxy cannot run — see the smoke
+ * `vercel dev` (which this sandbox's proxy cannot run — see the smoke
  * test commit for the reproduction). This exercises actual UI behavior,
  * not a mocked component tree.
  */
@@ -133,7 +133,7 @@ export function startMockServer(port: number) {
     const method = req.method ?? "GET";
 
     // Static assets (the built React app) are never auth-gated, same as
-    // real Netlify static hosting — only /api/* functions are.
+    // real Vercel static hosting — only /api/* functions are.
     if (method === "GET" && !path.startsWith("/api/")) {
       if (serveStatic(req, res, path)) return;
     }

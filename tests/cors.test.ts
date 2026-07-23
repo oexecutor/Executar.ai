@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import oauthRegisterHandler from "../netlify/functions/oauth-register.mjs";
-import oauthTokenHandler from "../netlify/functions/oauth-token.mjs";
-import oauthMetadataHandler from "../netlify/functions/oauth-metadata.mjs";
-import oauthAuthorizeHandler from "../netlify/functions/oauth-authorize.mjs";
-import mcpHandler from "../netlify/functions/mcp.mjs";
+import oauthRegisterHandler from "../api/oauth-register.mjs";
+import oauthTokenHandler from "../api/oauth-token.mjs";
+import oauthMetadataHandler from "../api/oauth-metadata.mjs";
+import oauthAuthorizeHandler from "../api/oauth-authorize.mjs";
+import mcpHandler from "../api/mcp.mjs";
 
 /**
  * The MCP authorization spec expects a client that may run in a browser
@@ -14,15 +14,12 @@ import mcpHandler from "../netlify/functions/mcp.mjs";
  * cause for "could not register" with no further detail.
  */
 describe("CORS on OAuth + MCP endpoints", () => {
-  const env: Record<string, string | undefined> = {};
-
   beforeEach(() => {
-    env.PUBLIC_BASE_URL = "https://example.test";
-    (globalThis as Record<string, unknown>).Netlify = { env: { get: (name: string) => env[name] } };
+    vi.stubEnv("PUBLIC_BASE_URL", "https://example.test");
   });
 
   afterEach(() => {
-    delete (globalThis as Record<string, unknown>).Netlify;
+    vi.unstubAllEnvs();
   });
 
   it("answers OPTIONS preflight on /oauth/register with CORS headers", async () => {
@@ -81,8 +78,8 @@ describe("CORS on OAuth + MCP endpoints", () => {
   });
 
   it("attaches CORS headers to an /oauth/authorize error response, including when the lookup itself fails", async () => {
-    // No Netlify Blobs runtime is configured in this test environment, so
-    // oauthStore().get() throws before validate() can even reach its own
+    // No Postgres connection string is configured in this test environment,
+    // so oauthStore().get() throws before validate() can even reach its own
     // "unknown client" check — the response falls through to safeError's
     // 500. What this test actually guards is that CORS headers are present
     // on *every* exit path of the handler, not just the happy path.

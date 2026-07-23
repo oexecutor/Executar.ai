@@ -1,4 +1,4 @@
-import type { Store } from "@netlify/blobs";
+import type { KvStore as Store } from "../../src/lib/kv-store.mjs";
 
 /** Same in-memory Store fake used by tests/vault.test.ts, shared. */
 export function memoryStore(): Store {

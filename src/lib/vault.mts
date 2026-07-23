@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import path from "node:path";
-import type { Store } from "@netlify/blobs";
+import type { KvStore as Store } from "./kv-store.mjs";
 import { parse, stringify } from "yaml";
 import type { FileRecord, TrashRecord } from "./types.mjs";
 
@@ -251,7 +251,7 @@ export class BlobVaultService {
     }
     return {
       vaultName: "DESK-OS Obsidian Cloud Vault",
-      storage: "Netlify Blobs",
+      storage: "Vercel Postgres",
       noteCount: files.filter((file) => file.path.toLowerCase().endsWith(".md")).length,
       fileCount: files.length,
       folderCount: folders.size,

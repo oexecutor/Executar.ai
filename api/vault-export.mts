@@ -1,9 +1,8 @@
-import type { Config } from "@netlify/functions";
 import { zipSync } from "fflate";
-import { requireAdminJson } from "../../src/lib/admin-guard.mjs";
-import { json, methodNotAllowed, safeError } from "../../src/lib/http.mjs";
-import { vaultStore } from "../../src/lib/stores.mjs";
-import { BlobVaultService } from "../../src/lib/vault.mjs";
+import { requireAdminJson } from "../src/lib/admin-guard.mjs";
+import { json, methodNotAllowed, safeError } from "../src/lib/http.mjs";
+import { vaultStore } from "../src/lib/stores.mjs";
+import { BlobVaultService } from "../src/lib/vault.mjs";
 
 export default async (request: Request): Promise<Response> => {
   if (request.method !== "GET") return methodNotAllowed(["GET"]);
@@ -29,5 +28,3 @@ export default async (request: Request): Promise<Response> => {
     return safeError(error);
   }
 };
-
-export const config: Config = { path: "/api/vault/export" };

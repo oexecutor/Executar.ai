@@ -1,10 +1,9 @@
 import path from "node:path";
-import type { Config } from "@netlify/functions";
-import { requireAdminHtml } from "../../src/lib/admin-guard.mjs";
-import { baseUrl } from "../../src/lib/env.mjs";
-import { vaultStore } from "../../src/lib/stores.mjs";
-import { BlobVaultService, VaultProblem } from "../../src/lib/vault.mjs";
-import { buildWorkflowDashboardUrl, isGeneratedWorkflowDashboard } from "../../src/lib/workflow-dashboard.mjs";
+import { requireAdminHtml } from "../src/lib/admin-guard.mjs";
+import { baseUrl } from "../src/lib/env.mjs";
+import { vaultStore } from "../src/lib/stores.mjs";
+import { BlobVaultService, VaultProblem } from "../src/lib/vault.mjs";
+import { buildWorkflowDashboardUrl, isGeneratedWorkflowDashboard } from "../src/lib/workflow-dashboard.mjs";
 
 const DASHBOARD_ROOT = "DESK-OS/Dashboards/Workflows/";
 
@@ -70,5 +69,3 @@ export default async (request: Request): Promise<Response> => {
     return new Response(errorPage("Erro interno", "O dashboard não pôde ser carregado."), { status: 500, headers: headers() });
   }
 };
-
-export const config: Config = { path: "/dashboard" };

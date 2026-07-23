@@ -1,6 +1,6 @@
 import { zipSync } from "fflate";
-import { afterEach, describe, expect, it } from "vitest";
-import vaultImportHandler, { setVaultStoreForTesting } from "../netlify/functions/vault-import.mjs";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import vaultImportHandler, { setVaultStoreForTesting } from "../api/vault-import.mjs";
 import { adminCookie, signAdminSession } from "../src/lib/auth.mjs";
 import { memoryStore } from "./helpers/memory-store.js";
 
@@ -14,14 +14,10 @@ import { memoryStore } from "./helpers/memory-store.js";
  * one oversized file keep working.
  */
 
-const env: Record<string, string | undefined> = {
-  PUBLIC_BASE_URL: "https://example.test",
-  MCP_JWT_SECRET: "unit-test-secret-with-at-least-32-characters!!",
-  ADMIN_PASSWORD: "correct-horse-battery",
-};
-
 async function authenticatedImport(archive: Uint8Array): Promise<Response> {
-  (globalThis as Record<string, unknown>).Netlify = { env: { get: (name: string) => env[name] } };
+  vi.stubEnv("PUBLIC_BASE_URL", "https://example.test");
+  vi.stubEnv("MCP_JWT_SECRET", "unit-test-secret-with-at-least-32-characters!!");
+  vi.stubEnv("ADMIN_PASSWORD", "correct-horse-battery");
   const cookie = adminCookie(await signAdminSession()).split(";")[0] ?? "";
   setVaultStoreForTesting(() => memoryStore());
   return vaultImportHandler(
@@ -33,7 +29,10 @@ async function authenticatedImport(archive: Uint8Array): Promise<Response> {
   );
 }
 
-afterEach(() => setVaultStoreForTesting(null));
+afterEach(() => {
+  setVaultStoreForTesting(null);
+  vi.unstubAllEnvs();
+});
 
 describe("zip-bomb guard", () => {
   it("rejects a realistic high-ratio bomb (200MB declared, ~200KB compressed) without inflating it", async () => {

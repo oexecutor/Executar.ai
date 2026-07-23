@@ -1,4 +1,4 @@
-import type { Store } from "@netlify/blobs";
+import type { KvStore as Store } from "../src/lib/kv-store.mjs";
 import { describe, expect, it } from "vitest";
 import { BlobVaultService, normalizeVaultPath } from "../src/lib/vault.mjs";
 

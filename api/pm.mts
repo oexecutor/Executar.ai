@@ -1,13 +1,12 @@
 import crypto from "node:crypto";
-import type { Config } from "@netlify/functions";
-import { requireAdminJson } from "../../src/lib/admin-guard.mjs";
-import { json } from "../../src/lib/http.mjs";
-import { vaultStore } from "../../src/lib/stores.mjs";
-import { BlobVaultService, VaultProblem } from "../../src/lib/vault.mjs";
-import { DeskOsService } from "../../src/application/desk-os-service.mjs";
-import type { ActorContext } from "../../src/application/context.mjs";
-import { createDeskOsRepositories } from "../../src/repository/vault-adapter.mjs";
-import { DomainError } from "../../src/domain/errors.mjs";
+import { requireAdminJson } from "../src/lib/admin-guard.mjs";
+import { json } from "../src/lib/http.mjs";
+import { vaultStore } from "../src/lib/stores.mjs";
+import { BlobVaultService, VaultProblem } from "../src/lib/vault.mjs";
+import { DeskOsService } from "../src/application/desk-os-service.mjs";
+import type { ActorContext } from "../src/application/context.mjs";
+import { createDeskOsRepositories } from "../src/repository/vault-adapter.mjs";
+import { DomainError } from "../src/domain/errors.mjs";
 
 /**
  * HTTP adapter for contracts/project-management-api.yaml. Thin by design:
@@ -226,7 +225,7 @@ function defaultService(): DeskOsService {
 
 let serviceFactory: () => DeskOsService = defaultService;
 
-/** Tests inject an in-memory service; production uses Netlify Blobs. */
+/** Tests inject an in-memory service; production uses Vercel Postgres. */
 export function setPmServiceForTesting(factory: (() => DeskOsService) | null): void {
   serviceFactory = factory ?? defaultService;
 }
@@ -280,5 +279,3 @@ export default async (request: Request): Promise<Response> => {
     );
   }
 };
-
-export const config: Config = { path: "/api/pm/*" };

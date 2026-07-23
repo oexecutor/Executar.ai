@@ -26,7 +26,7 @@ export function constantTimeEqual(left: string, right: string): boolean {
 
 /** True when the operator password is configured in the environment. */
 export function adminAuthConfigured(): boolean {
-  return Boolean(Netlify.env.get("ADMIN_PASSWORD")?.trim());
+  return Boolean(process.env.ADMIN_PASSWORD?.trim());
 }
 
 /**
@@ -35,7 +35,7 @@ export function adminAuthConfigured(): boolean {
  * ADMIN_PASSWORD is not configured.
  */
 export function verifyAdminPassword(password: string): boolean {
-  const expected = Netlify.env.get("ADMIN_PASSWORD")?.trim();
+  const expected = process.env.ADMIN_PASSWORD?.trim();
   if (!expected || typeof password !== "string" || password.length === 0) return false;
   return constantTimeEqual(hashToken(password), hashToken(expected));
 }

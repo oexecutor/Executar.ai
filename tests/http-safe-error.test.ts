@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { safeError } from "../src/lib/http.mjs";
 import { VaultProblem } from "../src/lib/vault.mjs";
-import oauthTokenHandler from "../netlify/functions/oauth-token.mjs";
+import oauthTokenHandler from "../api/oauth-token.mjs";
 
 /**
  * baseline §11.6: safeError previously wrote error.message straight into
@@ -58,25 +58,23 @@ describe("safeError", () => {
 });
 
 describe("oauth-token.mts does not leak internals through its safeError catch-all", () => {
-  const env: Record<string, string | undefined> = {};
-
   beforeEach(() => {
     // MCP_JWT_SECRET intentionally absent/short: signAccessToken() throws a
     // real internal Error ("...must contain at least 32 characters"), which
     // must never reach the HTTP response body.
-    env.PUBLIC_BASE_URL = "https://example.test";
-    env.MCP_JWT_SECRET = "too-short";
-    (globalThis as Record<string, unknown>).Netlify = { env: { get: (name: string) => env[name] } };
+    vi.stubEnv("PUBLIC_BASE_URL", "https://example.test");
+    vi.stubEnv("MCP_JWT_SECRET", "too-short");
     vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllEnvs();
   });
 
   it("returns a generic message instead of the unconfigured-store internal error", async () => {
-    // No Netlify Blobs runtime is configured in this test environment, so
-    // oauthStore().get(...) throws its own internal Error — a realistic
+    // No Postgres connection string is configured in this test environment,
+    // so oauthStore().get(...) throws its own internal Error — a realistic
     // stand-in for "parser internals, blob-store errors" (baseline §11.6).
     const response = await oauthTokenHandler(
       new Request("https://example.test/oauth/token", {

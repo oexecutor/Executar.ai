@@ -1,6 +1,6 @@
 export function requiredEnv(name: string): string {
-  const value = Netlify.env.get(name)?.trim();
-  if (!value) throw new Error(`Missing required Netlify environment variable: ${name}`);
+  const value = process.env[name]?.trim();
+  if (!value) throw new Error(`Missing required environment variable: ${name}`);
   return value;
 }
 
@@ -13,5 +13,5 @@ export function resourceUrl(): string {
 }
 
 export function isProduction(): boolean {
-  return Netlify.env.get("CONTEXT") === "production";
+  return process.env.VERCEL_ENV === "production";
 }

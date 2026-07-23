@@ -1,10 +1,9 @@
-import type { Config } from "@netlify/functions";
 import { unzipSync, type UnzipFileInfo } from "fflate";
-import { requireAdminJson } from "../../src/lib/admin-guard.mjs";
-import { json, methodNotAllowed, safeError } from "../../src/lib/http.mjs";
-import { vaultStore } from "../../src/lib/stores.mjs";
-import { BlobVaultService, normalizeVaultPath, VaultProblem } from "../../src/lib/vault.mjs";
-import { isDeskOsPath } from "../../src/repository/paths.mjs";
+import { requireAdminJson } from "../src/lib/admin-guard.mjs";
+import { json, methodNotAllowed, safeError } from "../src/lib/http.mjs";
+import { vaultStore } from "../src/lib/stores.mjs";
+import { BlobVaultService, normalizeVaultPath, VaultProblem } from "../src/lib/vault.mjs";
+import { isDeskOsPath } from "../src/repository/paths.mjs";
 
 const MAX_ARCHIVE_BYTES = 6_000_000;
 const MAX_FILES = 2_000;
@@ -55,7 +54,7 @@ function evaluateEntries(compressed: Uint8Array) {
 
 let storeFactory = vaultStore;
 
-/** Tests inject an in-memory store; production uses Netlify Blobs. */
+/** Tests inject an in-memory store; production uses Vercel Postgres. */
 export function setVaultStoreForTesting(factory: typeof vaultStore | null): void {
   storeFactory = factory ?? vaultStore;
 }
@@ -106,5 +105,3 @@ export default async (request: Request): Promise<Response> => {
     return safeError(error);
   }
 };
-
-export const config: Config = { path: "/api/vault/import" };

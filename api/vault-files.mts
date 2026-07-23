@@ -1,12 +1,11 @@
 import path from "node:path";
-import type { Config } from "@netlify/functions";
-import { requireAdminJson } from "../../src/lib/admin-guard.mjs";
-import { baseUrl } from "../../src/lib/env.mjs";
-import { vaultStore } from "../../src/lib/stores.mjs";
-import { BlobVaultService, normalizeVaultPath, VaultProblem } from "../../src/lib/vault.mjs";
-import { isDeskOsPath } from "../../src/repository/paths.mjs";
-import { buildVaultDownloadUrl, buildVaultRawUrl, buildVaultViewUrl, contentTypeFor, isTextFile, renderMarkdown } from "../../src/lib/viewer.mjs";
-import type { FileRecord } from "../../src/lib/types.mjs";
+import { requireAdminJson } from "../src/lib/admin-guard.mjs";
+import { baseUrl } from "../src/lib/env.mjs";
+import { vaultStore } from "../src/lib/stores.mjs";
+import { BlobVaultService, normalizeVaultPath, VaultProblem } from "../src/lib/vault.mjs";
+import { isDeskOsPath } from "../src/repository/paths.mjs";
+import { buildVaultDownloadUrl, buildVaultRawUrl, buildVaultViewUrl, contentTypeFor, isTextFile, renderMarkdown } from "../src/lib/viewer.mjs";
+import type { FileRecord } from "../src/lib/types.mjs";
 
 const MAX_EDITOR_BYTES = 1_048_576;
 
@@ -164,5 +163,3 @@ export default async (request: Request): Promise<Response> => {
     return json({ error: { code: "SERVER_ERROR", message: "O navegador do vault encontrou um erro inesperado." } }, 500);
   }
 };
-
-export const config: Config = { path: "/api/vault/files" };
