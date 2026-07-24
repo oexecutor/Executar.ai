@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { getJson } from "./api";
-import { getBrowserSession, restoreWorkspaceFromAppSession, selectedWorkspace, signOut } from "./auth";
+import {
+  restoreWorkspaceFromAppSession,
+  selectedWorkspace,
+  signOut,
+} from "./auth";
 import { Layout, type AppView } from "./components/Layout";
 
 import { Board } from "./pages/Board";
@@ -59,7 +63,8 @@ export function App() {
     await signOut();
     setProjects([]);
     setSelectedProjectId(null);
-    setSession("anonymous");
+    setSession("checking");
+    await checkSession();
   }
 
   if (session === "checking") {
