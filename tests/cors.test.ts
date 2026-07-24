@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import oauthHandler from "../api/oauth.js";
+import { oauthHandler } from "../api/oauth.js";
 import { mcpHandler } from "../api/mcp.js";
 
 const oauthRegisterHandler = oauthHandler;
@@ -79,10 +79,10 @@ describe("CORS on OAuth + MCP endpoints", () => {
     expect(response.headers.get("Access-Control-Allow-Origin")).toBe("*");
   });
 
-  it("redirects an unauthenticated OAuth authorization to sign-in with CORS", async () => {
+  it("redirects an unauthenticated OAuth authorization to the workspace with CORS", async () => {
     const response = await oauthAuthorizeHandler(new Request("https://example.test/oauth/authorize?client_id=unknown", { method: "GET" }));
     expect(response.status).toBe(303);
-    expect(response.headers.get("location")).toContain("/entrar?return_to=");
+    expect(response.headers.get("location")).toContain("/app");
     expect(response.headers.get("Access-Control-Allow-Origin")).toBe("*");
   });
 

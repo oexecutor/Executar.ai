@@ -6,6 +6,7 @@ import { vaultStore } from "../src/lib/stores.js";
 import { BlobVaultService, VaultProblem } from "../src/lib/vault.js";
 import { buildWorkflowDashboardUrl, isGeneratedWorkflowDashboard } from "../src/lib/workflow-dashboard.js";
 import { getAuthenticatedRequest } from "../src/lib/request-auth.js";
+import { createVercelNodeHandler } from "../src/lib/vercel-node-adapter.js";
 
 const DASHBOARD_ROOT = "DESK-OS/Dashboards/Workflows/";
 
@@ -40,7 +41,7 @@ function listPage(items: Array<{ path: string; modifiedAt: string }>): string {
   return `<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dashboards DESK-OS</title><style>body{margin:0;background:#0d1117;color:#e6edf3;font-family:system-ui,sans-serif;padding:32px}.wrap{max-width:860px;margin:auto}.eyebrow{font:12px ui-monospace,monospace;color:#5fa8ff;letter-spacing:.12em;text-transform:uppercase}h1{font-size:28px}ul{list-style:none;padding:0;display:grid;gap:10px}li{border:1px solid #263041;background:#151b23;border-radius:10px;padding:16px;display:flex;justify-content:space-between;gap:16px}a{color:#e6edf3;font-weight:650;text-decoration:none}small{color:#8b98a5}</style><body><div class="wrap"><div class="eyebrow">DESK-OS · Vault</div><h1>Dashboards dinâmicos</h1><ul>${rows}</ul></div></body></html>`;
 }
 
-export default async (request: Request): Promise<Response> => {
+async function workflowDashboardHandler(request: Request): Promise<Response> {
   const denied = await requireAdminHtml(request);
   if (denied) return denied;
   const auth = await getAuthenticatedRequest(request);
@@ -72,4 +73,7 @@ export default async (request: Request): Promise<Response> => {
     console.error(error instanceof Error ? error.message : String(error));
     return new Response(errorPage("Erro interno", "O dashboard não pôde ser carregado."), { status: 500, headers: headers() });
   }
-};
+}
+
+export { workflowDashboardHandler };
+export default createVercelNodeHandler(workflowDashboardHandler);

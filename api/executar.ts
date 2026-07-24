@@ -6,6 +6,7 @@ import { requireAdminJson } from "../src/lib/admin-guard.js";
 import { absoluteUrl, json } from "../src/lib/http.js";
 import { getAuthenticatedRequest, type AuthenticatedRequest } from "../src/lib/request-auth.js";
 import { vaultStore } from "../src/lib/stores.js";
+import { createVercelNodeHandler } from "../src/lib/vercel-node-adapter.js";
 
 function response(data: unknown, requestId: string, status = 200): Response {
   return json(
@@ -36,7 +37,7 @@ function canWrite(auth: AuthenticatedRequest): boolean {
   return auth.role !== "VIEWER";
 }
 
-export default async (request: Request): Promise<Response> => {
+async function executarHandler(request: Request): Promise<Response> {
   const denied = await requireAdminJson(request);
   if (denied) return denied;
   const auth = await getAuthenticatedRequest(request);
@@ -117,4 +118,7 @@ export default async (request: Request): Promise<Response> => {
       { status: 500 },
     );
   }
-};
+}
+
+export { executarHandler };
+export default createVercelNodeHandler(executarHandler);

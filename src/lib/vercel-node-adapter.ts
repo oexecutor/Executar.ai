@@ -1,3 +1,5 @@
+import type { IncomingMessage, ServerResponse } from "node:http";
+
 type WebHandler = (request: Request) => Response | Promise<Response>;
 
 type HeaderValue = string | string[] | undefined;
@@ -6,23 +8,10 @@ function firstHeader(value: HeaderValue): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
 
-async function readBody(req: any): Promise<BodyInit | undefined> {
-  if (req.body !== undefined && req.body !== null) {
-    if (typeof req.body === "string" || req.body instanceof Uint8Array) {
-      return req.body as BodyInit;
-    }
-    return JSON.stringify(req.body);
-  }
-
-  if (typeof req?.[Symbol.asyncIterator] !== "function") return undefined;
-
+async function readBody(req: IncomingMessage): Promise<BodyInit | undefined> {
   const chunks: Uint8Array[] = [];
-  for await (const chunk of req as AsyncIterable<Uint8Array | string>) {
-    chunks.push(
-      typeof chunk === "string"
-        ? new TextEncoder().encode(chunk)
-        : new Uint8Array(chunk),
-    );
+  for await (const chunk of req) {
+    chunks.push(typeof chunk === "string" ? new TextEncoder().encode(chunk) : new Uint8Array(chunk));
   }
 
   if (!chunks.length) return undefined;
@@ -39,7 +28,7 @@ async function readBody(req: any): Promise<BodyInit | undefined> {
   return merged as BodyInit;
 }
 
-async function toWebRequest(req: any): Promise<Request> {
+async function toWebRequest(req: IncomingMessage): Promise<Request> {
   const rawHeaders: Record<string, HeaderValue> = req.headers ?? {};
   const headers = new Headers();
 
@@ -71,14 +60,11 @@ async function toWebRequest(req: any): Promise<Request> {
   return new Request(url, init);
 }
 
-async function writeNodeResponse(response: Response, res: any): Promise<void> {
+async function writeNodeResponse(response: Response, res: ServerResponse): Promise<void> {
   res.statusCode = response.status;
 
-  const responseHeaders: any = response.headers;
-  if (typeof responseHeaders.getSetCookie === "function") {
-    const cookies = responseHeaders.getSetCookie();
-    if (cookies.length) res.setHeader("set-cookie", cookies);
-  }
+  const cookies = response.headers.getSetCookie();
+  if (cookies.length) res.setHeader("set-cookie", cookies);
 
   response.headers.forEach((value, key) => {
     if (key.toLowerCase() !== "set-cookie") res.setHeader(key, value);
@@ -90,7 +76,7 @@ async function writeNodeResponse(response: Response, res: any): Promise<void> {
   }
 
   const reader = response.body.getReader();
-  while (true) {
+  for (;;) {
     const { done, value } = await reader.read();
     if (done) break;
     res.write(value);
@@ -99,7 +85,7 @@ async function writeNodeResponse(response: Response, res: any): Promise<void> {
 }
 
 export function createVercelNodeHandler(webHandler: WebHandler) {
-  return async function vercelNodeHandler(req: any, res: any): Promise<void> {
+  return async function vercelNodeHandler(req: IncomingMessage, res: ServerResponse): Promise<void> {
     try {
       const request = await toWebRequest(req);
       const response = await webHandler(request);

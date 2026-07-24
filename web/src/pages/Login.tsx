@@ -81,7 +81,7 @@ export function Login({ onSuccess }: LoginProps) {
     setError(null);
     setMessage(null);
     try {
-      await signInWithGoogle(safeReturnTo());
+      await signInWithGoogle();
     } catch {
       setError("Não foi possível iniciar o login com Google. Tente novamente.");
       setPending(false);

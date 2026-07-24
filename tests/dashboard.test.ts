@@ -9,8 +9,8 @@ describe("Phase 4 React surfaces", () => {
   const styles = fs.readFileSync(new URL("../web/src/styles.css", import.meta.url), "utf8");
 
   it("ships a public product landing and the authenticated workspace separately", () => {
-    expect(landing).toContain("Contexto complexo");
-    expect(landing).toContain("3 fases, 9 áreas e 36 itens");
+    expect(landing).toContain("window.location.replace(\"/app\")");
+    expect(landing).toContain("boot-screen");
     expect(app).toContain("<Overview");
     expect(app).toContain("<ProjectWorkspace");
     expect(app).toContain("<Board");

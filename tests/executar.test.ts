@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import executarHandler, { setExecutarServiceForTesting } from "../api/executar.js";
+import { executarHandler, setExecutarServiceForTesting } from "../api/executar.js";
 import { adminCookie, appCookie, signAdminSession, signAppSession } from "../src/lib/auth.js";
 import { dashboardSummary } from "../src/executar/engine.js";
 import { validateProject } from "../src/executar/schema.js";

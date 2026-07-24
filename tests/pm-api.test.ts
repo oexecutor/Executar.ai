@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import pmHandler, { setPmServiceForTesting } from "../api/pm.js";
+import { pmHandler, setPmServiceForTesting } from "../api/pm.js";
 import { adminCookie, appCookie, signAdminSession, signAppSession } from "../src/lib/auth.js";
 import { DeskOsService } from "../src/application/desk-os-service.js";
 import { createDeskOsRepositories } from "../src/repository/vault-adapter.js";

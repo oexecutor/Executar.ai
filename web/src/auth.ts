@@ -72,7 +72,7 @@ export async function signUp(email: string, password: string, fullName: string) 
   return data.session;
 }
 
-export async function signInWithGoogle(returnTo: string): Promise<void> {
+export async function signInWithGoogle(): Promise<void> {
   const client = await getSupabaseClient();
   const { error } = await client.auth.signInWithOAuth({
     provider: "google",

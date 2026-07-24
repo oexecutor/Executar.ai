@@ -6,6 +6,7 @@ import { oauthStore } from "../src/lib/stores.js";
 import { getWorkspaceMembershipAsService } from "../src/lib/supabase.js";
 import { getAuthenticatedRequest } from "../src/lib/request-auth.js";
 import type { AuthorizationCode, OAuthClient, RefreshGrant } from "../src/lib/types.js";
+import { createVercelNodeHandler } from "../src/lib/vercel-node-adapter.js";
 
 /**
  * All four OAuth endpoints (register/authorize/token/discovery) live in one
@@ -82,7 +83,6 @@ async function authorize(request: Request): Promise<Response> {
     const url = absoluteUrl(request);
     const session = await getAuthenticatedRequest(request);
     if (!session) {
-      const returnTo = `${url.pathname}${url.search}`;
       return withCors(Response.redirect(`${baseUrl()}/app`, 303));
     }
     const form = request.method === "POST" ? new URLSearchParams(await request.text()) : undefined;
@@ -202,11 +202,14 @@ async function metadata(request: Request): Promise<Response> {
   }
 }
 
-export default async (request: Request): Promise<Response> => {
+async function oauthHandler(request: Request): Promise<Response> {
   const pathname = absoluteUrl(request).pathname;
   if (pathname === "/oauth/register") return register(request);
   if (pathname === "/oauth/authorize") return authorize(request);
   if (pathname === "/oauth/token") return token(request);
   if (pathname.startsWith("/.well-known/")) return metadata(request);
   return withCors(json({ error: "not_found" }, { status: 404 }));
-};
+}
+
+export { oauthHandler };
+export default createVercelNodeHandler(oauthHandler);

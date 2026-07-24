@@ -38,7 +38,7 @@ export function App() {
   }, []);
 
   const checkSession = useCallback(async () => {
-    const appWorkspace = await restoreWorkspaceFromAppSession();
+    await restoreWorkspaceFromAppSession();
     // Login removed: every caller without a real session uses the shared
     // public workspace on the backend. Treat anonymous as authenticated.
     try {

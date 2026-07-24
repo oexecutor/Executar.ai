@@ -4,7 +4,6 @@ import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const STATIC_ROOT = fileURLToPath(new URL("../../public", import.meta.url));
-const SESSION_COOKIE = "e2e_session=1";
 
 const CONTENT_TYPES: Record<string, string> = {
   ".css": "text/css; charset=utf-8",
@@ -209,10 +208,6 @@ function fail(res: ServerResponse, statusCode: number, code: string, message: st
   send(res, statusCode, { ok: false, error: { code, message }, request_id: "req_e2e" });
 }
 
-function authenticated(req: IncomingMessage): boolean {
-  return (req.headers.cookie ?? "").includes(SESSION_COOKIE);
-}
-
 async function readBody(req: IncomingMessage): Promise<Record<string, unknown>> {
   const chunks: Buffer[] = [];
   for await (const chunk of req) chunks.push(Buffer.from(chunk));
@@ -223,10 +218,12 @@ function staticFile(pathname: string): string | null {
   const requestPath = pathname === "/" ? "/index.html"
     : pathname === "/app" || pathname === "/app/" ? "/app/index.html"
       : pathname === "/entrar" || pathname === "/entrar/" ? "/index.html"
-        : pathname;
+        : pathname === "/blog" || pathname === "/blog/" ? "/blog/index.html"
+          : pathname;
   const resolved = normalize(join(STATIC_ROOT, requestPath));
   if (resolved.startsWith(STATIC_ROOT) && existsSync(resolved) && statSync(resolved).isFile()) return resolved;
   if (pathname.startsWith("/app/")) return join(STATIC_ROOT, "app/index.html");
+  if (pathname.startsWith("/blog/")) return join(STATIC_ROOT, "blog/index.html");
   return null;
 }
 
@@ -249,21 +246,17 @@ export function startMockServer(port: number) {
       return ok(res, { url: `http://localhost:${port}/supabase`, publishableKey: "e2e-publishable-key" });
     }
     if (method === "GET" && path === "/api/auth/me") {
-      return authenticated(req)
-        ? ok(res, {
-            userId: "usr_e2e",
-            email: "e2e@executa.ai",
-            workspaceId: "wsp_e2e",
-            workspaceName: "EXECUTA Preview",
-            role: "OWNER",
-          })
-        : fail(res, 401, "UNAUTHORIZED", "Sessão não encontrada.");
+      return ok(res, {
+        userId: "public",
+        email: null,
+        workspaceId: "wsp_e2e",
+        workspaceName: "Workspace público",
+        role: "OWNER",
+      });
     }
     if (method === "POST" && path === "/api/auth/logout") {
       return ok(res, { authenticated: false });
     }
-
-    if (!authenticated(req)) return fail(res, 401, "UNAUTHORIZED", "Autenticação necessária.");
 
     if (method === "GET" && path === "/api/executar/projects") return ok(res, [summary()]);
     if (method === "GET" && path === `/api/executar/projects/${project.meta.id}`) {

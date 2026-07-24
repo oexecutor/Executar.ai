@@ -7,6 +7,7 @@ import { DeskOsService } from "../src/application/desk-os-service.js";
 import type { ActorContext } from "../src/application/context.js";
 import { createDeskOsRepositories } from "../src/repository/vault-adapter.js";
 import { DomainError } from "../src/domain/errors.js";
+import { createVercelNodeHandler } from "../src/lib/vercel-node-adapter.js";
 import { canWriteWorkspace, getAuthenticatedRequest, type AuthenticatedRequest } from "../src/lib/request-auth.js";
 
 /**
@@ -231,7 +232,7 @@ export function setPmServiceForTesting(factory: (() => DeskOsService) | null): v
   serviceFactory = factory ?? defaultService;
 }
 
-export default async (request: Request): Promise<Response> => {
+async function pmHandler(request: Request): Promise<Response> {
   const denied = await requireAdminJson(request);
   if (denied) return denied;
   const auth = await getAuthenticatedRequest(request);
@@ -294,4 +295,7 @@ export default async (request: Request): Promise<Response> => {
       { status: 500 },
     );
   }
-};
+}
+
+export { pmHandler };
+export default createVercelNodeHandler(pmHandler);
