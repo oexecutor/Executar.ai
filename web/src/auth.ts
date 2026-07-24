@@ -72,6 +72,15 @@ export async function signUp(email: string, password: string, fullName: string) 
   return data.session;
 }
 
+export async function signInWithGoogle(returnTo: string): Promise<void> {
+  const client = await getSupabaseClient();
+  const { error } = await client.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo: `${window.location.origin}/entrar?return_to=${encodeURIComponent(returnTo)}` },
+  });
+  if (error) throw error;
+}
+
 export async function getBrowserSession() {
   try {
     const client = await getSupabaseClient();

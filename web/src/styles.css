@@ -184,6 +184,10 @@ h1, h2, h3, p { margin-top: 0; }
 .auth-back { position: absolute; top: 2rem; left: 2rem; display: flex; align-items: center; gap: 0.4rem; color: var(--muted); font-size: 0.8rem; font-weight: 700; text-decoration: none; }
 .auth-form-wrap, .workspace-picker { width: min(100%, 490px); }
 .auth-form-wrap h2, .workspace-picker h2 { margin: 0 0 2.4rem; font-size: clamp(2.4rem, 5vw, 4.6rem); line-height: 0.95; letter-spacing: -0.055em; }
+.auth-google { width: 100%; gap: 0.65rem; margin-bottom: 1.4rem; }
+.auth-divider { position: relative; margin: 0 0 1.4rem; text-align: center; color: var(--muted); font: 700 0.68rem/1 var(--font-mono); text-transform: uppercase; }
+.auth-divider::before { content: ""; position: absolute; top: 50%; left: 0; width: 100%; height: 1px; background: var(--line); z-index: 0; }
+.auth-divider span { position: relative; z-index: 1; padding: 0 0.8rem; background: var(--surface); }
 .auth-form { display: grid; gap: 1.1rem; }
 .auth-form label, .exec-modal label { display: grid; gap: 0.45rem; font-size: 0.78rem; font-weight: 800; }
 .auth-form input, .exec-modal input, .exec-modal textarea {

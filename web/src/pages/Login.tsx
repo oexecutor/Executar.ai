@@ -5,9 +5,21 @@ import {
   loadMemberships,
   selectWorkspace,
   signIn,
+  signInWithGoogle,
   signUp,
   type WorkspaceMembership,
 } from "../auth";
+
+function GoogleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+      <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62Z" />
+      <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.81.54-1.85.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.95v2.33A9 9 0 0 0 9 18Z" />
+      <path fill="#FBBC05" d="M3.97 10.72A5.4 5.4 0 0 1 3.68 9c0-.6.1-1.18.29-1.72V4.95H.95A9 9 0 0 0 0 9c0 1.45.35 2.83.95 4.05l3.02-2.33Z" />
+      <path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .95 4.95l3.02 2.33C4.68 5.16 6.66 3.58 9 3.58Z" />
+    </svg>
+  );
+}
 
 interface LoginProps {
   onSuccess?: () => void;
@@ -63,6 +75,18 @@ export function Login({ onSuccess }: LoginProps) {
       if (session?.access_token) void prepareWorkspaces(session.access_token);
     });
   }, [prepareWorkspaces]);
+
+  async function continueWithGoogle() {
+    setPending(true);
+    setError(null);
+    setMessage(null);
+    try {
+      await signInWithGoogle(safeReturnTo());
+    } catch {
+      setError("Não foi possível iniciar o login com Google. Tente novamente.");
+      setPending(false);
+    }
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -132,6 +156,15 @@ export function Login({ onSuccess }: LoginProps) {
           <div className="auth-form-wrap">
             <p className="eyebrow">{mode === "signin" ? "Bem-vindo de volta" : "Criar workspace"}</p>
             <h2>{mode === "signin" ? "Entre para continuar." : "Comece a executar."}</h2>
+            <button
+              className="button button-quiet auth-google"
+              type="button"
+              onClick={() => void continueWithGoogle()}
+              disabled={pending}
+            >
+              <GoogleIcon /> Continuar com Google
+            </button>
+            <p className="auth-divider"><span>ou</span></p>
             <form className="auth-form" onSubmit={submit}>
               {mode === "signup" && (
                 <label>
