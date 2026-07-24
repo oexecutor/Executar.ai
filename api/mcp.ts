@@ -69,4 +69,5 @@ async function mcpHandler(request: Request): Promise<Response> {
   }
 }
 
+export { mcpHandler };
 export default createVercelNodeHandler(mcpHandler);

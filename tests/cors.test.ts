@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import oauthHandler from "../api/oauth.js";
-import mcpHandler from "../api/mcp.js";
+import { mcpHandler } from "../api/mcp.js";
 
 const oauthRegisterHandler = oauthHandler;
 const oauthTokenHandler = oauthHandler;

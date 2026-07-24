@@ -13,7 +13,7 @@ import {
   verifyAdminRequest,
   verifyPkce,
 } from "../src/lib/auth.js";
-import adminHandler from "../api/admin.js";
+import { adminHandler } from "../api/admin.js";
 
 const loginHandler = adminHandler;
 const logoutHandler = adminHandler;

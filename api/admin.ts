@@ -124,4 +124,5 @@ async function adminHandler(request: Request): Promise<Response> {
   }
 }
 
+export { adminHandler };
 export default createVercelNodeHandler(adminHandler);
