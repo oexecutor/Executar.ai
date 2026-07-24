@@ -1,4 +1,5 @@
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
+import { createVercelNodeHandler } from "../src/lib/vercel-node-adapter.js";
 import { verifyAccessToken } from "../src/lib/auth.js";
 import { baseUrl, resourceUrl } from "../src/lib/env.js";
 import { corsPreflight, withAbsoluteRequestUrl, withCors } from "../src/lib/http.js";
@@ -23,7 +24,7 @@ function unauthorized(): Response {
   });
 }
 
-export default async (request: Request): Promise<Response> => {
+async function mcpHandler(request: Request): Promise<Response> {
   if (request.method === "OPTIONS") return corsPreflight(["POST", "GET", "DELETE"]);
   const auth = request.headers.get("authorization");
   if (!auth?.startsWith("Bearer ")) return withCors(unauthorized());
@@ -66,4 +67,6 @@ export default async (request: Request): Promise<Response> => {
     console.error(error instanceof Error ? error.message : String(error));
     return withCors(unauthorized());
   }
-};
+}
+
+export default createVercelNodeHandler(mcpHandler);

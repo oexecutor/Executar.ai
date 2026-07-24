@@ -1,3 +1,4 @@
+import { createVercelNodeHandler } from "../src/lib/vercel-node-adapter.js";
 import {
   appCookie,
   clearAppCookie,
@@ -96,7 +97,7 @@ async function logout(request: Request): Promise<Response> {
   );
 }
 
-export default async (request: Request): Promise<Response> => {
+async function adminHandler(request: Request): Promise<Response> {
   const pathname = absoluteUrl(request).pathname;
   try {
     if (pathname === "/api/auth/config") return runtimeConfig(request);
@@ -121,4 +122,6 @@ export default async (request: Request): Promise<Response> => {
       error: { code: "AUTH_SERVICE_ERROR", message: "Não foi possível validar a autenticação." },
     }, { status: 503 });
   }
-};
+}
+
+export default createVercelNodeHandler(adminHandler);
