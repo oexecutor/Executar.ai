@@ -1,0 +1,758 @@
+{
+  "project": "EXECUTA.AI — LANÇAMENTO PÚBLICO",
+  "generatedAt": "2026-07-24",
+  "sourceCommit": "28a689ffee0fd87b31c8cbc59abda4c511c1edf1",
+  "capacityModel": {
+    "weeklyHours": 25,
+    "onePrimaryDeliveryPerDay": true,
+    "maxVisibleStepsPerTask": 3,
+    "waveHours": 72
+  },
+  "totals": {
+    "milestones": 11,
+    "issues": 21,
+    "estimatedHours": 72.0,
+    "p0Issues": 7
+  },
+  "proposedLaunchDate": "2026-08-14",
+  "launchDateStatus": "PROPOSTA — não é um compromisso aprovado",
+  "gates": [
+    {
+      "gate": "G0",
+      "milestone": "G0 — Auditoria e Baseline Confiável",
+      "epics": [
+        {
+          "epicId": "EXA-G0-DOC",
+          "issues": [
+            {
+              "issueId": "EXA-G0-DOC-001",
+              "title": "Publicar pacote docs/release/ com auditoria factual e backlog",
+              "description": "Auditoria completa (build/test/lint/e2e/smoke/produção) + 10 documentos + backlog CSV/JSON, seguindo o prompt-mestre do dono do produto.",
+              "priority": "P0",
+              "status": "In Review",
+              "labels": [
+                "area:doc",
+                "gate:G0",
+                "release"
+              ],
+              "owner": [
+                "Execução assistida (Claude Code)"
+              ],
+              "estimateHours": 6.0,
+              "startDate": "2026-07-24",
+              "dueDate": "2026-07-24",
+              "dependencies": [],
+              "blockedBy": null,
+              "acceptanceCriteria": "10 arquivos em docs/release/; CSV parseável; build/test/lint locais verdes",
+              "evidenceRequired": "npm run check; npm run build:web && test:web && lint:web; npx playwright test",
+              "risk": "Baixo",
+              "sourceFile": [
+                "docs/release/*"
+              ],
+              "sourceCommit": "28a689f"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "gate": "G1",
+      "milestone": "G1 — Runtime e Infraestrutura Estáveis",
+      "epics": [
+        {
+          "epicId": "EXA-G1-BE",
+          "issues": [
+            {
+              "issueId": "EXA-G1-BE-001",
+              "title": "Confirmar hotfix do adapter Vercel ao vivo em produção",
+              "description": "Rodar curl GET-only em /api/auth/me, /api/executar/projects, /mcp, /app na produção real para confirmar que o hotfix presente no código (src/lib/vercel-node-adapter.ts) está de fato publicado.",
+              "priority": "P0",
+              "status": "Blocked",
+              "labels": [
+                "area:be",
+                "gate:G1",
+                "decision-required"
+              ],
+              "owner": [
+                "Execução assistida (Claude Code)"
+              ],
+              "estimateHours": 1.0,
+              "startDate": "2026-07-25",
+              "dueDate": "2026-07-25",
+              "dependencies": [],
+              "blockedBy": "Acesso de rede a produção (bloqueado neste sandbox)",
+              "acceptanceCriteria": "Nenhuma rota retorna 500 ou FUNCTION_INVOCATION_FAILED",
+              "evidenceRequired": "Saída de curl -i para as 4 rotas",
+              "risk": "Médio",
+              "sourceFile": [
+                "src/lib/vercel-node-adapter.ts"
+              ],
+              "sourceCommit": "28a689f"
+            },
+            {
+              "issueId": "EXA-G1-BE-002",
+              "title": "Decidir destino do PR #9 (gate de senha de operador obsoleto)",
+              "description": "PR #9 tem base aeb1249 (muito atrás de main) e seu objetivo já foi alcançado por src/lib/admin-guard.ts sobre request-auth.ts. Fechar sem merge ou rebasear conscientemente.",
+              "priority": "P1",
+              "status": "Blocked",
+              "labels": [
+                "area:be",
+                "gate:G1",
+                "decision-required"
+              ],
+              "owner": [
+                "Product Owner"
+              ],
+              "estimateHours": 1.0,
+              "startDate": "2026-07-25",
+              "dueDate": "2026-07-25",
+              "dependencies": [],
+              "blockedBy": "Decisão do dono do produto",
+              "acceptanceCriteria": "PR #9 fechado ou rebaseado com justificativa registrada",
+              "evidenceRequired": "Link do PR fechado/atualizado",
+              "risk": "Baixo",
+              "sourceFile": [
+                "docs/GATE_PROGRESS.md"
+              ],
+              "sourceCommit": "aeb1249"
+            }
+          ]
+        },
+        {
+          "epicId": "EXA-G1-MCP",
+          "issues": [
+            {
+              "issueId": "EXA-G1-MCP-001",
+              "title": "Decidir destino do handoff executar-mcp-server",
+              "description": "api/mcp.ts -> src/mcp-server.ts já é uma implementação MCP nativa e mais madura (persistida via Neon/Supabase) que o handoff standalone. Decidir: absorver artefato deskos-project-executar-pm.json, descartar o servidor duplicado, ou manter paralelo com justificativa. Inclui decommission do projeto Vercel isolado executar-mcp-server-vercel-ready.",
+              "priority": "P1",
+              "status": "Blocked",
+              "labels": [
+                "area:mcp",
+                "gate:G1",
+                "decision-required"
+              ],
+              "owner": [
+                "Product Owner"
+              ],
+              "estimateHours": 4.0,
+              "startDate": "2026-07-26",
+              "dueDate": "2026-07-27",
+              "dependencies": [
+                "EXA-G1-BE-002"
+              ],
+              "blockedBy": "Decisão do dono do produto",
+              "acceptanceCriteria": "Decisão registrada em 04-RISCOS-DECISOES.md com plano de ação",
+              "evidenceRequired": "Documento de decisão",
+              "risk": "Médio",
+              "sourceFile": [
+                "scratchpad/skills-review/executar-mcp-server-handoff/"
+              ],
+              "sourceCommit": null
+            }
+          ]
+        },
+        {
+          "epicId": "EXA-G1-DOC",
+          "issues": [
+            {
+              "issueId": "EXA-G1-DOC-001",
+              "title": "Atualizar documentação estrutural obsoleta (Netlify → Vercel)",
+              "description": "AGENTS.md, SECURITY.md, docs/09_SECURITY_AND_GOVERNANCE.md, docs/13_DECISIONS_GAPS_ASSUMPTIONS.md, docs/DEPLOYMENT_STATUS.md e package.json (nome/versão) ainda descrevem o modelo operacional Netlify/senha de operador pré-migração.",
+              "priority": "P2",
+              "status": "Backlog",
+              "labels": [
+                "area:doc",
+                "gate:G1"
+              ],
+              "owner": [
+                "Execução assistida (Claude Code)"
+              ],
+              "estimateHours": 3.0,
+              "startDate": "2026-07-27",
+              "dueDate": "2026-07-27",
+              "dependencies": [],
+              "blockedBy": null,
+              "acceptanceCriteria": "Documentos citados atualizados ou marcados com nota de supersessão explícita",
+              "evidenceRequired": "Diff dos arquivos atualizados",
+              "risk": "Baixo",
+              "sourceFile": [
+                "AGENTS.md",
+                "SECURITY.md"
+              ],
+              "sourceCommit": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "gate": "G2",
+      "milestone": "G2 — Ciclo Central do Produto Funcional",
+      "epics": [
+        {
+          "epicId": "EXA-G2-BE",
+          "issues": [
+            {
+              "issueId": "EXA-G2-BE-001",
+              "title": "Validar ciclo central ponta a ponta em produção real",
+              "description": "Contexto -> estruturação por IA -> criação -> fases/tarefas -> próxima ação -> checkpoints -> evidência -> painel/exportação -> persistência -> recuperação, testado ao vivo.",
+              "priority": "P0",
+              "status": "Blocked",
+              "labels": [
+                "area:be",
+                "gate:G2"
+              ],
+              "owner": [
+                "Execução assistida (Claude Code)"
+              ],
+              "estimateHours": 4.0,
+              "startDate": "2026-07-28",
+              "dueDate": "2026-07-29",
+              "dependencies": [
+                "EXA-G1-BE-001"
+              ],
+              "blockedBy": "Confirmação de produção (G1)",
+              "acceptanceCriteria": "Reload preserva dados; ciclo completo sem erro",
+              "evidenceRequired": "Sessão gravada + captura do estado persistido",
+              "risk": "Alto",
+              "sourceFile": [
+                "src/executar/service.ts"
+              ],
+              "sourceCommit": null
+            }
+          ]
+        },
+        {
+          "epicId": "EXA-G2-DESKOS",
+          "issues": [
+            {
+              "issueId": "EXA-G2-DESKOS-001",
+              "title": "Confirmar contrato de dados do ciclo central contra a skill desk-os-neurocompatible-projects",
+              "description": "Verificar que DeskOsService/registerDeskOsTools respeita a mesma lógica 3x9x36 e hierarquia projeto->fase->área->item->ação->evidência da skill.",
+              "priority": "P2",
+              "status": "Backlog",
+              "labels": [
+                "area:deskos",
+                "gate:G2"
+              ],
+              "owner": [
+                "Execução assistida (Claude Code)"
+              ],
+              "estimateHours": 6.0,
+              "startDate": "2026-07-29",
+              "dueDate": "2026-07-31",
+              "dependencies": [],
+              "blockedBy": null,
+              "acceptanceCriteria": "Contrato de dados documentado como equivalente ou com desvios listados",
+              "evidenceRequired": "Comparação lado a lado dos schemas",
+              "risk": "Baixo",
+              "sourceFile": [
+                "scratchpad/skills-review/desk-os-skill/"
+              ],
+              "sourceCommit": null
+            }
+          ]
+        },
+        {
+          "epicId": "EXA-G2-PLANGEN",
+          "issues": [
+            {
+              "issueId": "EXA-G2-PLANGEN-001",
+              "title": "Registrar decisão de design sobre conectar plano-operacional-rastreavel ao ciclo central",
+              "description": "Motor hoje guiado por julgamento de LLM, sem endpoint síncrono. Decidir se/como vira gerador de plano assistido por IA no produto, registrando que isso é redesenho, não implementação trivial.",
+              "priority": "P2",
+              "status": "Blocked",
+              "labels": [
+                "area:plangen",
+                "gate:G2",
+                "decision-required"
+              ],
+              "owner": [
+                "Product Owner"
+              ],
+              "estimateHours": 8.0,
+              "startDate": "2026-07-31",
+              "dueDate": "2026-08-02",
+              "dependencies": [],
+              "blockedBy": "Decisão do dono do produto",
+              "acceptanceCriteria": "Decisão de design registrada em 04-RISCOS-DECISOES.md",
+              "evidenceRequired": "Documento de decisão",
+              "risk": "Médio",
+              "sourceFile": [
+                "scratchpad/skills-review/plano-operacional/"
+              ],
+              "sourceCommit": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "gate": "G3",
+      "milestone": "G3 — Persistência Segurança e Integridade dos Dados",
+      "epics": [
+        {
+          "epicId": "EXA-G3-SEC",
+          "issues": [
+            {
+              "issueId": "EXA-G3-SEC-001",
+              "title": "Decidir política de autenticação (login obrigatório vs. workspace público)",
+              "description": "src/lib/request-auth.ts:89-107 remove o bloqueio de login a pedido do operador; qualquer requisição sem sessão cai no workspace público com papel OWNER. Decidir se isso é definitivo ou se login será reativado antes do lançamento.",
+              "priority": "P0",
+              "status": "Blocked",
+              "labels": [
+                "area:sec",
+                "gate:G3",
+                "decision-required"
+              ],
+              "owner": [
+                "Product Owner"
+              ],
+              "estimateHours": 1.0,
+              "startDate": "2026-08-03",
+              "dueDate": "2026-08-03",
+              "dependencies": [
+                "EXA-G1-BE-002"
+              ],
+              "blockedBy": "Decisão do dono do produto",
+              "acceptanceCriteria": "Decisão registrada; implementação decorrente aberta como issue(s) TBD",
+              "evidenceRequired": "Documento de decisão",
+              "risk": "Alto",
+              "sourceFile": [
+                "src/lib/request-auth.ts"
+              ],
+              "sourceCommit": "28a689f"
+            },
+            {
+              "issueId": "EXA-G3-SEC-002",
+              "title": "Confirmar presença de variáveis de ambiente de produção",
+              "description": "Listar por presença (nunca valor) SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY/ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, DATABASE_URL/POSTGRES_URL/DATABASE_URL_UNPOOLED/POSTGRES_URL_NON_POOLING, ADMIN_PASSWORD no painel Vercel.",
+              "priority": "P1",
+              "status": "Blocked",
+              "labels": [
+                "area:sec",
+                "gate:G3"
+              ],
+              "owner": [
+                "Product Owner"
+              ],
+              "estimateHours": 1.0,
+              "startDate": "2026-08-03",
+              "dueDate": "2026-08-03",
+              "dependencies": [],
+              "blockedBy": "Acesso ao painel Vercel (fora desta sessão)",
+              "acceptanceCriteria": "Lista de presença/ausência confirmada",
+              "evidenceRequired": "Screenshot ou export do painel Vercel",
+              "risk": "Médio",
+              "sourceFile": [
+                "src/lib/supabase.ts",
+                "src/lib/stores.ts"
+              ],
+              "sourceCommit": null
+            }
+          ]
+        },
+        {
+          "epicId": "EXA-G3-DATA",
+          "issues": [
+            {
+              "issueId": "EXA-G3-DATA-001",
+              "title": "Decidir backend único de persistência (Neon vs Supabase)",
+              "description": "src/lib/stores.ts:14-27: vault bifurca por supabaseConfigured(), OAuth é sempre Neon independente da configuração. Contradiz a suposição de baseline de que Supabase estaria desligado. Decidir fonte de verdade única de produção.",
+              "priority": "P0",
+              "status": "Blocked",
+              "labels": [
+                "area:data",
+                "gate:G3",
+                "decision-required"
+              ],
+              "owner": [
+                "Product Owner"
+              ],
+              "estimateHours": 1.0,
+              "startDate": "2026-08-03",
+              "dueDate": "2026-08-03",
+              "dependencies": [],
+              "blockedBy": "Decisão do dono do produto",
+              "acceptanceCriteria": "Decisão registrada; bifurcação removida se aplicável",
+              "evidenceRequired": "Documento de decisão + diff de código",
+              "risk": "Alto",
+              "sourceFile": [
+                "src/lib/stores.ts"
+              ],
+              "sourceCommit": "28a689f"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "gate": "G4",
+      "milestone": "G4 — EXECUTA Journal Integrado",
+      "epics": [
+        {
+          "epicId": "EXA-G4-BLOG",
+          "issues": [
+            {
+              "issueId": "EXA-G4-BLOG-001",
+              "title": "Regressão final do blog em produção",
+              "description": "Confirmar deep link, busca, carrossel, SEO e responsividade do EXECUTA Journal em produção real, após os gates anteriores.",
+              "priority": "P2",
+              "status": "Backlog",
+              "labels": [
+                "area:blog",
+                "gate:G4"
+              ],
+              "owner": [
+                "Execução assistida (Claude Code)"
+              ],
+              "estimateHours": 2.0,
+              "startDate": "2026-08-04",
+              "dueDate": "2026-08-04",
+              "dependencies": [
+                "EXA-G1-BE-001"
+              ],
+              "blockedBy": null,
+              "acceptanceCriteria": "Sem 404 em deep link; busca e carrossel funcionais; zero violações a11y críticas/sérias",
+              "evidenceRequired": "npm run test:web:e2e + verificação manual em produção",
+              "risk": "Baixo",
+              "sourceFile": [
+                "web/src/blog/*"
+              ],
+              "sourceCommit": "28a689f"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "gate": "G5",
+      "milestone": "G5 — Qualidade Acessibilidade e Playwright",
+      "epics": [
+        {
+          "epicId": "EXA-G5-QA",
+          "issues": [
+            {
+              "issueId": "EXA-G5-QA-001",
+              "title": "Corrigir falha intermitente no teste raiz-sem-login (requestfailed /icon.svg)",
+              "description": "Reproduzido 2 de 3 execuções nesta auditoria (npx playwright test --repeat-each=3). Causa provável: corrida entre o carregamento de /icon.svg e um redirecionamento client-side de / para /app.",
+              "priority": "P1",
+              "status": "Backlog",
+              "labels": [
+                "area:qa",
+                "gate:G5"
+              ],
+              "owner": [
+                "Execução assistida (Claude Code)"
+              ],
+              "estimateHours": 3.0,
+              "startDate": "2026-08-05",
+              "dueDate": "2026-08-05",
+              "dependencies": [],
+              "blockedBy": null,
+              "acceptanceCriteria": "10/10 execuções consecutivas verdes",
+              "evidenceRequired": "npx playwright test --repeat-each=10",
+              "risk": "Médio",
+              "sourceFile": [
+                "web/e2e/app.spec.ts"
+              ],
+              "sourceCommit": null
+            },
+            {
+              "issueId": "EXA-G5-QA-002",
+              "title": "Avaliar extensão de cobertura de acessibilidade",
+              "description": "axe-playwright hoje só roda dentro de web/e2e/app.spec.ts. Avaliar se outros fluxos (ex. vault, dashboard) precisam de cobertura própria.",
+              "priority": "P2",
+              "status": "Backlog",
+              "labels": [
+                "area:qa",
+                "gate:G5"
+              ],
+              "owner": [
+                "Execução assistida (Claude Code)"
+              ],
+              "estimateHours": 4.0,
+              "startDate": "2026-08-06",
+              "dueDate": "2026-08-06",
+              "dependencies": [
+                "EXA-G5-QA-001"
+              ],
+              "blockedBy": null,
+              "acceptanceCriteria": "Relatório de cobertura entregue com recomendação",
+              "evidenceRequired": "Relatório de cobertura",
+              "risk": "Baixo",
+              "sourceFile": [
+                "web/e2e/app.spec.ts"
+              ],
+              "sourceCommit": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "gate": "G6",
+      "milestone": "G6 — Beta Fechado",
+      "epics": [
+        {
+          "epicId": "EXA-G6-REL",
+          "issues": [
+            {
+              "issueId": "EXA-G6-REL-001",
+              "title": "Desenhar fluxo de convite/onboarding para beta fechado",
+              "description": "Não existe fluxo de convite hoje. Construir onboarding em até 3 passos visíveis (regra de produto do AGENTS.md).",
+              "priority": "P1",
+              "status": "Backlog",
+              "labels": [
+                "area:rel",
+                "gate:G6"
+              ],
+              "owner": [
+                "Product Owner",
+                "Execução assistida (Claude Code)"
+              ],
+              "estimateHours": 8.0,
+              "startDate": "2026-08-07",
+              "dueDate": "2026-08-09",
+              "dependencies": [
+                "EXA-G2-BE-001",
+                "EXA-G3-SEC-001",
+                "EXA-G5-QA-001"
+              ],
+              "blockedBy": null,
+              "acceptanceCriteria": "Pelo menos 1 usuário externo completa onboarding",
+              "evidenceRequired": "Sessão gravada do fluxo completo",
+              "risk": "Médio",
+              "sourceFile": [
+                "web/src/App.tsx"
+              ],
+              "sourceCommit": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "gate": "G7",
+      "milestone": "G7 — Preparação Comercial e Operacional",
+      "epics": [
+        {
+          "epicId": "EXA-G7-DOC",
+          "issues": [
+            {
+              "issueId": "EXA-G7-DOC-001",
+              "title": "Redigir política de privacidade e termos de uso reais",
+              "description": "web/public/privacy.html existe hoje como placeholder não confirmado como conteúdo legal real. Precisa de revisão por competência jurídica antes do lançamento público.",
+              "priority": "P0",
+              "status": "Backlog",
+              "labels": [
+                "area:doc",
+                "gate:G7"
+              ],
+              "owner": [
+                "Product Owner"
+              ],
+              "estimateHours": 6.0,
+              "startDate": "2026-08-10",
+              "dueDate": "2026-08-10",
+              "dependencies": [
+                "EXA-G6-REL-001"
+              ],
+              "blockedBy": "Revisão jurídica (fora do escopo de automação)",
+              "acceptanceCriteria": "Política e termos publicados e revisados",
+              "evidenceRequired": "URLs publicadas",
+              "risk": "Alto",
+              "sourceFile": [
+                "web/public/privacy.html"
+              ],
+              "sourceCommit": null
+            }
+          ]
+        },
+        {
+          "epicId": "EXA-G7-WORKBOOK",
+          "issues": [
+            {
+              "issueId": "EXA-G7-WORKBOOK-001",
+              "title": "Decidir destino do deskgo-business-workbook",
+              "description": "Decidir se o gerador de 5 peças SVG de negócio vira feature/oferta do produto ou fica como skill de uso interno/consultoria, fora do app.",
+              "priority": "P3",
+              "status": "Backlog",
+              "labels": [
+                "area:workbook",
+                "gate:G7",
+                "decision-required"
+              ],
+              "owner": [
+                "Product Owner"
+              ],
+              "estimateHours": 2.0,
+              "startDate": "2026-08-11",
+              "dueDate": "2026-08-11",
+              "dependencies": [],
+              "blockedBy": "Decisão do dono do produto",
+              "acceptanceCriteria": "Decisão registrada em 04-RISCOS-DECISOES.md",
+              "evidenceRequired": "Documento de decisão",
+              "risk": "Baixo",
+              "sourceFile": [
+                "scratchpad/skills-review/deskgo-workbook/"
+              ],
+              "sourceCommit": null
+            }
+          ]
+        },
+        {
+          "epicId": "EXA-G7-REL",
+          "issues": [
+            {
+              "issueId": "EXA-G7-REL-002",
+              "title": "Definir plano de suporte",
+              "description": "Canal de suporte, SLA informal (operação solo-founder), triagem de incidentes.",
+              "priority": "P1",
+              "status": "Backlog",
+              "labels": [
+                "area:rel",
+                "gate:G7"
+              ],
+              "owner": [
+                "Product Owner"
+              ],
+              "estimateHours": 3.0,
+              "startDate": "2026-08-12",
+              "dueDate": "2026-08-12",
+              "dependencies": [],
+              "blockedBy": null,
+              "acceptanceCriteria": "Documento de plano de suporte publicado",
+              "evidenceRequired": "Documento de plano de suporte",
+              "risk": "Médio",
+              "sourceFile": [
+                "docs/release/08-OPERACAO-POS-LANCAMENTO.md"
+              ],
+              "sourceCommit": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "gate": "G8",
+      "milestone": "G8 — Release Candidate",
+      "epics": [
+        {
+          "epicId": "EXA-G8-REL",
+          "issues": [
+            {
+              "issueId": "EXA-G8-REL-001",
+              "title": "Cortar Release Candidate",
+              "description": "Aplicar critérios de 03-GATES-DE-RELEASE.md e criar branch/tag de RC.",
+              "priority": "P1",
+              "status": "Backlog",
+              "labels": [
+                "area:rel",
+                "gate:G8"
+              ],
+              "owner": [
+                "Product Owner",
+                "Execução assistida (Claude Code)"
+              ],
+              "estimateHours": 2.0,
+              "startDate": "2026-08-13",
+              "dueDate": "2026-08-13",
+              "dependencies": [
+                "EXA-G7-DOC-001",
+                "EXA-G7-REL-002"
+              ],
+              "blockedBy": null,
+              "acceptanceCriteria": "Tag de RC criada; changelog atualizado",
+              "evidenceRequired": "Tag Git + changelog",
+              "risk": "Baixo",
+              "sourceFile": [
+                "CHANGELOG.md"
+              ],
+              "sourceCommit": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "gate": "G9",
+      "milestone": "G9 — Lançamento Público",
+      "epics": [
+        {
+          "epicId": "EXA-G9-OPS",
+          "issues": [
+            {
+              "issueId": "EXA-G9-OPS-001",
+              "title": "Executar checklist de go-live",
+              "description": "Domínio, monitoramento ativo, comunicação de lançamento, aprovação humana final e não delegável.",
+              "priority": "P0",
+              "status": "Backlog",
+              "labels": [
+                "area:ops",
+                "gate:G9"
+              ],
+              "owner": [
+                "Product Owner"
+              ],
+              "estimateHours": 3.0,
+              "startDate": "2026-08-14",
+              "dueDate": "2026-08-14",
+              "dependencies": [
+                "EXA-G8-REL-001"
+              ],
+              "blockedBy": "Aprovação humana explícita",
+              "acceptanceCriteria": "Checklist assinado pelo dono do produto",
+              "evidenceRequired": "Checklist preenchido",
+              "risk": "Alto",
+              "sourceFile": [
+                "docs/release/05-CHECKLIST-LANCAMENTO.md"
+              ],
+              "sourceCommit": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "gate": "G10",
+      "milestone": "G10 — Operação e Acompanhamento Pós-Lançamento",
+      "epics": [
+        {
+          "epicId": "EXA-G10-OPS",
+          "issues": [
+            {
+              "issueId": "EXA-G10-OPS-001",
+              "title": "Definir cadência de revisão pós-lançamento",
+              "description": "Revisões em 24h/7d/30d; métricas de ativação e retenção.",
+              "priority": "P2",
+              "status": "Backlog",
+              "labels": [
+                "area:ops",
+                "gate:G10"
+              ],
+              "owner": [
+                "Product Owner"
+              ],
+              "estimateHours": 3.0,
+              "startDate": "2026-08-15",
+              "dueDate": "2026-08-15",
+              "dependencies": [
+                "EXA-G9-OPS-001"
+              ],
+              "blockedBy": null,
+              "acceptanceCriteria": "3 revisões realizadas e documentadas",
+              "evidenceRequired": "Relatórios de revisão",
+              "risk": "Baixo",
+              "sourceFile": [
+                "docs/release/08-OPERACAO-POS-LANCAMENTO.md"
+              ],
+              "sourceCommit": null
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
