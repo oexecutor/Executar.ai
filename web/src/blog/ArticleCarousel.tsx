@@ -20,7 +20,8 @@ export function ArticleCarousel({ posts }: ArticleCarouselProps) {
     const rail = railRef.current;
     const card = rail?.querySelector<HTMLElement>(".blog-card");
     if (!rail || !card) return 0;
-    const gap = Number.parseFloat(window.getComputedStyle(rail).columnGap || "0");
+    const parsedGap = Number.parseFloat(window.getComputedStyle(rail).columnGap);
+    const gap = Number.isNaN(parsedGap) ? 0 : parsedGap;
     return card.getBoundingClientRect().width + gap;
   }, []);
 

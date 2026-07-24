@@ -137,7 +137,7 @@
 
 .blog-featured-meta span,
 .blog-card-meta span {
-  color: var(--orange-dark);
+  color: var(--orange-text);
 }
 
 .blog-featured h2 {
@@ -742,7 +742,7 @@
 
 .blog-empty > span,
 .blog-not-found > span {
-  color: var(--orange);
+  color: var(--orange-text);
   font: 800 0.72rem/1 var(--font-mono);
 }
 
@@ -771,6 +771,10 @@
   padding: clamp(2rem, 6vw, 5rem);
   background: var(--black);
   color: var(--white);
+}
+
+.blog-newsletter .eyebrow-orange {
+  color: var(--orange);
 }
 
 .blog-newsletter h2 {
@@ -920,7 +924,7 @@
   margin: 0;
   padding-top: 2rem;
   border-top: 1px solid #333;
-  color: #666;
+  color: #9a9a9a;
   font: 700 0.6rem/1 var(--font-mono);
 }
 
@@ -1044,7 +1048,7 @@
 
 .blog-article-tools button:hover,
 .blog-article-tools a:hover {
-  color: var(--orange-dark);
+  color: var(--orange-text);
 }
 
 .blog-article-tools small {

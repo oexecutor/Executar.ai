@@ -1,0 +1,20 @@
+{
+  "name": "EXECUTA.AI",
+  "short_name": "EXECUTA",
+  "description": "Contexto complexo em execução clara e verificável.",
+  "id": "/app",
+  "start_url": "/app",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#efefeb",
+  "theme_color": "#101010",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

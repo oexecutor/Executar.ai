@@ -62,7 +62,7 @@ describe("BlogApp", () => {
     expect(screen.getByRole("button", { name: "Copiar Markdown" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Transformar em projeto" })).toHaveAttribute(
       "href",
-      "/entrar?origem=blog&artigo=cloud-mcp-pwa-mesma-fonte",
+      "/app?origem=blog&artigo=cloud-mcp-pwa-mesma-fonte",
     );
   });
 

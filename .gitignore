@@ -5,8 +5,10 @@ node_modules/
 coverage/
 .DS_Store
 
-# web/ (Vite React app): build output is generated into public/ at
-# build time (npm run build:web), not committed, same as any other dist/.
-public/
+# Build output is generated into /public at build time
+# (npm run build:web), not committed, same as any other dist/.
+# Anchored to the repo root so it doesn't also match web/public/,
+# which holds real source assets (manifest, icons, service worker).
+/public/
 web/test-results/
 web/playwright-report/

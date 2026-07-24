@@ -127,7 +127,7 @@ export function ArticlePage({ post }: ArticlePageProps) {
               <button type="button" onClick={() => window.print()}>
                 <Printer size={16} /> Imprimir
               </button>
-              <a href={`/entrar?origem=blog&artigo=${encodeURIComponent(post.slug)}`}>
+              <a href={`/app?origem=blog&artigo=${encodeURIComponent(post.slug)}`}>
                 <ExternalLink size={16} /> Transformar em projeto
               </a>
               {copyState === "error" && <small role="alert">Seu navegador bloqueou a cópia.</small>}

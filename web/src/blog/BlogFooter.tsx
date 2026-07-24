@@ -9,7 +9,7 @@ export function BlogFooter() {
         <a href="/">Produto</a>
         <a href="/#metodo">Método</a>
         <a href="/blog">Blog</a>
-        <a href="/entrar">Workspace</a>
+        <a href="/app">Workspace</a>
         <a href="/privacy.html">Privacidade</a>
       </nav>
       <p>© 2026 EXECUTA.AI</p>

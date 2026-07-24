@@ -11,8 +11,8 @@ export function BlogHeader() {
       <nav className="blog-desktop-nav" aria-label="Navegação pública">
         <a href="/#metodo">Método</a>
         <a href="/blog" aria-current="page">Blog</a>
-        <a href="/entrar">Entrar</a>
-        <a className="button button-orange button-compact" href="/entrar">
+        <a href="/app">Workspace</a>
+        <a className="button button-orange button-compact" href="/app">
           Começar <ArrowRight size={15} />
         </a>
       </nav>
@@ -23,7 +23,7 @@ export function BlogHeader() {
           <a href="/">Início</a>
           <a href="/#metodo">Método</a>
           <a href="/blog" aria-current="page">Blog</a>
-          <a href="/entrar">Entrar</a>
+          <a href="/app">Workspace</a>
         </nav>
       </details>
     </header>

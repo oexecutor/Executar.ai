@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="EXECUTA.AI">
+  <rect width="512" height="512" rx="96" fill="#101010"/>
+  <path d="M112 112h288v72H184v72h168v72H184v72h216v72H112z" fill="#f7f7f4"/>
+  <rect x="328" y="112" width="72" height="72" fill="#ff5a00"/>
+</svg>
