@@ -8,6 +8,7 @@ import { BlobVaultService, normalizeVaultPath, VaultProblem } from "../src/lib/v
 import { isDeskOsPath } from "../src/repository/paths.js";
 import { buildVaultBrowserUrl, buildVaultDownloadUrl, buildVaultRawUrl, buildVaultViewUrl, contentTypeFor, isTextFile, renderMarkdown, renderViewerError } from "../src/lib/viewer.js";
 import type { FileRecord } from "../src/lib/types.js";
+import { createVercelNodeHandler } from "../src/lib/vercel-node-adapter.js";
 import { canWriteWorkspace, getAuthenticatedRequest } from "../src/lib/request-auth.js";
 
 /**
@@ -389,7 +390,7 @@ async function view(request: Request): Promise<Response> {
   }
 }
 
-export default async (request: Request): Promise<Response> => {
+async function vaultHandler(request: Request): Promise<Response> {
   const pathname = absoluteUrl(request).pathname;
   if (pathname === "/api/vault/status") return status(request);
   if (pathname === "/api/vault/export") return exportZip(request);
@@ -397,4 +398,7 @@ export default async (request: Request): Promise<Response> => {
   if (pathname === "/api/vault/files") return files(request);
   if (pathname === "/view") return view(request);
   return httpJson({ error: "not_found" }, { status: 404 });
-};
+}
+
+export { vaultHandler };
+export default createVercelNodeHandler(vaultHandler);
