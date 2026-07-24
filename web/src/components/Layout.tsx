@@ -95,7 +95,7 @@ export function Layout({
               <ChevronDown size={15} aria-hidden="true" />
             </div>
           </div>
-          <span className="connection-state"><i /> Supabase conectado</span>
+          <span className="connection-state"><i /> Workspace público</span>
         </header>
         <main className="app-content" id="main-content">{children}</main>
       </div>
