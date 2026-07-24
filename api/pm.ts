@@ -7,6 +7,7 @@ import { DeskOsService } from "../src/application/desk-os-service.js";
 import type { ActorContext } from "../src/application/context.js";
 import { createDeskOsRepositories } from "../src/repository/vault-adapter.js";
 import { DomainError } from "../src/domain/errors.js";
+import { canWriteWorkspace, getAuthenticatedRequest, type AuthenticatedRequest } from "../src/lib/request-auth.js";
 
 /**
  * HTTP adapter for contracts/project-management-api.yaml. Thin by design:
@@ -218,12 +219,12 @@ route("POST", "/decomposition/proposals/:proposalId/apply", async ({ service, co
   return ok(result, context.requestId, result.auditId);
 });
 
-function defaultService(): DeskOsService {
-  const store = vaultStore();
+function defaultService(auth: AuthenticatedRequest): DeskOsService {
+  const store = vaultStore({ workspaceId: auth.workspaceId, accessToken: auth.accessToken });
   return new DeskOsService(createDeskOsRepositories(store), new BlobVaultService(store));
 }
 
-let serviceFactory: () => DeskOsService = defaultService;
+let serviceFactory: (auth: AuthenticatedRequest) => DeskOsService = defaultService;
 
 /** Tests inject an in-memory service; production uses Vercel Postgres. */
 export function setPmServiceForTesting(factory: (() => DeskOsService) | null): void {
@@ -233,6 +234,16 @@ export function setPmServiceForTesting(factory: (() => DeskOsService) | null): v
 export default async (request: Request): Promise<Response> => {
   const denied = await requireAdminJson(request);
   if (denied) return denied;
+  const auth = await getAuthenticatedRequest(request);
+  if (!auth) {
+    return json({ ok: false, error: { code: "UNAUTHORIZED", message: "Sessão inválida." } }, { status: 401 });
+  }
+  if (request.method !== "GET" && !canWriteWorkspace(auth)) {
+    return json(
+      { ok: false, error: { code: "FORBIDDEN", message: "Seu perfil é somente leitura." } },
+      { status: 403 },
+    );
+  }
 
   const requestId = `req_${crypto.randomUUID()}`;
   const url = absoluteUrl(request);
@@ -243,8 +254,13 @@ export default async (request: Request): Promise<Response> => {
       request.method === "GET"
         ? {}
         : ((await request.json().catch(() => ({}))) as Record<string, unknown>);
-    const service = serviceFactory();
-    const context: ActorContext = { actorType: "ADMIN", actorId: "operator", requestId };
+    const service = serviceFactory(auth);
+    const context: ActorContext = {
+      actorType: "ADMIN",
+      actorId: auth.userId,
+      workspaceId: auth.workspaceId,
+      requestId,
+    };
 
     for (const candidate of routes) {
       if (candidate.method !== request.method) continue;

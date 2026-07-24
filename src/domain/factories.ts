@@ -21,7 +21,11 @@ function nowIso(): string {
 
 export const DEFAULT_WORKSPACE_ID = "wsp_leonardo";
 
-export function makeProject(input: CreateProjectInput, workspaceId = DEFAULT_WORKSPACE_ID): Project {
+export function makeProject(
+  input: CreateProjectInput,
+  workspaceId = DEFAULT_WORKSPACE_ID,
+  ownerId = "leonardo",
+): Project {
   const at = nowIso();
   return {
     id: newId("project"),
@@ -34,7 +38,7 @@ export function makeProject(input: CreateProjectInput, workspaceId = DEFAULT_WOR
     definitionOfDone: input.definitionOfDone,
     status: "PLANNED",
     priority: input.priority,
-    ownerId: "leonardo",
+    ownerId,
     startAt: null,
     dueAt: null,
     tags: input.tags,

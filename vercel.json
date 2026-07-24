@@ -14,11 +14,20 @@
     { "source": "/dashboard", "destination": "/api/workflow-dashboard" },
     { "source": "/api/admin/login", "destination": "/api/admin" },
     { "source": "/api/admin/logout", "destination": "/api/admin" },
+    { "source": "/api/auth/config", "destination": "/api/admin" },
+    { "source": "/api/auth/workspaces", "destination": "/api/admin" },
+    { "source": "/api/auth/session", "destination": "/api/admin" },
+    { "source": "/api/auth/me", "destination": "/api/admin" },
+    { "source": "/api/auth/logout", "destination": "/api/admin" },
     { "source": "/api/vault/status", "destination": "/api/vault" },
     { "source": "/api/vault/export", "destination": "/api/vault" },
     { "source": "/api/vault/files", "destination": "/api/vault" },
     { "source": "/api/vault/import", "destination": "/api/vault" },
-    { "source": "/api/pm/:path*", "destination": "/api/pm" }
+    { "source": "/api/pm/:path*", "destination": "/api/pm" },
+    { "source": "/api/executar/:path*", "destination": "/api/executar" },
+    { "source": "/entrar", "destination": "/index.html" },
+    { "source": "/app", "destination": "/app/index.html" },
+    { "source": "/app/:path*", "destination": "/app/index.html" }
   ],
   "headers": [
     {
@@ -28,7 +37,7 @@
         { "key": "X-Frame-Options", "value": "DENY" },
         { "key": "Referrer-Policy", "value": "no-referrer" },
         { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'" }
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; connect-src 'self' https://*.supabase.co wss://*.supabase.co; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'" }
       ]
     }
   ]

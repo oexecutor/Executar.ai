@@ -47,14 +47,19 @@ function failure(error: unknown, requestId: string) {
   };
 }
 
-export function registerDeskOsTools(server: McpServer, service: DeskOsService, actorId: string): void {
+export function registerDeskOsTools(
+  server: McpServer,
+  service: DeskOsService,
+  actorId: string,
+  workspaceId?: string,
+): void {
   const guard = <T extends Record<string, unknown>>(
     summary: string,
     action: (input: T, context: ActorContext) => Promise<ToolEnvelope>,
   ) => {
     return async (input: T) => {
       const requestId = `req_${crypto.randomUUID()}`;
-      const context: ActorContext = { actorType: "MCP_CLIENT", actorId, requestId };
+      const context: ActorContext = { actorType: "MCP_CLIENT", actorId, workspaceId, requestId };
       try {
         const result = await action(input, context);
         return {

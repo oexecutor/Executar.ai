@@ -1,72 +1,124 @@
-import { adminAuthConfigured, adminCookie, clearAdminCookie, signAdminSession, verifyAdminPassword } from "../src/lib/auth.js";
+import {
+  appCookie,
+  clearAppCookie,
+  signAppSession,
+} from "../src/lib/auth.js";
 import { absoluteUrl, json, methodNotAllowed } from "../src/lib/http.js";
-import { loginPage } from "../src/lib/admin-guard.js";
+import { getAuthenticatedRequest } from "../src/lib/request-auth.js";
+import {
+  authenticateSupabaseUser,
+  getSupabasePublicConfig,
+  listWorkspaceMemberships,
+} from "../src/lib/supabase.js";
 
-/**
- * login + logout live in one function, dispatched by pathname, to stay
- * under Vercel's 12-function Hobby-plan cap — see api/oauth.ts and
- * api/vault.ts for the same pattern. Each section is otherwise unchanged
- * from its own former file.
- */
-
-interface Credentials {
-  password: string;
-  returnTo: string | null;
-  isForm: boolean;
+function privateJson(body: unknown, init: ResponseInit = {}): Response {
+  const headers = new Headers(init.headers);
+  headers.set("Cache-Control", "private, no-store");
+  headers.set("Vary", "Authorization, Cookie");
+  return json(body, { ...init, headers });
 }
 
-async function readCredentials(request: Request): Promise<Credentials> {
-  const contentType = request.headers.get("content-type") ?? "";
-  if (contentType.includes("application/x-www-form-urlencoded") || contentType.includes("multipart/form-data")) {
-    const form = await request.formData();
-    const returnTo = form.get("return_to");
-    return {
-      password: typeof form.get("password") === "string" ? String(form.get("password")) : "",
-      returnTo: typeof returnTo === "string" ? returnTo : null,
-      isForm: true,
-    };
-  }
-  const body = (await request.json().catch(() => ({}))) as { password?: unknown };
-  return { password: typeof body.password === "string" ? body.password : "", returnTo: null, isForm: false };
+async function body(request: Request): Promise<Record<string, unknown>> {
+  return await request.json().catch(() => ({})) as Record<string, unknown>;
 }
 
-async function login(request: Request): Promise<Response> {
-  if (request.method !== "POST") return methodNotAllowed(["POST"]);
-  if (!adminAuthConfigured()) {
-    return json(
-      {
-        error: {
-          code: "AUTH_NOT_CONFIGURED",
-          message: "Autenticação do operador não está configurada.",
-          suggestion: "Defina a variável de ambiente ADMIN_PASSWORD no Vercel.",
-        },
+async function runtimeConfig(request: Request): Promise<Response> {
+  if (request.method !== "GET") return methodNotAllowed(["GET"]);
+  const config = getSupabasePublicConfig();
+  if (!config) {
+    return privateJson({
+      ok: false,
+      error: {
+        code: "AUTH_NOT_CONFIGURED",
+        message: "O ambiente Supabase ainda não foi configurado.",
       },
-      { status: 503 },
-    );
+    }, { status: 503 });
   }
-  const credentials = await readCredentials(request);
-  if (!verifyAdminPassword(credentials.password)) {
-    if (credentials.isForm) return loginPage(credentials.returnTo ?? "/");
-    return json({ error: { code: "INVALID_CREDENTIALS", message: "Senha inválida." } }, { status: 401 });
+  return privateJson({ ok: true, data: config });
+}
+
+async function workspaces(request: Request): Promise<Response> {
+  if (request.method !== "POST") return methodNotAllowed(["POST"]);
+  const input = await body(request);
+  const accessToken = typeof input.access_token === "string" ? input.access_token : "";
+  const user = await authenticateSupabaseUser(accessToken);
+  if (!user) {
+    return privateJson({ ok: false, error: { code: "UNAUTHORIZED", message: "Sessão Supabase inválida." } }, { status: 401 });
   }
-  const cookie = adminCookie(await signAdminSession());
-  if (credentials.isForm) {
-    const returnTo =
-      credentials.returnTo && credentials.returnTo.startsWith("/") && !credentials.returnTo.startsWith("//")
-        ? credentials.returnTo
-        : "/";
-    return new Response(null, { status: 303, headers: { Location: returnTo, "Set-Cookie": cookie } });
+  const memberships = await listWorkspaceMemberships(accessToken, user.id);
+  return privateJson({ ok: true, data: { user, memberships } });
+}
+
+async function createSession(request: Request): Promise<Response> {
+  if (request.method !== "POST") return methodNotAllowed(["POST"]);
+  const input = await body(request);
+  const accessToken = typeof input.access_token === "string" ? input.access_token : "";
+  const workspaceId = typeof input.workspace_id === "string" ? input.workspace_id : "";
+  const user = await authenticateSupabaseUser(accessToken);
+  if (!user) {
+    return privateJson({ ok: false, error: { code: "UNAUTHORIZED", message: "Sessão Supabase inválida." } }, { status: 401 });
   }
-  return json({ authenticated: true, accessMode: "admin-session" }, { headers: { "Set-Cookie": cookie } });
+  const membership = (await listWorkspaceMemberships(accessToken, user.id))
+    .find((candidate) => candidate.workspaceId === workspaceId);
+  if (!membership) {
+    return privateJson({
+      ok: false,
+      error: { code: "WORKSPACE_FORBIDDEN", message: "Você não possui acesso ativo a esse workspace." },
+    }, { status: 403 });
+  }
+  const session = {
+    userId: user.id,
+    email: user.email,
+    workspaceId: membership.workspaceId,
+    workspaceName: membership.workspaceName,
+    role: membership.role,
+  };
+  const token = await signAppSession(session);
+  return privateJson(
+    { ok: true, data: session },
+    { headers: { "Set-Cookie": appCookie(token) } },
+  );
+}
+
+async function currentSession(request: Request): Promise<Response> {
+  if (request.method !== "GET") return methodNotAllowed(["GET"]);
+  const session = await getAuthenticatedRequest(request);
+  return session
+    ? privateJson({ ok: true, data: session })
+    : privateJson({ ok: false, error: { code: "UNAUTHORIZED", message: "Sessão não encontrada." } }, { status: 401 });
 }
 
 async function logout(request: Request): Promise<Response> {
   if (request.method !== "POST") return methodNotAllowed(["POST"]);
-  return json({ authenticated: false }, { headers: { "Set-Cookie": clearAdminCookie() } });
+  return privateJson(
+    { ok: true, data: { authenticated: false } },
+    { headers: { "Set-Cookie": clearAppCookie() } },
+  );
 }
 
 export default async (request: Request): Promise<Response> => {
   const pathname = absoluteUrl(request).pathname;
-  if (pathname === "/api/admin/logout") return logout(request);
-  return login(request);
+  try {
+    if (pathname === "/api/auth/config") return runtimeConfig(request);
+    if (pathname === "/api/auth/workspaces") return workspaces(request);
+    if (pathname === "/api/auth/session") return createSession(request);
+    if (pathname === "/api/auth/me") return currentSession(request);
+    if (pathname === "/api/auth/logout" || pathname === "/api/admin/logout") return logout(request);
+    if (pathname === "/api/admin/login") {
+      return privateJson({
+        ok: false,
+        error: {
+          code: "LEGACY_LOGIN_RETIRED",
+          message: "O login de operador foi substituído por contas Supabase com workspace.",
+        },
+      }, { status: 410 });
+    }
+    return privateJson({ ok: false, error: { code: "NOT_FOUND", message: "Rota de autenticação inexistente." } }, { status: 404 });
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    return privateJson({
+      ok: false,
+      error: { code: "AUTH_SERVICE_ERROR", message: "Não foi possível validar a autenticação." },
+    }, { status: 503 });
+  }
 };

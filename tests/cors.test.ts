@@ -79,17 +79,11 @@ describe("CORS on OAuth + MCP endpoints", () => {
     expect(response.headers.get("Access-Control-Allow-Origin")).toBe("*");
   });
 
-  it("attaches CORS headers to an /oauth/authorize error response, including when the lookup itself fails", async () => {
-    // No Postgres connection string is configured in this test environment,
-    // so oauthStore().get() throws before validate() can even reach its own
-    // "unknown client" check — the response falls through to safeError's
-    // 500. What this test actually guards is that CORS headers are present
-    // on *every* exit path of the handler, not just the happy path.
-    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+  it("redirects an unauthenticated OAuth authorization to sign-in with CORS", async () => {
     const response = await oauthAuthorizeHandler(new Request("https://example.test/oauth/authorize?client_id=unknown", { method: "GET" }));
-    expect(response.status).toBe(500);
+    expect(response.status).toBe(303);
+    expect(response.headers.get("location")).toContain("/entrar?return_to=");
     expect(response.headers.get("Access-Control-Allow-Origin")).toBe("*");
-    consoleErrorSpy.mockRestore();
   });
 
   it("answers OPTIONS preflight on /mcp with CORS headers without requiring auth", async () => {

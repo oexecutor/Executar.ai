@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import pmHandler, { setPmServiceForTesting } from "../api/pm.js";
-import { adminCookie, signAdminSession } from "../src/lib/auth.js";
+import { adminCookie, appCookie, signAdminSession, signAppSession } from "../src/lib/auth.js";
 import { DeskOsService } from "../src/application/desk-os-service.js";
 import { createDeskOsRepositories } from "../src/repository/vault-adapter.js";
 import { BlobVaultService } from "../src/lib/vault.js";
@@ -40,10 +40,27 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-describe("/api/pm HTTP adapter (Gate 5, API half)", () => {
-  it("does not require an operator session (Gate 0.5 disabled at the user's request)", async () => {
+describe("/api/pm HTTP adapter (compatibility API)", () => {
+  it("fails closed without a workspace session", async () => {
     const response = await pmHandler(new Request(`${BASE}/status`));
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(401);
+  });
+
+  it("allows viewers to read but blocks compatibility API mutations", async () => {
+    cookie = appCookie(await signAppSession({
+      userId: "usr_viewer",
+      email: "viewer@example.test",
+      workspaceId: "11111111-1111-1111-1111-111111111111",
+      workspaceName: "HQ",
+      role: "VIEWER",
+    })).split(";")[0] ?? "";
+    expect((await call("GET", "/status")).status).toBe(200);
+    expect((await call("POST", "/projects", {
+      idempotency_key: "viewer-write",
+      title: "Não permitido",
+      objective: "x",
+      definitionOfDone: ["x"],
+    })).status).toBe(403);
   });
 
   it("serves system status and 404s unknown routes", async () => {

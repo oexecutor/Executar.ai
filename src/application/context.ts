@@ -6,6 +6,7 @@ export interface ActorContext {
   actorType: ActorType;
   actorId: string;
   requestId: string;
+  workspaceId?: string;
 }
 
 export function writeOptions(

@@ -1,152 +1,100 @@
-import { useCallback, useEffect, useState } from "react";
-import { ApiError, getJson, newIdempotencyKey, postJson } from "../api";
-import { TaskForm } from "../components/TaskForm";
-import type { BoardView, SprintSummary, TaskStatus, TaskSummary } from "../types";
-import { KANBAN_COLUMNS, TASK_STATUS_LABEL } from "../types";
+import { Check, ChevronRight } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { getJson, postJson } from "../api";
+import type { ProjectBundle, ProjectItem, ProjectSummary } from "../types";
 
-async function moveTask(task: TaskSummary, targetStatus: TaskStatus, targetPosition: number): Promise<void> {
-  const body: Record<string, unknown> = {
-    idempotency_key: newIdempotencyKey(),
-    target_status: targetStatus,
-    target_position: targetPosition,
-    expected_version: task.version,
-  };
-  if (targetStatus === "BLOCKED") {
-    const reason = window.prompt("Por que esta tarefa está bloqueada?");
-    if (!reason) return;
-    body.blocked_reason = reason;
-  }
-  if (targetStatus === "DONE") {
-    const evidence = window.prompt("Evidência de conclusão (ou deixe em branco para justificar sem evidência):");
-    if (evidence) body.completion_evidence = [evidence];
-    else {
-      const override = window.prompt("Sem evidência — explique por que está concluída mesmo assim:");
-      if (!override) return;
-      body.override_reason = override;
-    }
-  }
-  await postJson(`/api/pm/tasks/${task.id}/move`, body);
-}
+type Column = "READY" | "IN_PROGRESS" | "CHECKPOINT" | "DONE";
 
-function TaskCard({ task, onChanged, onEdit }: { task: TaskSummary; onChanged: () => void; onEdit: () => void }) {
+export function Board({ project }: { project: ProjectSummary | null }) {
+  const [bundle, setBundle] = useState<ProjectBundle | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  async function handleMove(event: React.ChangeEvent<HTMLSelectElement>) {
-    const target = event.target.value as TaskStatus;
-    if (target === task.status) return;
-    setError(null);
-    try {
-      await moveTask(task, target, 0);
-      onChanged();
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Falha ao mover a tarefa.");
-    }
-  }
-
-  return (
-    <li className="task-card">
-      <p className="task-card-title">{task.title}</p>
-      <p className="task-card-meta">
-        {task.priority}
-        {task.stepsTotal > 0 ? ` · ${task.stepsDone}/${task.stepsTotal} passos` : ""}
-      </p>
-      {task.blockedReason && <p className="task-card-blocked">Bloqueada: {task.blockedReason}</p>}
-      <div className="task-card-actions">
-        <label className="visually-hidden" htmlFor={`move-${task.id}`}>
-          Mover {task.title} para
-        </label>
-        <select id={`move-${task.id}`} value={task.status} onChange={handleMove}>
-          {KANBAN_COLUMNS.map((status) => (
-            <option key={status} value={status}>
-              {TASK_STATUS_LABEL[status]}
-            </option>
-          ))}
-        </select>
-        <button type="button" className="button secondary small" onClick={onEdit}>
-          Editar
-        </button>
-      </div>
-      {error && (
-        <p role="alert" className="form-error">
-          {error}
-        </p>
-      )}
-    </li>
-  );
-}
-
-export function Board() {
-  const [sprint, setSprint] = useState<SprintSummary | null>(null);
-  const [board, setBoard] = useState<BoardView | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [formTask, setFormTask] = useState<TaskSummary | "new" | null>(null);
+  const [pending, setPending] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    setLoading(true);
+    if (!project) return;
+    try {
+      setBundle(await getJson<ProjectBundle>(`/api/executar/projects/${project.id}`));
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Não foi possível carregar o Kanban.");
+    }
+  }, [project]);
+
+  useEffect(() => { void load(); }, [load]);
+
+  const cards = useMemo(() => {
+    if (!bundle) return [] as Array<{ item: ProjectItem; areaTitle: string; column: Column; done: number; total: number }>;
+    return bundle.project.areas.flatMap((area) => area.items.map((item) => {
+      const actions = item.actions ?? [];
+      const done = actions.filter((action) => bundle.progress[action.id]).length;
+      const column: Column = item.type === "checkpoint"
+        ? bundle.progress[item.id] ? "DONE" : "CHECKPOINT"
+        : done === actions.length ? "DONE" : done > 0 ? "IN_PROGRESS" : "READY";
+      return { item, areaTitle: area.short_title, column, done, total: actions.length };
+    }));
+  }, [bundle]);
+
+  async function advance(item: ProjectItem) {
+    if (!project || !bundle) return;
+    setPending(item.id);
     setError(null);
     try {
-      const current = await getJson<SprintSummary | null>("/api/pm/sprints/current");
-      setSprint(current);
-      if (current) {
-        const boardView = await getJson<BoardView>(`/api/pm/sprints/${current.id}/board`);
-        setBoard(boardView);
+      if (item.type === "checkpoint") {
+        await postJson(`/api/executar/projects/${project.id}/checkpoints/${item.id}`, { done: true });
+      } else {
+        const next = (item.actions ?? []).find((action) => !bundle.progress[action.id]);
+        if (next) await postJson(`/api/executar/projects/${project.id}/actions/${next.id}`, { done: true });
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Falha ao carregar o sprint.");
+      await load();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Não foi possível avançar o item.");
     } finally {
-      setLoading(false);
+      setPending(null);
     }
-  }, []);
+  }
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  if (!project) return <div className="empty-command"><span>KANBAN</span><h2>Selecione um projeto.</h2><p>O quadro é derivado da mesma estrutura 3–9–36.</p></div>;
 
-  if (loading) return <p className="lead">Carregando…</p>;
-  if (error) return <p role="alert" className="form-error">{error}</p>;
-  if (!sprint || !board) return <p className="lead">Crie um projeto em Hoje para começar um sprint.</p>;
+  const columns: Array<{ id: Column; label: string }> = [
+    { id: "READY", label: "Prontas" },
+    { id: "IN_PROGRESS", label: "Em andamento" },
+    { id: "CHECKPOINT", label: "Checkpoints" },
+    { id: "DONE", label: "Concluídas" },
+  ];
 
   return (
-    <section aria-labelledby="board-heading">
-      <div className="page-heading">
-        <div>
-          <div className="eyebrow">{sprint.status}</div>
-          <h1 id="board-heading">{sprint.title}</h1>
-          <p className="lead">{sprint.goal}</p>
-        </div>
-        <button type="button" className="button" onClick={() => setFormTask("new")}>
-          + Nova tarefa
-        </button>
+    <section className="board-page">
+      <header className="page-title-row">
+        <div><p className="eyebrow">Kanban canônico</p><h1>Fluxo visível.</h1><p>{project.name}</p></div>
+        <span className="board-rule">O estado é derivado das ações</span>
+      </header>
+      {error && <p className="inline-error" role="alert">{error}</p>}
+      <div className="kanban">
+        {columns.map((column) => {
+          const items = cards.filter((card) => card.column === column.id);
+          return (
+            <section className="kanban-column" key={column.id}>
+              <header><span>{column.label}</span><b>{items.length}</b></header>
+              <div>
+                {items.map((card) => (
+                  <article className={`kanban-card card-${column.id.toLowerCase()}`} key={card.item.id}>
+                    <div className="kanban-card-top"><span>{card.item.id}</span><small>{card.areaTitle}</small></div>
+                    <h2>{card.item.title}</h2>
+                    <p>{card.item.evidence}</p>
+                    {card.item.type === "task" && <div className="card-action-progress">{Array.from({ length: card.total }, (_, index) => <i key={index} className={index < card.done ? "done" : ""} />)}</div>}
+                    {column.id !== "DONE" && (
+                      <button type="button" onClick={() => void advance(card.item)} disabled={pending === card.item.id}>
+                        {card.item.type === "checkpoint" ? "Validar" : "Concluir próxima"} <ChevronRight size={15} />
+                      </button>
+                    )}
+                    {column.id === "DONE" && <span className="card-done"><Check size={14} /> Concluída</span>}
+                  </article>
+                ))}
+                {!items.length && <p className="column-empty">Nenhum item.</p>}
+              </div>
+            </section>
+          );
+        })}
       </div>
-
-      <div className="board-columns">
-        {board.columns.map((column) => (
-          <div className="board-column" key={column.status}>
-            <h2>
-              {TASK_STATUS_LABEL[column.status]} <span className="column-count">{column.tasks.length}</span>
-            </h2>
-            <ul className="task-card-list">
-              {column.tasks.map((task) => (
-                <TaskCard key={task.id} task={task} onChanged={load} onEdit={() => setFormTask(task)} />
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
-
-      {formTask && (
-        <TaskForm
-          projectId={sprint.projectId}
-          sprintId={sprint.id}
-          task={formTask === "new" ? undefined : formTask}
-          onCancel={() => setFormTask(null)}
-          onSaved={() => {
-            setFormTask(null);
-            load();
-          }}
-        />
-      )}
     </section>
   );
 }
