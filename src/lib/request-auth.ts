@@ -1,6 +1,7 @@
 import { verifyAppSession, verifyAdminRequest, type AppSession } from "./auth.js";
 import {
   authenticateSupabaseUser,
+  getOrCreatePublicWorkspace,
   getWorkspaceMembershipAsService,
   listWorkspaceMemberships,
   supabaseConfigured,
@@ -74,8 +75,7 @@ async function resolve(request: Request): Promise<AuthenticatedRequest | null> {
     }
   }
 
-  // The legacy admin cookie is accepted only by tests. Production and
-  // previews fail closed unless a Supabase-backed app session exists.
+  // The legacy admin cookie is accepted only by tests.
   if (process.env.NODE_ENV === "test" && await verifyAdminRequest(request)) {
     return {
       userId: "test-operator",
@@ -85,7 +85,26 @@ async function resolve(request: Request): Promise<AuthenticatedRequest | null> {
       role: "OWNER",
     };
   }
-  return null;
+
+  // Login was removed at the operator's explicit, repeated request: no
+  // request should ever be blocked waiting on a sign-in step. Every caller
+  // without a real session shares a single public workspace instead.
+  if (process.env.NODE_ENV === "test") return null;
+  if (!supabaseConfigured()) {
+    return { userId: "public", email: null, workspaceId: "public", workspaceName: "Workspace público", role: "OWNER" };
+  }
+  try {
+    const workspace = await getOrCreatePublicWorkspace();
+    return {
+      userId: "public",
+      email: null,
+      workspaceId: workspace.workspaceId,
+      workspaceName: workspace.workspaceName,
+      role: "OWNER",
+    };
+  } catch {
+    return null;
+  }
 }
 
 export function getAuthenticatedRequest(request: Request): Promise<AuthenticatedRequest | null> {

@@ -123,6 +123,56 @@ export async function getWorkspaceMembershipAsService(
   };
 }
 
+const PUBLIC_WORKSPACE_SLUG = "public";
+const PUBLIC_WORKSPACE_NAME = "Workspace público";
+let publicWorkspaceCache: Promise<WorkspaceMembership> | null = null;
+
+function serviceHeaders(extra: HeadersInit = {}): HeadersInit {
+  const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  if (!serviceRole) throw new Error("SUPABASE_SERVICE_ROLE_CONFIG_MISSING");
+  return { apikey: serviceRole, Authorization: `Bearer ${serviceRole}`, "Content-Type": "application/json", ...extra };
+}
+
+async function fetchOrCreatePublicWorkspace(): Promise<WorkspaceMembership> {
+  const config = getSupabasePublicConfig();
+  if (!config) throw new Error("SUPABASE_CONFIG_MISSING");
+
+  const lookup = new URL(`${config.url}/rest/v1/workspaces`);
+  lookup.searchParams.set("select", "id,name,slug");
+  lookup.searchParams.set("slug", `eq.${PUBLIC_WORKSPACE_SLUG}`);
+  lookup.searchParams.set("limit", "1");
+  const found = await fetch(lookup, { headers: serviceHeaders(), signal: AbortSignal.timeout(8_000) });
+  if (found.ok) {
+    const rows = await found.json() as Array<{ id: string; name: string; slug: string }>;
+    if (rows[0]) return { workspaceId: rows[0].id, workspaceName: rows[0].name, workspaceSlug: rows[0].slug, role: "OWNER" };
+  }
+
+  const created = await fetch(`${config.url}/rest/v1/workspaces`, {
+    method: "POST",
+    headers: serviceHeaders({ Prefer: "resolution=merge-duplicates,return=representation" }),
+    body: JSON.stringify({ name: PUBLIC_WORKSPACE_NAME, slug: PUBLIC_WORKSPACE_SLUG }),
+    signal: AbortSignal.timeout(8_000),
+  });
+  if (!created.ok) throw new Error(`SUPABASE_PUBLIC_WORKSPACE_CREATE_FAILED:${created.status}`);
+  const rows = await created.json() as Array<{ id: string; name: string; slug: string }>;
+  const row = rows[0];
+  if (!row) throw new Error("SUPABASE_PUBLIC_WORKSPACE_CREATE_EMPTY");
+  return { workspaceId: row.id, workspaceName: row.name, workspaceSlug: row.slug, role: "OWNER" };
+}
+
+/**
+ * Login was explicitly and repeatedly removed at the operator's request
+ * (see auth.test.ts). Every unauthenticated request is bound to a single
+ * shared workspace so the app and APIs work without any sign-in step.
+ */
+export function getOrCreatePublicWorkspace(): Promise<WorkspaceMembership> {
+  publicWorkspaceCache ??= fetchOrCreatePublicWorkspace().catch((error: unknown) => {
+    publicWorkspaceCache = null;
+    throw error;
+  });
+  return publicWorkspaceCache;
+}
+
 export class SupabaseKvStore implements KvStore {
   constructor(
     private readonly workspaceId: string,
