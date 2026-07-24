@@ -1,10 +1,9 @@
 import { getAuthenticatedRequest } from "./request-auth.js";
 
 /**
- * Phase 4 authentication boundary. JSON calls accept a verified Supabase
- * bearer bound to an active workspace membership, or the short-lived
- * HttpOnly app session issued by /api/auth/session. HTML routes redirect to
- * the public sign-in screen and never expose vault data anonymously.
+ * Phase 4 authentication boundary. Login was removed at the operator's
+ * explicit request: every caller without a real session uses the shared
+ * public workspace instead of being blocked by a sign-in step.
  */
 export async function requireAdminJson(request: Request): Promise<Response | null> {
   if (await getAuthenticatedRequest(request)) return null;
@@ -29,12 +28,11 @@ export async function requireAdminJson(request: Request): Promise<Response | nul
 
 export async function requireAdminHtml(request: Request): Promise<Response | null> {
   if (await getAuthenticatedRequest(request)) return null;
-  const url = new URL(request.url);
-  const returnTo = `${url.pathname}${url.search}`;
+  // Redirect to /app (the workspace) instead of a login page.
   return new Response(null, {
     status: 303,
     headers: {
-      Location: `/entrar?return_to=${encodeURIComponent(returnTo)}`,
+      Location: `/app`,
       "Cache-Control": "private, no-store",
     },
   });

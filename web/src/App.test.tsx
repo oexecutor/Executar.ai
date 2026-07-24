@@ -19,12 +19,12 @@ describe("App", () => {
     localStorage.clear();
   });
 
-  it("mostra autenticação quando não existe sessão Supabase", async () => {
+  it("abre o workspace diretamente quando não existe sessão (login removido)", async () => {
     vi.mocked(getBrowserSession).mockResolvedValue(null);
     vi.mocked(selectedWorkspace).mockReturnValue(null);
+    vi.mocked(getJson).mockResolvedValue([]);
     render(<App />);
-    expect(await screen.findByRole("heading", { name: /Seu contexto/i })).toBeInTheDocument();
-    expect(screen.getByLabelText("E-mail")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Execução em foco." })).toBeInTheDocument();
   });
 
   it("abre o workspace quando sessão e workspace são válidos", async () => {

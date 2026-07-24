@@ -83,7 +83,7 @@ async function authorize(request: Request): Promise<Response> {
     const session = await getAuthenticatedRequest(request);
     if (!session) {
       const returnTo = `${url.pathname}${url.search}`;
-      return withCors(Response.redirect(`${baseUrl()}/entrar?return_to=${encodeURIComponent(returnTo)}`, 303));
+      return withCors(Response.redirect(`${baseUrl()}/app`, 303));
     }
     const form = request.method === "POST" ? new URLSearchParams(await request.text()) : undefined;
     const params = readAuthorizeParams(url, form);

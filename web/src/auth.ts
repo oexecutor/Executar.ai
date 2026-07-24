@@ -76,7 +76,7 @@ export async function signInWithGoogle(returnTo: string): Promise<void> {
   const client = await getSupabaseClient();
   const { error } = await client.auth.signInWithOAuth({
     provider: "google",
-    options: { redirectTo: `${window.location.origin}/entrar?return_to=${encodeURIComponent(returnTo)}` },
+    options: { redirectTo: `${window.location.origin}/app` },
   });
   if (error) throw error;
 }
