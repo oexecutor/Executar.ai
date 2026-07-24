@@ -1,0 +1,36 @@
+meta:
+  contract_id: CT-ERRORS
+  title: Taxonomia de Erros — AMES
+  version: "1.0"
+  status: APPROVED_FOR_SKILL_DRAFT
+  canonical_source: SRC-02, SRC-05
+  note: >
+    Cada erro indica severidade default, gate típico, condição, tratamento e decisão
+    recomendada. Códigos AC-xxx são erros de ACESSIBILIDADE (distintos de ACR-, que é
+    critério de aceitação — ADR-009).
+
+errors:
+  IN-001: { title: entrada inválida, severity: HIGH, gate: G0, condition: input não valida contra skill-input.schema.json, treatment: rejeitar e apontar campo, decision: CORRIGIR }
+  IN-002: { title: campo obrigatório ausente, severity: HIGH, gate: G0, condition: required faltando, treatment: solicitar campo, decision: CORRIGIR }
+  EV-001: { title: evidência ausente, severity: HIGH, gate: G1, condition: conclusão sem evidence_refs, treatment: registrar GAP, decision: PAUSAR }
+  EV-002: { title: fonte não rastreável, severity: MEDIUM, gate: G1, condition: metric/chart/table/evidence sem source, treatment: exigir source, decision: CORRIGIR }
+  CT-001: { title: conteúdo sem prioridade, severity: HIGH, gate: G1, condition: bloco sem priority, treatment: atribuir P0–P4, decision: CORRIGIR }
+  CT-002: { title: conteúdo sem representação, severity: HIGH, gate: G1, condition: bloco sem representations/text_fallback, treatment: adicionar representação, decision: CORRIGIR }
+  FM-001: { title: perfil de formato ausente, severity: HIGH, gate: G4, condition: target_format sem perfil, treatment: criar/perfilar, decision: CORRIGIR }
+  FM-002: { title: orçamento excedido, severity: MEDIUM, gate: G5, condition: conteúdo > content-budget, treatment: overflow_resolution_order, decision: CORRIGIR }
+  TR-001: { title: transformação não declarada, severity: HIGH, gate: G5, condition: adaptação sem behavior registrado, treatment: declarar behavior/justification/impact, decision: CORRIGIR }
+  TR-002: { title: scale indevido, severity: CRITICAL, gate: G5, condition: SCALE usado p/ compensar overflow ou reduzir fonte, treatment: usar REPRIORITIZE/SUBSTITUTE/PAGINATE, decision: CORRIGIR }
+  OV-001: { title: overflow, severity: HIGH, gate: G5, condition: conteúdo excede superfície, treatment: resolver por ordem; se irresolúvel sinalizar, decision: PAUSAR }
+  TK-001: { title: token ausente, severity: MEDIUM, gate: G4, condition: referência a token inexistente, treatment: definir/ligar token, decision: CORRIGIR }
+  TK-002: { title: valor hard-coded, severity: MEDIUM, gate: G4, condition: valor visual literal em componente, treatment: substituir por ref de token, decision: CORRIGIR }
+  CP-001: { title: componente sem variante, severity: MEDIUM, gate: G4, condition: componente sem full/compact/minimal/print, treatment: adicionar variantes, decision: CORRIGIR }
+  CP-002: { title: substituição ausente, severity: HIGH, gate: G4, condition: tabela larga sem substituição p/ formato estreito, treatment: declarar substitution, decision: CORRIGIR }
+  AC-001: { title: contraste insuficiente, severity: HIGH, gate: G6, condition: ratio < requisito ACC-001, treatment: elevar contraste, decision: CORRIGIR }
+  AC-002: { title: significado dependente de cor, severity: HIGH, gate: G6, condition: estado só por cor, treatment: rótulo+ícone+forma, decision: CORRIGIR }
+  PR-001: { title: margem insegura, severity: HIGH, gate: G6, condition: conteúdo na área de corte/rodapé, treatment: reservar safe-area, decision: CORRIGIR }
+  PR-002: { title: quebra inadequada, severity: MEDIUM, gate: G6, condition: break-inside violado, treatment: aplicar break-inside avoid, decision: CORRIGIR }
+  PR-003: { title: promessa profissional sem pipeline, severity: CRITICAL, gate: G6, condition: export P-1 declarada como arquivo de gráfica, treatment: exigir P-2, decision: CORRIGIR }
+  AI-001: { title: artefato sem saída estruturada, severity: HIGH, gate: G5, condition: visual sem par estruturado, treatment: gerar dados paralelos, decision: CORRIGIR }
+  AI-002: { title: relação implícita, severity: MEDIUM, gate: G1, condition: relação apenas em prosa, treatment: normalizar em relationships, decision: CORRIGIR }
+  DS-001: { title: perfil visual inconsistente, severity: MEDIUM, gate: G6, condition: viola style-profile/audit_criteria, treatment: corrigir p/ perfil, decision: CORRIGIR }
+  GO-001: { title: ação externa sem aprovação, severity: CRITICAL, gate: any, condition: escrita/publicação/deleção externa sem aprovação, treatment: bloquear e pedir aprovação, decision: PAUSAR }

@@ -1,0 +1,62 @@
+meta:
+  contract_id: CT-STYLE
+  title: Perfis de Estilo — AMES
+  version: "1.0"
+  status: APPROVED_FOR_SKILL_DRAFT
+  decision_refs: [EDR-003]
+  canonical_source: SRC-03 (Swiss)
+
+profiles:
+  neutral-editorial:
+    description: base editorial funcional, sem identidade forte; ponto de partida configurável.
+    grid: modular
+    alignment: left
+    color_policy: econômica, semântica
+    typography: sans funcional, ≤4 níveis de hierarquia
+    decoration: mínima
+
+  classic-swiss-editorial:
+    description: >
+      International Typographic Style funcional contemporâneo. Critérios OBJETIVOS de
+      auditoria (SWISS-001..006). Tokens Swiss vêm de TOK-DESKGO-SWISS-001 (SRC-04).
+    must:
+      - grid modular
+      - baseline grid
+      - composição assimétrica
+      - alinhamento principal à esquerda
+      - borda direita irregular (ragged right no corpo)
+      - tipografia sans funcional (grotesca condensada — Roboto Condensed PROVISIONAL, LAC-FONT)
+      - no máximo três pesos tipográficos
+      - contraste por escala, peso, posição e espaço
+      - cor econômica e semântica (accent ≤5% da área — ref TOK-DESKGO-SWISS-001.color.brand.signal)
+      - espaço negativo ativo (≥25% branco)
+      - linhas/regras com função estrutural (1px sólido)
+      - numeração sistemática
+      - continuidade entre páginas
+      - funcionamento em preto e branco
+    must_not:
+      - cards arredondados internos
+      - pills
+      - emojis
+      - sombras
+      - gradientes
+      - glassmorphism
+      - excesso de badges
+      - múltiplas cores decorativas
+      - aparência SaaS sem necessidade
+      - centralização decorativa
+    audit_criteria:            # objetivos — usados em G6 e acceptance-tests
+      - AUD-SWISS-GRID: alinhamentos verticais/horizontais compartilhados perceptíveis
+      - AUD-SWISS-ALIGN: alinhamento à esquerda dominante; borda direita irregular no corpo
+      - AUD-SWISS-TYPE: ≤3 pesos; ≤4 níveis de hierarquia simultâneos
+      - AUD-SWISS-COLOR: 1 papel semântico por cor; accent ≤5% da área
+      - AUD-SWISS-DECOR: 0 pills/emoji/sombra/gradiente/glass
+      - AUD-SWISS-BW: estrutura permanece clara em escala de cinza
+    shell_exception:
+      note: raio grande pertence ao shell do dispositivo/app, não à camada editorial interna (SRC-03 §6)
+      radius_shell: { ref: TOK-DESKGO-SWISS-001.radius.shell_mobile }
+      radius_editorial: 0px
+
+  custom:
+    description: perfil fornecido pelo usuário; MUST declarar os mesmos campos objetivos e critérios de auditoria.
+    requires: [must, must_not, audit_criteria, tokens_ref]

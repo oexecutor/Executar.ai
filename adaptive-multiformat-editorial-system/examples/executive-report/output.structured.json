@@ -1,0 +1,5 @@
+{ "run_id": "ex-exec-01", "format": "widget", "visible_blocks": ["HED-summary","MET-mrr","REC-expand"],
+  "hidden_blocks": ["TAB-cohorts"], "moved_to_expansion": ["TAB-cohorts"],
+  "kpi": { "label": "MRR", "value": 48000, "unit": "BRL", "trend": "up", "target": 52000 },
+  "next_action": "Alocar orçamento de marketing ao canal X em julho",
+  "source": "Financeiro e Produto, 2026-07-20" }

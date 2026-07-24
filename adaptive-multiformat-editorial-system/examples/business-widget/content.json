@@ -1,0 +1,10 @@
+{
+  "document": { "id": "DOC-widget-nps", "title": "Widget NPS", "style_profile": "classic-swiss-editorial" },
+  "blocks": [
+    { "id": "MET-nps", "type": "metric", "priority": "P1", "period": "Jul 2026",
+      "content": { "value": 62, "label": "NPS", "trend": "up" },
+      "source": { "name": "CX", "source_uri": "content/nps.csv" }, "epistemic_class": "FACT",
+      "representations": { "full": { "component": "chart", "variant": "full" }, "compact": { "component": "widget", "variant": "compact" }, "minimal": { "component": "metric", "variant": "minimal" }, "text_fallback": "NPS: 62 (Jul 2026), tendência de alta" },
+      "status": "APPROVED" }
+  ]
+}

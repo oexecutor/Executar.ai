@@ -1,0 +1,24 @@
+# Template de entrada de ciclo — valida contra contracts/skill-input.schema.json
+project_id: ""            # ex.: relatorio-q3-acme
+current_gate: G0          # G0..G7
+mode: SPECIFY             # SPECIFY | AUDIT | ADAPT | GENERATE | PACKAGE
+objective: ""             # frase única do objetivo do ciclo
+target_outputs: []        # [visual, structured-data, manifest, audit-report, package]
+target_formats: []        # ex.: [a4, widget, mobile]
+source_format: null       # p/ ADAPT
+target_format: null       # p/ ADAPT
+style_profile: classic-swiss-editorial   # neutral-editorial | classic-swiss-editorial | custom
+content_sources:
+  - uri: ""
+    kind: csv             # csv | json | yaml | markdown | image | html
+    version: null
+tokens_location:
+  contract_id: TOK-DESKGO-SWISS-001
+  uri: "DESKGO-SWISS-DESIGN-CONTRACT-SKILL-v1.0/04-DESIGN-SYSTEM/design-tokens.yaml"
+  version: "1.0"
+constraints:
+  print_class: none       # none | P-1 | P-2
+  max_pages: null
+  language: pt-BR
+approval_policy: require-approval-each-gate
+known_gaps: []            # [LAC-006, ...]

@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ames.local/contracts/skill-output.schema.json",
+  "title": "AMES Skill Output",
+  "description": "CT-OUTPUT. Saída de um gate. MUST conter exatamente uma decision e uma next_action.",
+  "type": "object",
+  "required": ["run_id", "project_id", "skill_version", "contract_version", "gate", "status", "decision", "next_action"],
+  "additionalProperties": false,
+  "properties": {
+    "run_id": { "type": "string", "minLength": 1 },
+    "project_id": { "type": "string", "minLength": 1 },
+    "skill_version": { "type": "string" },
+    "contract_version": { "type": "string" },
+    "gate": { "type": "string", "enum": ["G0", "G1", "G2", "G3", "G4", "G5", "G6", "G7"] },
+    "status": { "type": "string", "enum": ["completed", "blocked", "in-progress"] },
+    "decision": {
+      "type": "string",
+      "enum": ["AVANÇAR", "CORRIGIR", "PAUSAR", "ENCERRAR"],
+      "description": "Exatamente uma decisão por saída."
+    },
+    "facts": { "type": "array", "items": { "$ref": "#/$defs/claim" } },
+    "evidence": { "type": "array", "items": { "$ref": "#/$defs/claim" } },
+    "inferences": { "type": "array", "items": { "$ref": "#/$defs/claim" } },
+    "hypotheses": { "type": "array", "items": { "$ref": "#/$defs/claim" } },
+    "counterevidence": { "type": "array", "items": { "$ref": "#/$defs/claim" } },
+    "gaps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "description"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^LAC-[A-Za-z0-9]+$" },
+          "description": { "type": "string" },
+          "blocks_gate": { "type": "boolean" }
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": { "$ref": "audit-finding.schema.json" }
+    },
+    "transformations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["block_id", "from_format", "to_format", "behavior", "justification"],
+        "additionalProperties": false,
+        "properties": {
+          "block_id": { "type": "string" },
+          "from_format": { "type": "string" },
+          "to_format": { "type": "string" },
+          "behavior": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string", "enum": ["SCALE", "REFLOW", "REPRIORITIZE", "SUBSTITUTE", "PAGINATE"] }
+          },
+          "justification": { "type": "string" },
+          "impact": { "type": "string" }
+        }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "type"],
+        "additionalProperties": false,
+        "properties": {
+          "path": { "type": "string" },
+          "type": { "type": "string" },
+          "status": { "type": "string" },
+          "checksum": { "type": ["string", "null"] },
+          "parallel_structured_data": { "type": ["string", "null"], "description": "Caminho do par estruturado (FR-005, AI-001)." }
+        }
+      }
+    },
+    "quality_metrics": { "type": "object", "additionalProperties": true },
+    "limitations": { "type": "array", "items": { "type": "string" } },
+    "next_action": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Exatamente uma próxima ação."
+    }
+  },
+  "$defs": {
+    "claim": {
+      "type": "object",
+      "required": ["statement"],
+      "additionalProperties": false,
+      "properties": {
+        "statement": { "type": "string" },
+        "refs": { "type": "array", "items": { "type": "string" } },
+        "confidence": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH"] }
+      }
+    }
+  }
+}

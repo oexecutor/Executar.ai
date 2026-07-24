@@ -1,0 +1,35 @@
+meta:
+  contract_id: CT-EVIDENCE
+  title: Governança de Evidências — AMES
+  version: "1.0"
+  status: APPROVED_FOR_SKILL_DRAFT
+  canonical_source: SRC-01, SRC-02
+  decision_refs: []
+
+classes:
+  FACT:           sustentado pelo contrato ou pela entrada.
+  EVIDENCE:       trecho, token, dado, regra ou decisão identificável e localizável.
+  INFERENCE:      derivação lógica explicitamente marcada como tal.
+  HYPOTHESIS:     proposta ainda não aprovada.
+  COUNTEREVIDENCE: conflito com contrato, decisão ou outra evidência.
+  GAP:            dado necessário não fornecido (registrar como LAC-XXX).
+  RECOMMENDATION: sugestão de ação; nunca vira fato.
+
+rules:
+  - R1: não inventar informação ausente.
+  - R2: registrar ausência como GAP (LAC-XXX).
+  - R3: vincular conclusões a evidências.
+  - R4: indicar explicitamente quando algo é inferido.
+  - R5: preservar fonte, data, versão e localização da evidência.
+  - R6: não transformar RECOMMENDATION em FACT.
+  - R7: não continuar um gate quando faltar insumo essencial (decisão PAUSAR).
+  - R8: INFERENCE/HYPOTHESIS/GAP MUST NOT virar requisito APPROVED.
+
+evidence_record:
+  required_fields: [source, date]
+  optional_fields: [version, checksum, uri, last_scanned_at]
+  staleness: last_scanned_at permite detectar dados obsoletos (EDS-029).
+
+provenance_per_conclusion:
+  description: cada conclusão referencia sua fonte por ID (EDS-028)
+  fields: [conclusion_id, evidence_refs, source_uri, version, modified_at, checksum]

@@ -1,0 +1,26 @@
+{
+  "document": { "id": "DOC-exec-q2", "title": "Relatório Executivo — Q2 2026", "style_profile": "classic-swiss-editorial" },
+  "blocks": [
+    { "id": "HED-summary", "type": "heading", "priority": "P1", "content": "Receita cresce 18% e supera meta trimestral",
+      "representations": { "full": {}, "print": {}, "text_fallback": "Receita cresce 18% e supera meta trimestral" }, "status": "APPROVED" },
+    { "id": "MET-mrr", "type": "metric", "priority": "P1", "period": "Q2 2026", "unit": "BRL",
+      "content": { "value": 48000, "label": "MRR", "trend": "up", "target": 52000 },
+      "source": { "name": "Financeiro", "source_uri": "content/metrics.csv" },
+      "epistemic_class": "FACT",
+      "representations": { "full": { "component": "chart", "variant": "full" }, "compact": { "component": "metric", "variant": "compact" }, "minimal": { "component": "metric", "variant": "minimal" }, "print": {}, "text_fallback": "MRR: R$ 48.000 (Q2 2026), alta de 18%, meta R$ 52.000" },
+      "status": "APPROVED" },
+    { "id": "REC-expand", "type": "recommendation", "priority": "P1",
+      "content": { "statement": "Priorizar expansão do canal de maior conversão", "action": "Alocar orçamento de mkt ao canal X em julho" },
+      "epistemic_class": "RECOMMENDATION",
+      "representations": { "full": {}, "minimal": {}, "print": {}, "text_fallback": "Próxima ação: alocar orçamento de marketing ao canal X em julho" },
+      "status": "APPROVED" },
+    { "id": "TAB-cohorts", "type": "table", "priority": "P3",
+      "content": { "columns": ["Coorte","Retenção","LTV"], "rows": [["Jan","82%","R$ 1.2k"],["Fev","79%","R$ 1.1k"]] },
+      "source": { "name": "Produto", "source_uri": "content/cohorts.csv" },
+      "representations": { "full": {}, "print": {}, "text_fallback": "Retenção por coorte: Jan 82% LTV 1.2k; Fev 79% LTV 1.1k" },
+      "status": "APPROVED" },
+    { "id": "SRC-note", "type": "source", "priority": "P2",
+      "content": "Fonte: Financeiro e Produto, 2026-07-20",
+      "representations": { "full": {}, "print": {}, "text_fallback": "Fonte: Financeiro e Produto, 2026-07-20" }, "status": "APPROVED" }
+  ]
+}
