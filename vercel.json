@@ -25,9 +25,12 @@
     { "source": "/api/vault/import", "destination": "/api/vault" },
     { "source": "/api/pm/:path*", "destination": "/api/pm" },
     { "source": "/api/executar/:path*", "destination": "/api/executar" },
+    { "source": "/api/blog/newsletter", "destination": "/api/blog" },
     { "source": "/entrar", "destination": "/index.html" },
     { "source": "/app", "destination": "/app/index.html" },
-    { "source": "/app/:path*", "destination": "/app/index.html" }
+    { "source": "/app/:path*", "destination": "/app/index.html" },
+    { "source": "/blog", "destination": "/blog/index.html" },
+    { "source": "/blog/:path*", "destination": "/blog/index.html" }
   ],
   "headers": [
     {
