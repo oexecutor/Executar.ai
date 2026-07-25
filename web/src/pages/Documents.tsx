@@ -3,10 +3,25 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { apiAuthHeaders } from "../auth";
 import type { ProjectSummary, VaultEntry } from "../types";
 
+interface VaultFile extends VaultEntry {
+  content: string | null;
+  renderedHtml: string | null;
+  rawUrl: string | null;
+  mimeType?: string;
+}
+
+function linkedVaultPath(): string | null {
+  return new URLSearchParams(window.location.search).get("path");
+}
+
 export function Documents({ project }: { project: ProjectSummary | null }) {
   const [entries, setEntries] = useState<VaultEntry[]>([]);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedPath, setSelectedPath] = useState<string | null>(linkedVaultPath);
+  const [selectedFile, setSelectedFile] = useState<VaultFile | null>(null);
+  const [viewerLoading, setViewerLoading] = useState(false);
+  const [viewerError, setViewerError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setError(null);
@@ -20,7 +35,43 @@ export function Documents({ project }: { project: ProjectSummary | null }) {
     }
   }, []);
 
+  const loadFile = useCallback(async (path: string) => {
+    setViewerLoading(true);
+    setViewerError(null);
+    setSelectedFile(null);
+    try {
+      const response = await fetch(`/api/vault/files?path=${encodeURIComponent(path)}`, {
+        headers: await apiAuthHeaders(),
+      });
+      const body = await response.json().catch(() => ({})) as {
+        file?: VaultFile;
+        error?: { message?: string };
+      };
+      if (!response.ok || !body.file) {
+        throw new Error(body.error?.message ?? "Não foi possível abrir o arquivo.");
+      }
+      setSelectedFile(body.file);
+    } catch (caught) {
+      setViewerError(caught instanceof Error ? caught.message : "Não foi possível abrir o arquivo.");
+    } finally {
+      setViewerLoading(false);
+    }
+  }, []);
+
   useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    if (selectedPath) void loadFile(selectedPath);
+  }, [loadFile, selectedPath]);
+
+  function closeViewer() {
+    setSelectedPath(null);
+    setSelectedFile(null);
+    setViewerError(null);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("path");
+    url.searchParams.set("tab", "documents");
+    window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+  }
 
   async function createNote(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -67,6 +118,36 @@ export function Documents({ project }: { project: ProjectSummary | null }) {
         ))}
         {!entries.length && <p className="documents-empty">Nenhum documento no workspace.</p>}
       </div>
+
+      {selectedPath && (
+        <div className="modal-backdrop" role="presentation" onMouseDown={closeViewer}>
+          <section className="modal exec-modal vault-viewer-modal" role="dialog" aria-modal="true" aria-label="Visualizador do Vault" onMouseDown={(event) => event.stopPropagation()}>
+            <div className="modal-head">
+              <div><p className="eyebrow">Visualizador do Vault</p><h2>{selectedFile?.name ?? selectedPath.split("/").at(-1) ?? "Arquivo"}</h2></div>
+              <button type="button" onClick={closeViewer} aria-label="Fechar visualizador"><X size={20} /></button>
+            </div>
+            {viewerLoading && <p className="documents-empty">Carregando arquivo…</p>}
+            {viewerError && <p className="inline-error" role="alert">{viewerError}</p>}
+            {selectedFile && (
+              <>
+                <div className="modal-actions">
+                  {selectedFile.rawUrl && <a className="button button-quiet" href={selectedFile.rawUrl} target="_blank" rel="noreferrer">Texto bruto</a>}
+                  <a className="button button-orange" href={selectedFile.downloadUrl}><Download size={16} /> Baixar</a>
+                </div>
+                <div className="vault-viewer-body">
+                  {selectedFile.renderedHtml ? (
+                    <article className="article" dangerouslySetInnerHTML={{ __html: selectedFile.renderedHtml }} />
+                  ) : selectedFile.content !== null ? (
+                    <pre>{selectedFile.content}</pre>
+                  ) : (
+                    <p className="documents-empty">Este arquivo é binário. Use o botão de download.</p>
+                  )}
+                </div>
+              </>
+            )}
+          </section>
+        </div>
+      )}
 
       {creating && (
         <div className="modal-backdrop" role="presentation" onMouseDown={() => setCreating(false)}>
