@@ -1,8 +1,8 @@
 # 04 — Riscos e Decisões
 
-> Atualizado em **2026-07-25** após homologação direta no GitHub e na Vercel.
-> As três decisões que bloqueavam o G1 foram resolvidas abaixo. Nenhuma delas
-> autoriza lançamento público com dados privados.
+> Atualizado em **2026-07-25** após homologação direta no GitHub e na Vercel e
+> início do G2. Nenhuma decisão abaixo autoriza lançamento público com dados
+> privados.
 
 ## Registro de riscos
 
@@ -13,10 +13,11 @@
 | RISK-003 | Duplicação de servidor MCP | Média | Média | Duas fontes de verdade e manutenção duplicada | A rota nativa `oexecutor/Executar.ai` (`/mcp`) é a implementação canônica; o servidor standalone é legado e não deve ser conectado ao produto principal | Dono do produto | G1 | Resolvido |
 | RISK-004 | Teste e2e intermitente relacionado a `/icon.svg` | Média | Média | Ruído na CI e regressões mascaradas | Corrigir e estabilizar em `EXA-G5-QA-001` | Engenharia | G5 | Aberto |
 | RISK-005 | Produção não homologada ao vivo | Alta | — | Código poderia estar verde sem funcionar na Vercel | Homologação realizada: produção READY; APIs principais responderam sem 500; erros de runtime do Vault não encontrados nas últimas 24 horas | Engenharia | G1 | Resolvido |
-| RISK-006 | Documentos históricos descreviam Netlify e senha de operador | Baixa | — | Agentes poderiam executar instruções obsoletas | `AGENTS.md`, `SECURITY.md`, `docs/DEPLOYMENT_STATUS.md`, `docs/09_SECURITY_AND_GOVERNANCE.md` e `docs/13_DECISIONS_GAPS_ASSUMPTIONS.md` foram migrados para a orientação Vercel pelo PR #16 | Engenharia | G1 | Resolvido |
+| RISK-006 | Documentos históricos descreviam Netlify e senha de operador | Baixa | — | Agentes poderiam executar instruções obsoletas | Documentos operacionais principais foram migrados para Vercel pelo PR #16 | Engenharia | G1 | Resolvido |
 | RISK-007 | PR #9 obsoleto poderia ser mesclado acidentalmente | Baixa | — | Reintrodução de autenticação antiga ou regressão | PR #9 encerrado sem merge em 2026-07-25 | Dono do produto | G1 | Resolvido |
 | RISK-008 | Política de privacidade e termos não validados juridicamente | Alta | — | Exposição legal no lançamento público | Validar conteúdo legal antes de G7 | Dono do produto | G7 | Aberto |
-| RISK-009 | `plano-operacional-rastreavel` depende de julgamento de LLM, não de endpoint determinístico | Média | Média | Escopo incorreto de engenharia | Fechar decisão de design em `EXA-G2-PLANGEN-001` antes de codificar integração | Produto | G2 | Aberto |
+| RISK-009 | `plano-operacional-rastreavel` depende de julgamento de LLM, não de endpoint determinístico | Média | Média | Escopo incorreto de engenharia e acoplamento frágil | Usar a skill como gerador externo de proposta `ProjectDoc`; validar deterministicamente e exigir revisão humana antes da persistência; não criar endpoint LLM síncrono no G2 | Produto + Engenharia | G2 | Mitigado / decisão registrada |
+| RISK-010 | `ExecutarService` e `DeskOsService` poderiam virar duas fontes operacionais concorrentes | Alta | Média | Dual-write, divergência de progresso e recuperação inconsistente | `ProjectDoc` + `ExecutarService` são canônicos para o ciclo 3–9–36; não fazer dual-write durante G2 | Produto + Engenharia | G2 | Mitigado / monitorado |
 
 ## Decisões resolvidas
 
@@ -65,6 +66,24 @@ separada.
 **Evidência atual:** `GET /mcp` responde `401` com `WWW-Authenticate` e metadata
 OAuth, comportamento esperado para um recurso MCP protegido; não retorna 500.
 
+### DEC-004 — Conexão PLANGEN e fonte canônica do ciclo central
+
+**Decisão:** `ProjectDoc` + `ExecutarService` + `/api/executar/*` formam a fonte
+canônica do ciclo 3–9–36. A skill `plano-operacional-rastreavel` gera um
+candidato `ProjectDoc` fora do backend transacional. O candidato passa por:
+
+1. validação em `/api/executar/validate`;
+2. revisão humana;
+3. persistência em `/api/executar/projects`.
+
+Não haverá endpoint LLM síncrono nem dual-write com `DeskOsService` durante o
+G2. Recursos maduros de proposta, auditoria e evidência do `DeskOsService`
+podem ser absorvidos posteriormente por adaptação explícita, sem trocar a
+fonte de verdade.
+
+**Evidência:** contrato e matriz comparativa em
+`docs/release/10-G2-CONTRATO-CICLO-CENTRAL.md`.
+
 ## Evidências de homologação do G1
 
 Em 2026-07-25 foram confirmados:
@@ -77,12 +96,15 @@ Em 2026-07-25 foram confirmados:
 - `/api/vault/files?path=_desk-os/index/evidence.json`: `200` com conteúdo;
 - `/mcp`: `401` autenticável, sem erro de runtime;
 - nenhum cluster de erro nas rotas do Vault nas últimas 24 horas;
-- PR #14 encerrado sem merge porque o `main` já contém implementação
-  equivalente e mais recente;
-- PR #9 encerrado sem merge por estar superado pela arquitetura atual;
-- PR #11 integrado com roadmap e runbooks;
-- PR #15 integrado com homologação e decisões;
-- PR #16 integrado com a migração operacional Netlify → Vercel.
+- PR #14 e PR #9 encerrados sem merge por estarem superados;
+- PRs #11, #15, #16 e #17 integrados ao `main`.
+
+## Evidências iniciais do G2
+
+- teste automatizado cobre criação, 81 ações, 9 checkpoints, 100% de progresso,
+  exportação e recuperação sobre nova instância do serviço;
+- contrato PLANGEN e decisão de fonte única registrados;
+- smoke de escrita no ambiente real ainda pendente.
 
 ## Decisões históricas preservadas
 
