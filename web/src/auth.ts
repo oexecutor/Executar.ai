@@ -1,9 +1,16 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-interface RuntimeConfig {
-  url: string;
-  publishableKey: string;
-}
+type RuntimeConfig =
+  | {
+      mode: "public";
+      workspaceId: string;
+      workspaceName: string;
+    }
+  | {
+      mode: "supabase";
+      url: string;
+      publishableKey: string;
+    };
 
 export interface WorkspaceMembership {
   workspaceId: string;
@@ -44,13 +51,18 @@ async function request<T>(path: string, body?: unknown): Promise<T> {
 
 export function getSupabaseClient(): Promise<SupabaseClient> {
   clientPromise ??= request<RuntimeConfig>("/api/auth/config")
-    .then(({ url, publishableKey }) => createClient(url, publishableKey, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-      },
-    }));
+    .then((config) => {
+      if (config.mode !== "supabase") {
+        throw new Error("Autenticação Supabase desativada no modo de workspace público.");
+      }
+      return createClient(config.url, config.publishableKey, {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true,
+        },
+      });
+    });
   return clientPromise;
 }
 
