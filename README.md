@@ -42,6 +42,7 @@ Requisitos: Node.js 20 ou superior e um projeto Supabase.
 npm ci
 npm --prefix web ci
 cp .env.example .env.local
+npm run env:check
 npm run build
 npm test
 npm run lint
@@ -88,18 +89,34 @@ Se existir um `kv_store` legado sem `workspace_id`, a migração o preserva como
 `legacy_kv_store`; o conteúdo operacional deverá ser associado a um workspace
 por um procedimento de migração de dados aprovado.
 
-## Variáveis
+## Configuração de ambiente
 
-Use `.env.example` como referência:
+Use `.env.example` como contrato público e sem segredos. Para desenvolvimento local, copie o modelo para `.env.local`; os arquivos locais de ambiente são protegidos pelo `.gitignore` e não devem ser enviados ao GitHub.
 
-- `PUBLIC_BASE_URL`;
-- `MCP_JWT_SECRET`;
-- `SUPABASE_URL`;
-- `SUPABASE_PUBLISHABLE_KEY`;
-- `SUPABASE_SERVICE_ROLE_KEY` somente no servidor;
-- `DATABASE_URL` para o registro OAuth durante a migração.
+| Variável | Obrigatória | Escopo | Ambientes | Origem/configuração |
+|---|---:|---|---|---|
+| `PUBLIC_BASE_URL` | Sim | Não sensível | Local, Preview e Production | URL local ou domínio da Vercel |
+| `MCP_JWT_SECRET` | Sim | Privada, servidor | Preview e Production | Segredo aleatório com pelo menos 32 bytes |
+| `SUPABASE_URL` | Sim | Pública | Local, Preview e Production | Supabase Project Settings |
+| `SUPABASE_PUBLISHABLE_KEY` | Sim | Pública | Local, Preview e Production | Supabase API Settings |
+| `SUPABASE_SERVICE_ROLE_KEY` | Sim | Privada, servidor | Preview e Production | Supabase API Settings |
+| `DATABASE_URL` | Sim durante a migração OAuth | Privada, servidor | Local, Preview e Production | Supabase/Postgres, preferencialmente pooler |
+| `ADMIN_PASSWORD` | Não, legado | Privada, servidor | Somente implantação legada | Não configurar sem dependência confirmada |
+| `SMOKE_BASE_URL` | Apenas testes smoke | Não sensível | Local, CI ou Preview | URL do ambiente testado |
 
-Nenhuma chave de IA ou `service_role` deve usar prefixo `VITE_` ou chegar ao navegador.
+Nenhuma chave de IA, senha, `service_role`, segredo JWT ou URL privada de banco deve usar prefixo `VITE_` ou `NEXT_PUBLIC_`, nem chegar ao navegador.
+
+Validações disponíveis:
+
+```bash
+# Confere se o contrato .env.example contém todas as variáveis esperadas
+npm run env:check
+
+# Confere os valores reais do ambiente atual antes de Preview/produção
+npm run env:check:runtime
+```
+
+A checagem padrão também faz parte de `npm run check`. A checagem de runtime exige que as variáveis obrigatórias estejam efetivamente cadastradas no ambiente atual.
 
 ## Contratos expostos
 
