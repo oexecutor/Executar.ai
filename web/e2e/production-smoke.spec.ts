@@ -14,7 +14,7 @@ test.describe("G2 production smoke", () => {
     try {
       await page.goto("/app/");
       await expect(page.getByRole("heading", { name: "Execução em foco." })).toBeVisible();
-      await page.getByRole("button", { name: "Portfólio" }).click();
+      await page.getByRole("button", { name: "Portfólio", exact: true }).click();
       await expect(page.getByRole("heading", { name: "Projetos que avançam." })).toBeVisible();
 
       await page.getByRole("button", { name: /novo projeto/i }).click();
