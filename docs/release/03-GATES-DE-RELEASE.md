@@ -1,29 +1,34 @@
 # 03 — Gates de Release: Critérios Objetivos de Passagem
 
-Critérios binários (passa/não passa), verificáveis por evidência — não por
-opinião. Cada critério cita como verificar e o estado atual confirmado nesta
-auditoria (2026-07-24, SHA `28a689f`).
+Critérios binários e verificáveis por evidência. O baseline foi produzido em
+2026-07-24 e os critérios de infraestrutura foram atualizados após homologação
+Vercel e fechamento do G1 em 2026-07-25.
 
 | Critério | Como verificar | Estado atual |
 |---|---|---|
-| Zero erros TypeScript | `npm run build` e `npm run build:web` | ✅ PASS (FATO, confirmado nesta sessão) |
-| Zero testes aplicáveis falhando | `npm test` + `npm run test:web` | ✅ PASS — 21 arquivos/140 testes (backend) + 3 arquivos/10 testes (web), todos verdes |
-| Playwright verde | `npm run test:web:e2e` | ⚠️ PARCIAL — 10/11 testes verdes; 1 teste intermitente reproduzido 2/3 execuções (ver G5, `EXA-G5-QA-001`) |
-| Zero erros 500 nos fluxos homologados | `curl` GET-only contra produção | 🔲 LACUNA — sem acesso de rede a produção nesta sessão |
-| Projeto criado e persistido | Ciclo completo via `/api/executar` ou `/mcp` | ⚠️ Validado localmente via testes (`tests/executar.test.ts`, `tests/mcp-desk-os.test.ts`); não validado ao vivo em produção (G2) |
-| Reload preserva dados | `web/e2e/app.spec.ts` — "recarregar a página mantém o acesso ao workspace" | ✅ PASS (teste e2e verde) |
-| Blog acessível por deep link | `web/e2e/app.spec.ts` — "artigo abre por slug diretamente, refresh não gera 404" | ✅ PASS |
-| Mobile homologado | `web/e2e/app.spec.ts` — testes de responsividade 375px/834px, sem rolagem horizontal | ✅ PASS |
-| Logs sem erros novos | Revisão de `runtime logs` no painel Vercel | 🔲 LACUNA — sem acesso ao painel Vercel nesta sessão |
-| Rollback documentado | `07-PLANO-DE-ROLLBACK.md` | ✅ Este pacote inclui o plano |
-| Monitoramento ativo | Confirmar no painel Vercel / serviço externo | 🔲 NÃO CONFIRMADO — não verificado nesta sessão, sem evidência de ferramenta de monitoramento configurada |
-| Política de privacidade e termos avaliados antes do público | Revisão jurídica de `web/public/privacy.html` | 🔲 NÃO CONFIRMADO — arquivo existe mas conteúdo não foi validado como real política legal (G7) |
-| Zero erros TypeScript em CI | `.github/workflows/ci.yml` job `check` | EVIDÊNCIA (config lida, roda os mesmos comandos verificados localmente; log da última execução não recuperado nesta sessão por limite de tooling) |
-| Acessibilidade sem violações críticas/sérias | `axe-playwright` (wcag2a/wcag2aa) em `web/e2e/app.spec.ts` | ✅ PASS nos pontos cobertos (login-free root, blog) |
+| Zero erros TypeScript | `npm run build` e `npm run build:web` | ✅ PASS — builds locais e Vercel concluídos |
+| Zero testes aplicáveis falhando | `npm test` + `npm run test:web` | ✅ PASS no baseline — 140 testes backend + 10 testes web |
+| Playwright verde | `npm run test:web:e2e` | ⚠️ PARCIAL — 10/11 no baseline; 1 teste intermitente ligado a `/icon.svg` permanece para G5 |
+| Zero erros 500 nos fluxos homologados | chamadas GET contra produção | ✅ PASS para identidade, projetos e Vault; MCP retorna o 401 OAuth esperado, sem 500 |
+| Projeto criado e persistido | ciclo completo via `/api/executar` ou `/mcp` | ⚠️ Validado por testes e leitura em produção; criação ponta a ponta permanece como critério central do G2 |
+| Reload preserva dados | teste e2e e recuperação em produção | ✅ PASS no teste e2e do baseline; recuperação completa será revalidada no G2 |
+| Blog acessível por deep link | teste direto por slug + refresh | ✅ PASS no baseline |
+| Mobile homologado | testes 375px/834px, sem rolagem horizontal | ✅ PASS no baseline |
+| Logs sem erros novos | revisão de runtime logs Vercel | ✅ PASS para as rotas Vault na janela verificada de 24 horas |
+| Rollback documentado | `07-PLANO-DE-ROLLBACK.md` | ✅ PASS |
+| Monitoramento ativo | painel Vercel / serviço externo | 🔲 NÃO CONFIRMADO — exigido antes de G6 |
+| Política de privacidade e termos avaliados | revisão jurídica de `web/public/privacy.html` | 🔲 NÃO CONFIRMADO — exigido em G7 |
+| Orientação operacional atualizada | `AGENTS.md`, `SECURITY.md`, deployment e governança | ✅ PASS — migração documental Netlify → Vercel integrada pelo PR #16 |
+| Acessibilidade sem violações críticas/sérias | `axe-playwright` em fluxos cobertos | ✅ PASS nos pontos cobertos pelo baseline |
+
+## Estado dos gates iniciais
+
+- **G0 — Auditoria e baseline confiável:** ✅ APROVADO.
+- **G1 — Runtime e infraestrutura estáveis:** ✅ APROVADO.
+- **G2 — Ciclo central do produto funcional:** ▶ PRÓXIMO GATE.
 
 ## Regra de gate
 
-Nenhum gate G6 (beta fechado) em diante pode abrir enquanto houver qualquer
-linha com estado 🔲 (LACUNA/NÃO CONFIRMADO) ou ⚠️ (PARCIAL) nesta tabela sem
-uma decisão explícita registrada em `04-RISCOS-DECISOES.md` justificando o
-avanço mesmo assim.
+Nenhum gate G6 (beta fechado) em diante pode abrir enquanto houver linha com
+estado 🔲 ou ⚠️ nesta tabela sem correção ou decisão explícita registrada em
+`04-RISCOS-DECISOES.md`.

@@ -13,7 +13,7 @@
 | RISK-003 | Duplicação de servidor MCP | Média | Média | Duas fontes de verdade e manutenção duplicada | A rota nativa `oexecutor/Executar.ai` (`/mcp`) é a implementação canônica; o servidor standalone é legado e não deve ser conectado ao produto principal | Dono do produto | G1 | Resolvido |
 | RISK-004 | Teste e2e intermitente relacionado a `/icon.svg` | Média | Média | Ruído na CI e regressões mascaradas | Corrigir e estabilizar em `EXA-G5-QA-001` | Engenharia | G5 | Aberto |
 | RISK-005 | Produção não homologada ao vivo | Alta | — | Código poderia estar verde sem funcionar na Vercel | Homologação realizada: produção READY; APIs principais responderam sem 500; erros de runtime do Vault não encontrados nas últimas 24 horas | Engenharia | G1 | Resolvido |
-| RISK-006 | Documentos históricos ainda descrevem Netlify e senha de operador | Baixa | Certa | Agentes podem executar instruções obsoletas | Este pacote `docs/release/` passa a ser a referência operacional; atualizar `AGENTS.md`, `SECURITY.md` e documentos legados no restante do G1 | Engenharia | G1 | Em correção |
+| RISK-006 | Documentos históricos descreviam Netlify e senha de operador | Baixa | — | Agentes poderiam executar instruções obsoletas | `AGENTS.md`, `SECURITY.md`, `docs/DEPLOYMENT_STATUS.md`, `docs/09_SECURITY_AND_GOVERNANCE.md` e `docs/13_DECISIONS_GAPS_ASSUMPTIONS.md` foram migrados para a orientação Vercel pelo PR #16 | Engenharia | G1 | Resolvido |
 | RISK-007 | PR #9 obsoleto poderia ser mesclado acidentalmente | Baixa | — | Reintrodução de autenticação antiga ou regressão | PR #9 encerrado sem merge em 2026-07-25 | Dono do produto | G1 | Resolvido |
 | RISK-008 | Política de privacidade e termos não validados juridicamente | Alta | — | Exposição legal no lançamento público | Validar conteúdo legal antes de G7 | Dono do produto | G7 | Aberto |
 | RISK-009 | `plano-operacional-rastreavel` depende de julgamento de LLM, não de endpoint determinístico | Média | Média | Escopo incorreto de engenharia | Fechar decisão de design em `EXA-G2-PLANGEN-001` antes de codificar integração | Produto | G2 | Aberto |
@@ -69,8 +69,7 @@ OAuth, comportamento esperado para um recurso MCP protegido; não retorna 500.
 
 Em 2026-07-25 foram confirmados:
 
-- produção Vercel do projeto `executar-ai` em estado `READY` no commit
-  `308227130147c94268e268abd8601a1a8dce2580` antes da integração documental;
+- produção Vercel do projeto `executar-ai` em estado `READY`;
 - `/api/auth/me`: `200`;
 - `/api/executar/projects`: `200` e portfólio carregado;
 - `/api/vault/status`: `200`, 5 arquivos, armazenamento Vercel Postgres;
@@ -80,7 +79,10 @@ Em 2026-07-25 foram confirmados:
 - nenhum cluster de erro nas rotas do Vault nas últimas 24 horas;
 - PR #14 encerrado sem merge porque o `main` já contém implementação
   equivalente e mais recente;
-- PR #9 encerrado sem merge por estar superado pela arquitetura atual.
+- PR #9 encerrado sem merge por estar superado pela arquitetura atual;
+- PR #11 integrado com roadmap e runbooks;
+- PR #15 integrado com homologação e decisões;
+- PR #16 integrado com a migração operacional Netlify → Vercel.
 
 ## Decisões históricas preservadas
 
