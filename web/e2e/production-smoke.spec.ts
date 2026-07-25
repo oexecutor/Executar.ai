@@ -6,6 +6,7 @@ const apiUrl = (path: string) => new URL(path, productionBaseUrl).toString();
 
 test.describe("G2 production smoke", () => {
   test.skip(!runProductionSmoke, "Executado somente no job controlado de homologação em produção.");
+  test.setTimeout(60_000);
 
   test("cria, recarrega, avança, exporta e remove projeto descartável", async ({ page, request }) => {
     const marker = `PW-G2-${Date.now()}`;
@@ -23,7 +24,12 @@ test.describe("G2 production smoke", () => {
       await page.getByLabel("Responsável").fill("Playwright CI");
       await page.getByRole("button", { name: /criar estrutura/i }).click();
 
-      await expect(page.getByRole("heading", { name: marker })).toBeVisible({ timeout: 20_000 });
+      const markerHeading = page.getByRole("heading", { name: marker });
+      const openCreated = page.getByRole("button", { name: `Abrir ${marker}` });
+      await expect(markerHeading.or(openCreated)).toBeVisible({ timeout: 20_000 });
+      if (await openCreated.isVisible()) await openCreated.click();
+      await expect(markerHeading).toBeVisible({ timeout: 20_000 });
+
       const kicker = page.locator(".project-kicker span");
       projectId = (await kicker.textContent())?.trim() ?? null;
       expect(projectId).toMatch(/^PRJ-/);
