@@ -245,7 +245,7 @@ function pageStyles(): string {
 }
 
 function shell(title: string, body: string, script = ""): string {
-  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>${escapeHtml(title)} · DESK-OS</title><style>${pageStyles()}</style></head><body><main class="shell"><header class="top"><div class="brand">DESK-OS / OBSIDIAN CLOUD</div><a href="/">PAINEL</a></header>${body}<footer class="foot">Visualização protegida por sessão administrativa · conteúdo armazenado em Netlify Blobs</footer></main>${script ? `<script>${script}</script>` : ""}</body></html>`;
+  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>${escapeHtml(title)} · DESK-OS</title><style>${pageStyles()}</style></head><body><main class="shell"><header class="top"><div class="brand">DESK-OS / OBSIDIAN CLOUD</div><a href="/">PAINEL</a></header>${body}<footer class="foot">Vault EXECUTA.AI · conteúdo armazenado em Vercel Postgres</footer></main>${script ? `<script>${script}</script>` : ""}</body></html>`;
 }
 
 export function renderVaultBrowser(records: FileRecord[], publicBaseUrl: string): string {
