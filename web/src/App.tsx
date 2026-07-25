@@ -17,9 +17,14 @@ import type { ProjectSummary } from "./types";
 
 type Session = "checking" | "authenticated";
 
+function initialView(): AppView {
+  const tab = new URLSearchParams(window.location.search).get("tab");
+  return tab === "notes" || tab === "documents" ? "documents" : "overview";
+}
+
 export function App() {
   const [session, setSession] = useState<Session>("checking");
-  const [view, setView] = useState<AppView>("overview");
+  const [view, setView] = useState<AppView>(initialView);
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
     () => localStorage.getItem("executa.project"),
