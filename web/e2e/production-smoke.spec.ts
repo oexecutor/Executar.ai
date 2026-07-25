@@ -10,8 +10,10 @@ test.describe("G2 production smoke", () => {
     let projectId: string | null = null;
 
     try {
-      await page.goto("/app");
-      await expect(page.getByRole("button", { name: /novo projeto/i })).toBeVisible();
+      await page.goto("/app/");
+      await expect(page.getByRole("heading", { name: "Execução em foco." })).toBeVisible();
+      await page.getByRole("button", { name: "Portfólio" }).click();
+      await expect(page.getByRole("heading", { name: "Projetos que avançam." })).toBeVisible();
 
       await page.getByRole("button", { name: /novo projeto/i }).click();
       await page.getByLabel("Nome do projeto").fill(marker);
@@ -39,6 +41,14 @@ test.describe("G2 production smoke", () => {
       const exportBody = await exported.json() as { data: { progress: Record<string, boolean> } };
       expect(exportBody.data.progress["T02.1"]).toBe(true);
     } finally {
+      if (!projectId) {
+        const listed = await request.get("/api/executar/projects");
+        if (listed.ok()) {
+          const body = await listed.json() as { data?: Array<{ id: string; name: string }> };
+          projectId = body.data?.find((project) => project.name === marker)?.id ?? null;
+        }
+      }
+
       if (projectId) {
         const removed = await request.delete(`/api/executar/projects/${projectId}`, {
           data: { confirm: true },
