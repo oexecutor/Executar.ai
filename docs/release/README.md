@@ -4,6 +4,7 @@ Pacote de auditoria, roadmap e operação de lançamento do **EXECUTA.AI**.
 
 - Baseline inicial: **2026-07-24**, commit `28a689f`.
 - Homologação e fechamento do G1: **2026-07-25**.
+- Início do G2 — contrato e teste do ciclo central: **2026-07-25**.
 - Ambiente canônico: **Vercel**, projeto `executar-ai`.
 - Fonte documental: branch `main` de `oexecutor/Executar.ai`.
 
@@ -18,20 +19,20 @@ Pacote de auditoria, roadmap e operação de lançamento do **EXECUTA.AI**.
 
 ## Leitura recomendada
 
-1. [`09-HOMOLOGACAO-G1-2026-07-25.md`](./09-HOMOLOGACAO-G1-2026-07-25.md) —
+1. [`10-G2-CONTRATO-CICLO-CENTRAL.md`](./10-G2-CONTRATO-CICLO-CENTRAL.md) —
+   decisão canônica do ciclo 3–9–36, integração PLANGEN e lacunas de homologação.
+2. [`09-HOMOLOGACAO-G1-2026-07-25.md`](./09-HOMOLOGACAO-G1-2026-07-25.md) —
    fechamento do G1, produção homologada, PRs resolvidos e decisões vigentes.
-2. [`01-ROADMAP-LANCAMENTO.md`](./01-ROADMAP-LANCAMENTO.md) — Gates G0–G10,
+3. [`01-ROADMAP-LANCAMENTO.md`](./01-ROADMAP-LANCAMENTO.md) — Gates G0–G10,
    fases, dependências e caminho crítico.
-3. [`04-RISCOS-DECISOES.md`](./04-RISCOS-DECISOES.md) — riscos atuais e
+4. [`04-RISCOS-DECISOES.md`](./04-RISCOS-DECISOES.md) — riscos atuais e
    decisões de autenticação, persistência e MCP.
-4. [`00-STATUS-ATUAL.md`](./00-STATUS-ATUAL.md) — baseline histórico da
-   auditoria inicial; consultar a homologação G1 para o estado mais recente.
 
 ## Pacote completo
 
 | Documento | Função |
 |---|---|
-| `00-STATUS-ATUAL.md` | Baseline factual e tabela Área × Estado × Evidência × Bloqueio × Próxima ação |
+| `00-STATUS-ATUAL.md` | Baseline histórico factual |
 | `01-ROADMAP-LANCAMENTO.md` | Roadmap G0–G10 de prontidão de lançamento |
 | `02-BACKLOG-LINEAR.csv` | Backlog tabular pronto para revisão/importação |
 | `02-BACKLOG-LINEAR.json` | Backlog estruturado para agentes e automação |
@@ -43,6 +44,7 @@ Pacote de auditoria, roadmap e operação de lançamento do **EXECUTA.AI**.
 | `07-PLANO-DE-ROLLBACK.md` | Procedimento de incidente e reversão |
 | `08-OPERACAO-POS-LANCAMENTO.md` | Operação, suporte e monitoramento pós-lançamento |
 | `09-HOMOLOGACAO-G1-2026-07-25.md` | Evidência viva da retomada e fechamento do G1 |
+| `10-G2-CONTRATO-CICLO-CENTRAL.md` | Contrato, decisão PLANGEN, comparação de domínios e smoke test G2 |
 
 ## Estado resumido
 
@@ -50,9 +52,12 @@ Pacote de auditoria, roadmap e operação de lançamento do **EXECUTA.AI**.
 - **G1 — runtime e infraestrutura:** **APROVADO**. Vercel, Vault, APIs e MCP
   homologados; PRs #14 e #9 encerrados como superados; documentação operacional
   migrada de Netlify para Vercel pelos PRs #15 e #16.
+- **G2 — ciclo central:** **EM EXECUÇÃO**. O contrato canônico e a decisão
+  PLANGEN estão registrados; foi adicionada cobertura automatizada de criação,
+  81 ações, 9 checkpoints, exportação, persistência e recuperação. Falta o smoke
+  de escrita pelo fluxo real da interface.
 - **PR #4 — AMES:** permanece em draft, fora do runtime do app, aguardando
   migração controlada para `HQ-EXECUTA-AI-PLUGIN-SUITE`.
-- **Próximo gate:** **G2 — validar o ciclo central do produto ponta a ponta**.
 
 ## Regra de escrita externa
 
