@@ -45,7 +45,9 @@ jobs:
         run: npm --prefix web run test:e2e
 
   production-smoke:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/smoke/g2-production-playwright'
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/smoke/g2-production-playwright') ||
+      (github.event_name == 'pull_request' && github.head_ref == 'smoke/g2-production-playwright')
     runs-on: ubuntu-latest
     concurrency:
       group: g2-production-smoke
