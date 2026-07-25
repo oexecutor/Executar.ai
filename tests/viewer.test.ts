@@ -3,14 +3,14 @@ import { buildVaultViewUrl, renderMarkdown, renderVaultBrowser, renderVaultFile 
 import type { FileRecord } from "../src/lib/types.js";
 
 describe("secure vault viewer", () => {
-  const baseUrl = "https://desk-os-vault-mcp-openai.netlify.app";
+  const baseUrl = "https://executar-ai.vercel.app";
 
   it("builds encoded permanent viewer links", () => {
     expect(buildVaultViewUrl(baseUrl, "Projects/Plano semanal.md")).toBe(
-      "https://desk-os-vault-mcp-openai.netlify.app/?tab=notes&path=Projects%2FPlano%20semanal.md",
+      "https://executar-ai.vercel.app/?tab=notes&path=Projects%2FPlano%20semanal.md",
     );
     expect(buildVaultViewUrl(baseUrl, "References/Manual.pdf")).toBe(
-      "https://desk-os-vault-mcp-openai.netlify.app/?tab=documents&path=References%2FManual.pdf",
+      "https://executar-ai.vercel.app/?tab=documents&path=References%2FManual.pdf",
     );
   });
 
@@ -34,6 +34,8 @@ describe("secure vault viewer", () => {
     const browser = renderVaultBrowser([record], baseUrl);
     expect(browser).toContain("Projects/Plan.md");
     expect(browser).toContain("/?tab=notes&amp;path=Projects%2FPlan.md");
+    expect(browser).toContain("Vercel Postgres");
+    expect(browser).not.toContain("Netlify Blobs");
 
     const page = renderVaultFile({ record, bytes: Buffer.from("# Plan", "utf8"), publicBaseUrl: baseUrl });
     expect(page).toContain("<h1>Plan</h1>");
