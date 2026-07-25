@@ -55,8 +55,9 @@ describe("canonical EXECUTA 3–9–36 engine", () => {
     expect((await firstSession.getNext(id, 1)).count).toBe(1);
 
     for (const area of created.project.areas) {
-      const checkpoint = area.items[0];
-      for (const task of area.items.slice(1)) {
+      const checkpoint = area.items.find((item) => item.type === "checkpoint");
+      if (!checkpoint) throw new Error(`Área ${area.id} sem checkpoint canônico.`);
+      for (const task of area.items.filter((item) => item.type === "task")) {
         for (const action of task.actions ?? []) {
           await firstSession.completeAction(id, action.id, true);
         }
