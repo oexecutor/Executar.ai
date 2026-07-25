@@ -2,6 +2,7 @@ import { Download, ExternalLink, FileText, Plus, X } from "lucide-react";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { apiAuthHeaders } from "../auth";
 import type { ProjectSummary, VaultEntry } from "../types";
+import "../vault-viewer.css";
 
 interface VaultFile extends VaultEntry {
   content: string | null;
