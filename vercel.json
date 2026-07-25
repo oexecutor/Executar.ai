@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npm run install:web && npm run build:web && npm run build",
+  "buildCommand": "node scripts/check-mcp-secret.mjs && npm run install:web && npm run build:web && npm run build",
   "outputDirectory": "public",
   "rewrites": [
     { "source": "/health", "destination": "/api/health" },
