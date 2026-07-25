@@ -10,7 +10,7 @@ import { DeskOsService } from "../src/application/desk-os-service.js";
 import { createDeskOsRepositories } from "../src/repository/vault-adapter.js";
 import { ExecutarStore } from "../src/executar/store.js";
 import { ExecutarService } from "../src/executar/service.js";
-import { getWorkspaceMembershipAsService } from "../src/lib/supabase.js";
+import { resolveAuthorizedWorkspace } from "../src/lib/workspace-authorization.js";
 
 function unauthorized(): Response {
   const metadata = `${baseUrl()}/.well-known/oauth-protected-resource/mcp`;
@@ -32,7 +32,7 @@ async function mcpHandler(request: Request): Promise<Response> {
     const token = auth.slice(7);
     const claims = await verifyAccessToken(token);
     if (!claims.scopes.includes("mcp:tools")) return withCors(new Response(JSON.stringify({ error: "insufficient_scope" }), { status: 403 }));
-    const membership = await getWorkspaceMembershipAsService(claims.userId, claims.workspaceId);
+    const membership = await resolveAuthorizedWorkspace(claims.userId, claims.workspaceId);
     if (!membership) return withCors(unauthorized());
     if (membership.role === "VIEWER") {
       return withCors(new Response(JSON.stringify({ error: "insufficient_role" }), {
