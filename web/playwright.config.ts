@@ -8,6 +8,7 @@ import { defineConfig } from "@playwright/test";
 // present, so CI keeps using Playwright's own browser resolution.
 const SANDBOX_CHROMIUM = "/opt/pw-browsers/chromium";
 const executablePath = existsSync(SANDBOX_CHROMIUM) ? SANDBOX_CHROMIUM : undefined;
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:4173";
 
 export default defineConfig({
   testDir: "./e2e",
@@ -16,7 +17,7 @@ export default defineConfig({
   workers: 1,
   reporter: "list",
   use: {
-    baseURL: "http://localhost:4173",
+    baseURL,
     trace: "retain-on-failure",
     launchOptions: { executablePath, args: ["--no-sandbox"] },
   },
