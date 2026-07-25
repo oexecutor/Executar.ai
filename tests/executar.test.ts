@@ -42,6 +42,44 @@ describe("canonical EXECUTA 3–9–36 engine", () => {
     expect((await executar.getStatus(id)).items.checkpoints.done).toBe(1);
   });
 
+  it("persists, completes, exports and recovers the full 3–9–36 cycle", async () => {
+    const storage = memoryStore();
+    const firstSession = new ExecutarService(new ExecutarStore(storage));
+    const created = await firstSession.createProject({
+      name: "Validação G2",
+      description: "Validar o ciclo central completo do EXECUTA.AI.",
+      owner: "Execução assistida",
+    });
+    const id = created.project.meta.id;
+
+    expect((await firstSession.getNext(id, 1)).count).toBe(1);
+
+    for (const area of created.project.areas) {
+      const checkpoint = area.items[0];
+      for (const task of area.items.slice(1)) {
+        for (const action of task.actions ?? []) {
+          await firstSession.completeAction(id, action.id, true);
+        }
+      }
+      await firstSession.completeCheckpoint(id, checkpoint.id, true);
+    }
+
+    const completed = await firstSession.getStatus(id);
+    expect(completed.actions).toMatchObject({ total: 81, done: 81, pct: 100 });
+    expect(completed.items.tasks).toMatchObject({ total: 27, done: 27 });
+    expect(completed.items.checkpoints).toMatchObject({ total: 9, done: 9 });
+    expect((await firstSession.getNext(id, 5)).count).toBe(0);
+
+    const exported = await firstSession.exportPackage(id);
+    expect(exported.project.meta.id).toBe(id);
+    expect(Object.values(exported.progress).filter(Boolean)).toHaveLength(90);
+
+    const reloadedSession = new ExecutarService(new ExecutarStore(storage));
+    const recovered = await reloadedSession.getProject(id);
+    expect(recovered.status.actions).toMatchObject({ total: 81, done: 81, pct: 100 });
+    expect(recovered.progress).toEqual(exported.progress);
+  });
+
   it("keeps workspaces isolated by their storage adapter", async () => {
     const left = service();
     const right = service();
