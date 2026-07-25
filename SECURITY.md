@@ -1,61 +1,129 @@
-# Security model — operator session edition
+# Security model — Vercel internal-MVP edition
 
-## Deliberate configuration
+## Current production boundary
 
-Version 1.7.0 replaces the open-access model introduced in 1.4.0 with an authenticated
-operator session (Gate 0.5 of the DESK-OS PM handoff, baseline §13 Option B), while keeping
-controlled binary import from 1.5.0 and generated workflow dashboards from 1.6.0.
+The canonical deployment is the Vercel project `executar-ai` at
+`https://executar-ai.vercel.app`.
 
-- The vault HTTP APIs (`/api/vault/*`), the human viewer (`/view`) and the workflow
-  dashboard (`/dashboard`) require an authenticated operator session.
-- The session is issued by `POST /api/admin/login` after checking `ADMIN_PASSWORD`
-  (compared as SHA-256 digests with `timingSafeEqual`) and is carried in a signed JWT
-  cookie: `HttpOnly`, `Secure`, `SameSite=Lax`, 8-hour expiry.
-- Login fails closed: while `ADMIN_PASSWORD` is unset, no session can be created.
-- `/health` remains public and returns no sensitive data.
-- OAuth authorization for `/mcp` is automatic after protocol validation and authenticates
-  the MCP client, not the operator. Dynamic Client Registration remains available.
-- `MCP_JWT_SECRET` signs both OAuth access tokens and operator session cookies. It is not
-  a login password and is never shown in the interface.
+The application currently operates in a deliberate **internal-MVP public
+workspace mode**:
 
-## Remaining safeguards
+- `/api/auth/me` returns the shared `public` workspace with role `OWNER` when
+  no user session exists;
+- the React workspace, Vault HTTP routes, `/view` and dashboards are reachable
+  without the former operator-password login;
+- `/mcp` remains a separate protected resource and requires an OAuth bearer
+  token;
+- this configuration is intended only for development, owner-operated use and
+  controlled demonstrations.
 
-- OAuth still validates exact redirect URIs, resource audience, authorization codes and PKCE S256.
-- Markdown is escaped before safe formatting.
-- HTML, JavaScript, TypeScript and CSS files are displayed as text, never executed.
-- Binary files remain download-only.
-- Text editing is limited to 1 MB.
-- Updates use `expectedSha256`; stale revisions return `409 CONFLICT`.
-- Hidden paths, `.obsidian`, `.git`, traversal, absolute and null-byte paths are rejected.
-- The MCP exposes no command-execution or permanent-delete tool.
+This mode is **not safe for a public multi-user beta or private third-party
+data**. Authentication and workspace isolation must be implemented before G6
+(public beta), unless the deployment remains a single demonstrative workspace
+with no sensitive data.
 
-## Exposure notes
+## Canonical authentication surfaces
 
-- Anyone with the URL can reach the login form and the OAuth endpoints; everything else
-  requires the operator session or a valid MCP access token.
-- The MCP surface still authenticates *a client*, not a person: any client that completes
-  Dynamic Client Registration and PKCE receives tool access. Treat the MCP URL itself as
-  sensitive until per-actor authorization exists (out of MVP scope, DEC in baseline §13).
+### Application and Vault
 
-## Binary import safeguards
+The current application fallback is implemented in `src/lib/request-auth.ts`.
+It provides the shared public workspace when no stronger identity is present.
+Agents must not describe this fallback as tenant isolation or user
+authentication.
 
-- Base64 is validated canonically before storage.
-- Decoded payloads are limited to 4,000,000 bytes.
-- Optional SHA-256 verification detects modified or truncated input.
-- Existing destinations cannot be replaced without `overwrite=true` and the current `expectedSha256`.
-- Replaced files are moved to recoverable trash.
-- MIME type values are syntactically validated.
-- Hidden, internal, absolute and traversal paths remain blocked.
-- Imported ZIP and Skill packages are stored only; the server does not extract, execute or install them.
-- ZIP import over HTTP now requires the operator session; MCP import requires an OAuth token.
+### MCP
 
-## Workflow dashboard safeguards
+The canonical MCP endpoint is `/mcp` in this repository. It uses OAuth 2.1
+patterns, bearer access tokens, resource metadata and PKCE. An unauthenticated
+request should return `401` with `WWW-Authenticate`; this is expected behavior,
+not a runtime failure.
 
-- Dashboard HTML is generated only from validated structured fields; user text is HTML-escaped.
-- The generated dashboard contains no JavaScript and no external dependencies.
-- `/dashboard` renders only paths under `DESK-OS/Dashboards/Workflows/` ending in `STATUS_DASHBOARD.html`.
-- Renderable files must contain the DESK-OS server-generation marker.
-- The renderer applies a Content Security Policy that blocks scripts, network connections, frames, forms and external assets.
-- `expectedStateSha256` can prevent stale workflow-state updates.
-- Every ingestion can create an audit snapshot under `history/`.
-- The generated HTML is derived output; the JSON state is the source of truth.
+A successful MCP OAuth flow authenticates a client, not necessarily a human
+actor. Per-user authorization and workspace isolation remain separate product
+requirements.
+
+## Persistence boundary
+
+- Vault and OAuth use Vercel Postgres/Neon through the existing store adapters.
+- `SupabaseKvStore` is used only when Supabase is explicitly configured and a
+  workspace scope is supplied.
+- No storage migration or source-of-truth change may be made without an ADR,
+  tested migration, rollback and data-integrity verification.
+
+## Required safeguards
+
+- validate OAuth redirect URIs, state, audience, issuer and PKCE S256;
+- use short-lived access tokens and document revocation/refresh behavior;
+- apply rate limiting to OAuth, MCP and any future login endpoints;
+- validate every external input with an explicit schema;
+- reject traversal, absolute, hidden, null-byte and reserved paths;
+- enforce upload type, size and decompression limits;
+- escape or sanitize rendered Markdown/HTML;
+- display source code as text rather than executing it;
+- keep binary files download-only;
+- use optimistic concurrency for updates (`expectedSha256` or equivalent);
+- preserve recoverable trash/backups for overwrite and bulk operations;
+- emit audit evidence for consequential writes;
+- never log secrets, bearer tokens or complete Vault content;
+- keep preview and production secrets separate;
+- protect `.env*` files and maintain `.env.example` without real credentials;
+- inspect Vercel runtime errors after deployment;
+- treat dependency audit findings as tracked risks, not as permission to run
+  breaking `npm audit fix --force` automatically.
+
+## Human approval boundary
+
+AI may propose, classify, structure, validate, test and create reviewable
+branches or pull requests.
+
+Without explicit owner approval, AI must not:
+
+- perform destructive or bulk data changes;
+- permanently delete projects or Vault files;
+- overwrite content without concurrency protection and backup;
+- export private content to third parties;
+- send external messages;
+- publish content;
+- deploy production;
+- change the canonical storage backend;
+- introduce a second MCP source of truth;
+- enable public multi-user access while isolation is absent.
+
+## Vault and import safeguards
+
+- canonical Base64 validation before storage;
+- decoded payload limit of 4,000,000 bytes unless a reviewed contract changes
+  it;
+- optional SHA-256 verification for imported content;
+- replacement requires explicit `overwrite=true` and the current expected
+  hash;
+- replaced files go to recoverable trash;
+- imported ZIP and Skill packages are stored only and are never automatically
+  extracted, executed or installed;
+- hidden, internal and traversal destinations remain blocked.
+
+## Rendering safeguards
+
+- generated dashboard fields and user text must be HTML-escaped;
+- generated dashboards must not execute JavaScript or depend on untrusted
+  external assets;
+- render only allowlisted paths and expected file types;
+- apply a restrictive Content Security Policy;
+- treat structured JSON state as the source of truth and HTML as derived
+  output.
+
+## Launch security gates
+
+Before public beta:
+
+1. replace the public fallback with real authentication;
+2. isolate every workspace and entity by actor/tenant;
+3. validate authorization for all read and write routes;
+4. complete privacy/terms review;
+5. execute security, access-control and cross-workspace tests;
+6. document incident response, data export and deletion procedures.
+
+## Current accepted risks
+
+See `docs/release/04-RISCOS-DECISOES.md` for the binding risk register and
+`docs/release/09-HOMOLOGACAO-G1-2026-07-25.md` for live production evidence.
