@@ -67,4 +67,16 @@ jobs:
         env:
           RUN_PRODUCTION_SMOKE: "true"
           PLAYWRIGHT_BASE_URL: "https://executar-ai.vercel.app"
-        run: npx --prefix web playwright test e2e/production-smoke.spec.ts
+        run: |
+          set -o pipefail
+          npx --prefix web playwright test e2e/production-smoke.spec.ts 2>&1 | tee production-smoke.log
+      - name: Upload smoke diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: g2-production-smoke-diagnostics
+          path: |
+            production-smoke.log
+            web/test-results
+          if-no-files-found: warn
+          retention-days: 3
