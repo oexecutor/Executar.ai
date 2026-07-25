@@ -1,81 +1,90 @@
 # 04 — Riscos e Decisões
 
+> Atualizado em **2026-07-25** após homologação direta no GitHub e na Vercel.
+> As três decisões que bloqueavam o G1 foram resolvidas abaixo. Nenhuma delas
+> autoriza lançamento público com dados privados.
+
 ## Registro de riscos
 
-| ID | Risco | Gravidade | Probabilidade | Impacto | Mitigação | Responsável | Prazo | Estado |
+| ID | Risco | Gravidade | Probabilidade | Impacto | Mitigação / decisão | Responsável | Prazo | Estado |
 |---|---|---|---|---|---|---|---|---|
-| RISK-001 | **Workspace público compartilhado** — não apropriado para múltiplos usuários nem dados privados; qualquer pessoa com a URL acessa o mesmo workspace com papel `OWNER` (`src/lib/request-auth.ts:89-107`, FATO) | Alta | Certa (comportamento atual confirmado) | Vazamento cruzado de dados entre usuários reais assim que houver mais de um | Resolver DECISÃO NECESSÁRIA #1 antes do G6 (beta) | Dono do produto | Antes de G6 | Aberto |
-| RISK-002 | Backend de persistência ambíguo (Neon vs. Supabase, bifurcação em `src/lib/stores.ts:14-27`) pode causar inconsistência de dados entre ambientes | Média | Média | Dados gravados em lugares diferentes conforme configuração do ambiente | Resolver DECISÃO NECESSÁRIA #2 antes do G3 | Dono do produto | Antes de G3 | Aberto |
-| RISK-003 | Duplicação de servidor MCP (handoff `executar-mcp-server` vs. implementação nativa) pode gerar confusão de qual é a fonte de verdade se ambos forem mantidos vivos | Baixa | Média | Manutenção duplicada, drift de funcionalidade | Resolver DECISÃO NECESSÁRIA #3 | Dono do produto | Antes de G1 fechar | Aberto |
-| RISK-004 | Teste e2e intermitente (`raiz entra direto no workspace, sem tela de login`, `requestfailed /icon.svg`) reproduzido 2/3 execuções nesta auditoria | Média | Alta (flaky, não 100%) | Falsos negativos/positivos em CI, mascarando regressões reais | `EXA-G5-QA-001` | Execução assistida | G5 | Aberto |
-| RISK-005 | Sem acesso de rede a produção nesta sessão (proxy do sandbox bloqueia HTTPS externo, 403) | Baixa (limitação de ambiente, não do produto) | Certa neste ambiente | Auditoria não confirma estado real de produção, só o estado do código | Rodar checklist de `README-HOTFIX.md` fora deste sandbox | Dono do produto | Antes de G1 fechar | Aberto |
-| RISK-006 | Documentação estrutural (`AGENTS.md`, `SECURITY.md`, `docs/09`, `docs/13`, `docs/DEPLOYMENT_STATUS.md`) descreve arquitetura Netlify/senha de operador que não existe mais no código atual | Baixa | Certa (confirmado por leitura) | Onboarding de qualquer novo colaborador (humano ou IA) parte de premissas erradas | `EXA-G1-DOC-001` | Execução assistida | G1 | Aberto |
-| RISK-007 | PR #9 aberto com base muito atrás de `main`, objetivo já resolvido de outra forma | Baixa | — | Merge acidental poderia reintroduzir um mecanismo de auth obsoleto ou reverter arquivos já reescritos | `EXA-G1-BE-002` | Dono do produto | G1 | Aberto |
-| RISK-008 | Política de privacidade/termos de uso (`web/public/privacy.html`) não confirmados como conteúdo legal real | Alta (bloqueia lançamento público) | — | Exposição legal/regulatória ao abrir para o grande público | `EXA-G7-DOC-001` | Dono do produto | G7 | Aberto |
-| RISK-009 | `plano-operacional-rastreavel` é guiado por julgamento de LLM, sem endpoint síncrono — expectativa de virar "motor de API" pode gerar retrabalho se mal escopada | Média | Média | Esforço de engenharia investido numa abordagem que precisa ser redesenhada | `EXA-G2-PLANGEN-001` — registrar decisão de design antes de codificar | Dono do produto | G2 | Aberto |
+| RISK-001 | **Workspace público compartilhado** — qualquer pessoa com a URL entra como `OWNER` no workspace público | Alta | Certa no comportamento atual | Dados de usuários diferentes poderiam se misturar | Permitido somente durante desenvolvimento interno e demonstrações controladas; não armazenar dados privados; login e isolamento são obrigatórios antes do beta público | Dono do produto | Antes de G6 | Aceito temporariamente |
+| RISK-002 | Persistência distribuída entre Vercel Postgres/Neon e componentes Supabase | Média | Média | Drift entre ambientes ou fontes de dados | Manter o contrato atual até G3: Vault e OAuth canônicos em Vercel Postgres; Supabase somente onde já estiver configurado para workspace. Registrar ADR antes de qualquer migração | Produto + Engenharia | G3 | Mitigado / monitorado |
+| RISK-003 | Duplicação de servidor MCP | Média | Média | Duas fontes de verdade e manutenção duplicada | A rota nativa `oexecutor/Executar.ai` (`/mcp`) é a implementação canônica; o servidor standalone é legado e não deve ser conectado ao produto principal | Dono do produto | G1 | Resolvido |
+| RISK-004 | Teste e2e intermitente relacionado a `/icon.svg` | Média | Média | Ruído na CI e regressões mascaradas | Corrigir e estabilizar em `EXA-G5-QA-001` | Engenharia | G5 | Aberto |
+| RISK-005 | Produção não homologada ao vivo | Alta | — | Código poderia estar verde sem funcionar na Vercel | Homologação realizada: produção READY; APIs principais responderam sem 500; erros de runtime do Vault não encontrados nas últimas 24 horas | Engenharia | G1 | Resolvido |
+| RISK-006 | Documentos históricos ainda descrevem Netlify e senha de operador | Baixa | Certa | Agentes podem executar instruções obsoletas | Este pacote `docs/release/` passa a ser a referência operacional; atualizar `AGENTS.md`, `SECURITY.md` e documentos legados no restante do G1 | Engenharia | G1 | Em correção |
+| RISK-007 | PR #9 obsoleto poderia ser mesclado acidentalmente | Baixa | — | Reintrodução de autenticação antiga ou regressão | PR #9 encerrado sem merge em 2026-07-25 | Dono do produto | G1 | Resolvido |
+| RISK-008 | Política de privacidade e termos não validados juridicamente | Alta | — | Exposição legal no lançamento público | Validar conteúdo legal antes de G7 | Dono do produto | G7 | Aberto |
+| RISK-009 | `plano-operacional-rastreavel` depende de julgamento de LLM, não de endpoint determinístico | Média | Média | Escopo incorreto de engenharia | Fechar decisão de design em `EXA-G2-PLANGEN-001` antes de codificar integração | Produto | G2 | Aberto |
 
-## Decisões necessárias (aguardando o dono do produto)
+## Decisões resolvidas
 
-### DECISÃO NECESSÁRIA #1 — Política de autenticação
+### DEC-001 — Política de autenticação
 
-**Contexto**: `src/lib/request-auth.ts:89-107` documenta, em comentário no
-próprio código, que "Login was removed at the operator's explicit, repeated
-request". `README-HOTFIX.md` (linhas 81-85) registra isso como "risco
-temporário aceito" e recomenda "reative autenticação e isolamento antes do
-lançamento externo".
+**Decisão:** manter temporariamente o acesso direto ao workspace público para o
+MVP interno, demonstrações e homologação, preservando a decisão explícita do
+dono do produto de retirar a tela de login.
 
-**Opções**:
-1. Reativar login obrigatório e isolamento de workspace antes do lançamento
-   público (alinhado com a recomendação já registrada no próprio hotfix).
-2. Manter o workspace público compartilhado como design definitivo do MVP
-   (aceitando que não há isolamento entre usuários).
+**Limite obrigatório:** isso não é autorização para beta público com dados de
+terceiros. Antes do G6 devem existir autenticação e isolamento por workspace,
+ou o produto deve permanecer restrito a um único workspace demonstrativo sem
+dados privados.
 
-**Recomendação implícita da documentação já existente**: opção 1, mas a
-decisão final é do dono do produto — este documento não a toma por conta
-própria.
+**Evidência atual:** `GET /api/auth/me` responde `200` com usuário e workspace
+`public`, papel `OWNER`.
 
-### DECISÃO NECESSÁRIA #2 — Backend único de persistência
+### DEC-002 — Persistência durante o ciclo G1–G3
 
-**Contexto**: `src/lib/stores.ts:14-27` — o vault alterna entre
-`SupabaseKvStore` e `PostgresKvStore` (Neon) conforme `supabaseConfigured()`;
-o armazenamento OAuth é **sempre** Neon, independente dessa configuração.
+**Decisão:** não executar uma migração de dados durante o hotfix. Manter e
+documentar o contrato real em produção:
 
-**Opções**:
-1. Supabase como fonte única (auth + dados), Neon descontinuado.
-2. Neon como fonte única, Supabase mantido só para autenticação (ou também
-   descontinuado, com nova solução de auth).
-3. Manter a bifurcação atual, documentando explicitamente por quê.
+- Vault e OAuth: **Vercel Postgres/Neon**;
+- workspace Supabase: utilizado somente quando as variáveis correspondentes
+  estiverem configuradas;
+- qualquer unificação futura exige ADR, migração testada e rollback.
 
-### DECISÃO NECESSÁRIA #3 — Duplicação de MCP
+**Evidência atual:** `GET /api/vault/status` informa armazenamento
+`Vercel Postgres`; `src/lib/stores.ts` mantém fallback explícito para
+`PostgresKvStore` e usa `SupabaseKvStore` apenas quando configurado.
 
-**Contexto**: este repositório já tem uma implementação MCP nativa completa
-e persistida (`api/mcp.ts` → `src/mcp-server.ts`, 18+19 ferramentas, OAuth
-2.1+PKCE). O handoff `executar-mcp-server` (revisado em fase anterior desta
-conversa) é um servidor MCP standalone, separado, com armazenamento efêmero
-em `globalThis` — problema que **não existe** na implementação nativa.
+### DEC-003 — Fonte única do MCP
 
-**Opções**:
-1. Descartar o handoff inteiro; no máximo, absorver o artefato
-   `deskos-project-executar-pm.json` (já convertido para o schema
-   checkpoint-primeiro) como dado de exemplo/seed.
-2. Investigar se o handoff tem alguma funcionalidade não coberta pela
-   implementação nativa antes de descartar.
-3. Manter os dois, documentando por que ambos existem (não recomendado —
-   contraria `AGENTS.md` regra 5, "Do not create a second independent source
-   of truth").
+**Decisão:** a implementação MCP canônica é a que vive neste repositório:
 
-Inclui, em qualquer opção, a decisão sobre descomissionar o projeto Vercel
-isolado `executar-mcp-server-vercel-ready` (criado acidentalmente numa sessão
-separada do Claude.ai).
+- `api/mcp.ts`;
+- `src/mcp-server.ts`;
+- endpoint de produção `https://executar-ai.vercel.app/mcp`;
+- OAuth e persistência compartilhados com o aplicativo.
 
-## Decisões já tomadas (histórico, preservadas por rastreabilidade)
+O repositório/servidor standalone `Executar-mcp-server` não deve ser tratado
+como backend do EXECUTA.AI nem conectado em paralelo. Ele pode permanecer
+apenas como referência histórica até ser arquivado ou removido em ação
+separada.
 
-Estas decisões foram tomadas em fases anteriores do projeto (antes desta
-auditoria) e são citadas aqui só para contexto — não estão em aberto:
+**Evidência atual:** `GET /mcp` responde `401` com `WWW-Authenticate` e metadata
+OAuth, comportamento esperado para um recurso MCP protegido; não retorna 500.
 
-- Remover a tela de login e o gate de senha de operador, a pedido explícito
-  do operador (PR #9, e a arquitetura Fase 4/Supabase que a sucedeu).
-- Migrar de Netlify Functions + Blobs para Vercel Functions + Postgres
-  (commit `a6ecf27` e correntes).
-- Integrar o EXECUTA Journal (blog) ao build principal (trabalho anterior
-  desta mesma conversa, mesclado via PR #10).
+## Evidências de homologação do G1
+
+Em 2026-07-25 foram confirmados:
+
+- produção Vercel do projeto `executar-ai` em estado `READY` no commit
+  `308227130147c94268e268abd8601a1a8dce2580` antes da integração documental;
+- `/api/auth/me`: `200`;
+- `/api/executar/projects`: `200` e portfólio carregado;
+- `/api/vault/status`: `200`, 5 arquivos, armazenamento Vercel Postgres;
+- `/api/vault/files`: `200` e `viewUrl` gerado corretamente;
+- `/api/vault/files?path=_desk-os/index/evidence.json`: `200` com conteúdo;
+- `/mcp`: `401` autenticável, sem erro de runtime;
+- nenhum cluster de erro nas rotas do Vault nas últimas 24 horas;
+- PR #14 encerrado sem merge porque o `main` já contém implementação
+  equivalente e mais recente;
+- PR #9 encerrado sem merge por estar superado pela arquitetura atual.
+
+## Decisões históricas preservadas
+
+- Retirar a tela de login e o gate de senha para o ciclo interno do MVP.
+- Migrar Netlify Functions + Blobs para Vercel Functions + Postgres.
+- Integrar o EXECUTA Journal ao build principal.
+- Manter GitHub como fonte documental e Vercel como ambiente de execução.

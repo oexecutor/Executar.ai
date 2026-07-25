@@ -1,59 +1,66 @@
 # docs/release — Índice Mestre
 
-Pacote de auditoria e planejamento de lançamento do **EXECUTA.AI**, gerado em
-**2026-07-24** contra `origin/main` no commit `28a689ffee0fd87b31c8cbc59abda4c511c1edf1`.
+Pacote de auditoria, roadmap e operação de lançamento do **EXECUTA.AI**.
+
+- Baseline inicial: **2026-07-24**, commit `28a689f`.
+- Homologação de produção e atualização G1: **2026-07-25**.
+- Ambiente canônico: **Vercel**, projeto `executar-ai`.
+- Fonte documental: branch `main` de `oexecutor/Executar.ai`.
 
 > **Desambiguação obrigatória**: os gates **G0–G10** deste pacote são sobre
-> **prontidão de lançamento público**. Eles **não são** os Gates 0–5 de
-> `docs/GATE_PROGRESS.md`, que documentam a migração de backend DESK-OS
-> (domínio → repositório → aplicação → MCP → API), concluída antes da
-> migração Netlify→Vercel. Aquele histórico é um insumo do baseline deste
-> novo G0, não um eixo paralelo.
+> **prontidão de lançamento público**. Eles não são os Gates 0–5 de
+> `docs/GATE_PROGRESS.md`, que registram a migração técnica anterior.
 >
-> Este pacote também **supera** `docs/DEPLOYMENT_STATUS.md` (2026-07-19,
-> alvo Netlify) — o ambiente real hoje é Vercel (`vercel.json`, projeto
-> `executar-ai`).
+> Este pacote supera `docs/DEPLOYMENT_STATUS.md` e demais orientações antigas
+> voltadas a Netlify. Até a atualização completa de `AGENTS.md` e
+> `SECURITY.md`, prevalecem os documentos desta pasta.
 
-## Documentos
+## Leitura recomendada
 
-1. [`00-STATUS-ATUAL.md`](./00-STATUS-ATUAL.md) — resumo executivo, tabela
-   Área × Estado × Evidência × Bloqueio × Próxima ação, decisão recomendada.
-2. [`01-ROADMAP-LANCAMENTO.md`](./01-ROADMAP-LANCAMENTO.md) — Gates G0–G10
-   completos, incluindo as 3 skills revisadas e o handoff MCP como epics
-   formais (§Fase F).
-3. [`02-BACKLOG-LINEAR.csv`](./02-BACKLOG-LINEAR.csv) /
-   [`.json`](./02-BACKLOG-LINEAR.json) /
-   [`.md`](./02-BACKLOG-LINEAR.md) — backlog completo pronto para importar
-   no Linear (prévia, nada foi criado no Linear ainda).
-4. [`03-GATES-DE-RELEASE.md`](./03-GATES-DE-RELEASE.md) — critérios
-   objetivos de passagem, com estado atual de cada um.
-5. [`04-RISCOS-DECISOES.md`](./04-RISCOS-DECISOES.md) — registro de riscos e
-   as 3 decisões necessárias do dono do produto.
-6. [`05-CHECKLIST-LANCAMENTO.md`](./05-CHECKLIST-LANCAMENTO.md) — checklist
-   completo por área, com evidência exigida.
-7. [`06-PLANO-DE-TESTES.md`](./06-PLANO-DE-TESTES.md) — cobertura de testes
-   real (o que já roda, o que é lacuna).
-8. [`07-PLANO-DE-ROLLBACK.md`](./07-PLANO-DE-ROLLBACK.md) — procedimento de
-   incidente e rollback.
-9. [`08-OPERACAO-POS-LANCAMENTO.md`](./08-OPERACAO-POS-LANCAMENTO.md) —
-   monitoramento, suporte, cadência de revisão pós-lançamento.
+1. [`09-HOMOLOGACAO-G1-2026-07-25.md`](./09-HOMOLOGACAO-G1-2026-07-25.md) —
+   atualização mais recente: produção, PRs resolvidos e decisões vigentes.
+2. [`00-STATUS-ATUAL.md`](./00-STATUS-ATUAL.md) — baseline executivo da
+   auditoria inicial.
+3. [`01-ROADMAP-LANCAMENTO.md`](./01-ROADMAP-LANCAMENTO.md) — Gates G0–G10,
+   fases, dependências e caminho crítico.
+4. [`04-RISCOS-DECISOES.md`](./04-RISCOS-DECISOES.md) — riscos atuais e
+   decisões resolvidas sobre autenticação, persistência e MCP.
 
-## Próxima ação única
+## Pacote completo
 
-Revisar `00-STATUS-ATUAL.md` e `04-RISCOS-DECISOES.md` e responder com uma
-das seguintes:
+| Documento | Função |
+|---|---|
+| `00-STATUS-ATUAL.md` | Baseline factual e tabela Área × Estado × Evidência × Bloqueio × Próxima ação |
+| `01-ROADMAP-LANCAMENTO.md` | Roadmap G0–G10 de prontidão de lançamento |
+| `02-BACKLOG-LINEAR.csv` | Backlog tabular pronto para revisão/importação |
+| `02-BACKLOG-LINEAR.json` | Backlog estruturado para agentes e automação |
+| `02-BACKLOG-LINEAR.md` | Versão humana e instruções de sincronização |
+| `03-GATES-DE-RELEASE.md` | Critérios objetivos de entrada e saída de cada gate |
+| `04-RISCOS-DECISOES.md` | Registro de riscos, decisões e mitigação |
+| `05-CHECKLIST-LANCAMENTO.md` | Checklist por área e evidência exigida |
+| `06-PLANO-DE-TESTES.md` | Estratégia e cobertura de qualidade |
+| `07-PLANO-DE-ROLLBACK.md` | Procedimento de incidente e reversão |
+| `08-OPERACAO-POS-LANCAMENTO.md` | Operação, suporte e monitoramento pós-lançamento |
+| `09-HOMOLOGACAO-G1-2026-07-25.md` | Evidência viva da retomada após a interrupção do Manus |
 
-- **`APROVADO PARA LINEAR`** — para eu sincronizar `02-BACKLOG-LINEAR.csv`/`.json`
-  no Linear (sujeito à disponibilidade de um conector do Linear nesta sessão
-  — hoje ausente, ver `02-BACKLOG-LINEAR.md` §Limitação).
-- Uma decisão sobre qualquer uma das 3 **DECISÕES NECESSÁRIAS** em
-  `04-RISCOS-DECISOES.md` (autenticação, persistência, duplicação de MCP).
-- Pedido de ajuste em qualquer documento deste pacote antes da aprovação.
+## Estado resumido
 
-## Como este pacote foi gerado
+- **G0 — baseline e roadmap:** aprovado e integrado ao `main`.
+- **G1 — runtime e infraestrutura:** parcialmente aprovado; produção e APIs
+  homologadas, PRs obsoletos encerrados e decisões técnicas registradas.
+- **Pendência final do G1:** atualizar `AGENTS.md`, `SECURITY.md` e referências
+  históricas que ainda instruem agentes a usar Netlify/senha de operador.
+- **Próximo gate:** G2 — validar o ciclo central do produto ponta a ponta.
 
-Auditoria factual (build/test/lint/e2e locais + leitura direta de código),
-classificando cada achado como FATO / EVIDÊNCIA / INFERÊNCIA / LACUNA /
-BLOQUEIO / DECISÃO NECESSÁRIA — ver metodologia completa em
-`00-STATUS-ATUAL.md`. Nenhum código de produto foi alterado nesta passada;
-nenhuma tarefa foi criada no Linear; nenhum merge ou deploy foi feito.
+## Regra de escrita externa
+
+O backlog do Linear está preparado, mas não deve ser sincronizado sem aprovação
+explícita do dono do produto. A frase operacional esperada é
+`APROVADO PARA LINEAR`.
+
+## Metodologia
+
+Os documentos distinguem FATO, EVIDÊNCIA, INFERÊNCIA, LACUNA, BLOQUEIO e
+DECISÃO. Evidências de produção são registradas separadamente de validações
+locais para evitar que um deploy verde seja confundido com fluxo funcional
+homologado.
