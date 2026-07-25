@@ -3,8 +3,8 @@ import { hashToken, randomToken, signAccessToken, verifyPkce } from "../src/lib/
 import { baseUrl, resourceUrl } from "../src/lib/env.js";
 import { absoluteUrl, corsPreflight, html, json, methodNotAllowed, safeError, withCors } from "../src/lib/http.js";
 import { oauthStore } from "../src/lib/stores.js";
-import { getWorkspaceMembershipAsService } from "../src/lib/supabase.js";
 import { getAuthenticatedRequest } from "../src/lib/request-auth.js";
+import { resolveAuthorizedWorkspace } from "../src/lib/workspace-authorization.js";
 import type { AuthorizationCode, OAuthClient, RefreshGrant } from "../src/lib/types.js";
 import { createVercelNodeHandler } from "../src/lib/vercel-node-adapter.js";
 
@@ -118,7 +118,7 @@ async function issueToken(
   scope: string,
   resource: string,
 ): Promise<Response> {
-  const membership = await getWorkspaceMembershipAsService(userId, workspaceId);
+  const membership = await resolveAuthorizedWorkspace(userId, workspaceId);
   if (!membership) return json({ error: "invalid_grant", error_description: "Workspace membership is no longer active." }, { status: 400 });
   if (membership.role === "VIEWER") {
     return json({ error: "insufficient_role", error_description: "A read-only membership cannot authorize MCP mutations." }, { status: 403 });
