@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test";
 
 const runProductionSmoke = process.env.RUN_PRODUCTION_SMOKE === "true";
+const productionBaseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "https://executar-ai.vercel.app";
+const apiUrl = (path: string) => new URL(path, productionBaseUrl).toString();
 
 test.describe("G2 production smoke", () => {
   test.skip(!runProductionSmoke, "Executado somente no job controlado de homologação em produção.");
@@ -36,13 +38,13 @@ test.describe("G2 production smoke", () => {
       await page.reload();
       await expect(page.locator(".action-row.is-done").filter({ hasText: "T02.1" }).first()).toBeVisible({ timeout: 20_000 });
 
-      const exported = await request.get(`/api/executar/projects/${projectId}/export`);
+      const exported = await request.get(apiUrl(`/api/executar/projects/${projectId}/export`));
       expect(exported.status()).toBe(200);
       const exportBody = await exported.json() as { data: { progress: Record<string, boolean> } };
       expect(exportBody.data.progress["T02.1"]).toBe(true);
     } finally {
       if (!projectId) {
-        const listed = await request.get("/api/executar/projects");
+        const listed = await request.get(apiUrl("/api/executar/projects"));
         if (listed.ok()) {
           const body = await listed.json() as { data?: Array<{ id: string; name: string }> };
           projectId = body.data?.find((project) => project.name === marker)?.id ?? null;
@@ -50,7 +52,7 @@ test.describe("G2 production smoke", () => {
       }
 
       if (projectId) {
-        const removed = await request.delete(`/api/executar/projects/${projectId}`, {
+        const removed = await request.delete(apiUrl(`/api/executar/projects/${projectId}`), {
           data: { confirm: true },
         });
         expect(removed.status()).toBe(200);
