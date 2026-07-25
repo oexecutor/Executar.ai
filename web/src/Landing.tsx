@@ -2,11 +2,12 @@ import { useEffect } from "react";
 
 export function Landing() {
   useEffect(() => {
-    // Remove any visual entry step: go straight to the workspace.
+    // Remove any visual entry step: go straight to the workspace while
+    // preserving deep-link parameters used by the Vault viewer.
     if (window.location.pathname === "/app" || window.location.pathname.startsWith("/app/")) {
       return;
     }
-    window.location.replace("/app");
+    window.location.replace(`/app${window.location.search}${window.location.hash}`);
   }, []);
 
   return (
