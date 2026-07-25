@@ -9,7 +9,8 @@ describe("Phase 4 React surfaces", () => {
   const styles = fs.readFileSync(new URL("../web/src/styles.css", import.meta.url), "utf8");
 
   it("ships a public product landing and the authenticated workspace separately", () => {
-    expect(landing).toContain("window.location.replace(\"/app\")");
+    expect(landing).toContain("window.location.replace");
+    expect(landing).toContain("window.location.search");
     expect(landing).toContain("boot-screen");
     expect(app).toContain("<Overview");
     expect(app).toContain("<ProjectWorkspace");
@@ -18,7 +19,11 @@ describe("Phase 4 React surfaces", () => {
   });
 
   it("keeps vault documents in the authenticated React workspace", () => {
+    expect(app).toContain("new URLSearchParams(window.location.search)");
+    expect(app).toContain('return tab === "notes" || tab === "documents" ? "documents"');
     expect(documents).toContain('fetch("/api/vault/files"');
+    expect(documents).toContain("/api/vault/files?path=");
+    expect(documents).toContain("dangerouslySetInnerHTML");
     expect(documents).toContain('method: "POST"');
     expect(documents).toContain("apiAuthHeaders");
     expect(documents).toContain("Projetos/${project.id}");
