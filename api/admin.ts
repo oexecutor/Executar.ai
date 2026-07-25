@@ -28,14 +28,15 @@ async function runtimeConfig(request: Request): Promise<Response> {
   const config = getSupabasePublicConfig();
   if (!config) {
     return privateJson({
-      ok: false,
-      error: {
-        code: "AUTH_NOT_CONFIGURED",
-        message: "O ambiente Supabase ainda não foi configurado.",
+      ok: true,
+      data: {
+        mode: "public",
+        workspaceId: "public",
+        workspaceName: "Workspace público",
       },
-    }, { status: 503 });
+    });
   }
-  return privateJson({ ok: true, data: config });
+  return privateJson({ ok: true, data: { mode: "supabase", ...config } });
 }
 
 async function workspaces(request: Request): Promise<Response> {
