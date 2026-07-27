@@ -43,3 +43,41 @@ jobs:
         run: npx --prefix web playwright install --with-deps chromium
       - name: End-to-end tests (real browser + accessibility checks)
         run: npm --prefix web run test:e2e
+
+  production-smoke:
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/smoke/g2-production-playwright') ||
+      (github.event_name == 'pull_request' && github.head_ref == 'smoke/g2-production-playwright')
+    runs-on: ubuntu-latest
+    concurrency:
+      group: g2-production-smoke
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install
+        run: npm --prefix web ci
+      - name: Install Playwright browser
+        run: npx --prefix web playwright install --with-deps chromium
+      - name: G2 smoke against production
+        env:
+          RUN_PRODUCTION_SMOKE: "true"
+          PLAYWRIGHT_BASE_URL: "https://executar-ai.vercel.app"
+        run: |
+          set -o pipefail
+          cd web
+          npx playwright test e2e/production-smoke.spec.ts 2>&1 | tee ../production-smoke.log
+      - name: Upload smoke diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: g2-production-smoke-diagnostics
+          path: |
+            production-smoke.log
+            web/test-results
+          if-no-files-found: warn
+          retention-days: 3

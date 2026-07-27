@@ -20,7 +20,8 @@ describe("Phase 4 React surfaces", () => {
 
   it("keeps vault documents in the authenticated React workspace", () => {
     expect(app).toContain("new URLSearchParams(window.location.search)");
-    expect(app).toContain('return tab === "notes" || tab === "documents" ? "documents"');
+    expect(app).toContain('if (tab === "notes" || tab === "documents") return "documents"');
+    expect(app).toContain('if (tab === "editorial") return "editorial"');
     expect(documents).toContain('fetch("/api/vault/files"');
     expect(documents).toContain("/api/vault/files?path=");
     expect(documents).toContain("dangerouslySetInnerHTML");
