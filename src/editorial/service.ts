@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import { DomainError } from "../domain/errors.js";
 import { validateEditorialPublication } from "./schema.js";
 import { assertEditorialTransition } from "./state-machine.js";
-import { EditorialStore } from "./store.js";
+import type { EditorialRepository } from "./store.js";
 import type {
   EditorialEvent,
   EditorialPublication,
@@ -74,7 +74,7 @@ function summary(publication: EditorialPublication): EditorialPublicationSummary
 }
 
 export class EditorialService {
-  constructor(private readonly store: EditorialStore) {}
+  constructor(private readonly store: EditorialRepository) {}
 
   validate(input: unknown) {
     return validateEditorialPublication(input);

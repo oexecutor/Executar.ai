@@ -15,6 +15,7 @@
     "lint": "eslint . --ext .ts,.mts --max-warnings 0",
     "env:check": "node scripts/check-env.mjs",
     "env:check:runtime": "node scripts/check-env.mjs --runtime",
+    "db:migrate": "node scripts/migrate-editorial.mjs --require",
     "check": "npm run env:check && npm run build && npm test && npm run lint",
     "build:web": "npm --prefix web run build",
     "install:web": "npm --prefix web install",
@@ -31,6 +32,7 @@
     "zod": "3.25.76"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.4",
     "@types/node": "24.0.15",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
