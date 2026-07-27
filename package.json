@@ -12,7 +12,7 @@
     "dev": "npx vercel dev",
     "test": "vitest run",
     "test:smoke": "node scripts/smoke-oauth.mjs",
-    "lint": "eslint . --ext .ts,.mts --max-warnings 0",
+    "lint": "eslint . --max-warnings 0",
     "env:check": "node scripts/check-env.mjs",
     "env:check:runtime": "node scripts/check-env.mjs --runtime",
     "db:migrate": "node scripts/migrate-editorial.mjs --require",
@@ -24,7 +24,7 @@
     "lint:web": "npm --prefix web run lint"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "1.29.0",
+    "@modelcontextprotocol/sdk": "1.30.0",
     "@neondatabase/serverless": "^1.1.0",
     "fflate": "0.8.3",
     "jose": "6.2.3",
@@ -33,15 +33,18 @@
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.4",
+    "@eslint/js": "10.0.1",
     "@types/node": "24.0.15",
-    "@typescript-eslint/eslint-plugin": "^7.18.0",
-    "@typescript-eslint/parser": "^7.18.0",
-    "eslint": "^8.57.1",
-    "eslint-config-prettier": "^9.1.0",
+    "@typescript-eslint/eslint-plugin": "8.65.0",
+    "@typescript-eslint/parser": "8.65.0",
+    "eslint": "10.8.0",
+    "eslint-config-prettier": "10.1.8",
+    "globals": "17.8.0",
     "typescript": "5.8.3",
     "vitest": "3.2.6"
   },
   "overrides": {
+    "@hono/node-server": "2.0.12",
     "@opentelemetry/core": "2.9.0",
     "@opentelemetry/resources": "2.9.0",
     "@opentelemetry/sdk-trace-base": "2.9.0",
