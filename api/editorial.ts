@@ -1,11 +1,13 @@
 import crypto from "node:crypto";
 import { DomainError } from "../src/domain/errors.js";
+import { createEditorialSqlClient, PostgresEditorialStore } from "../src/editorial/postgres-store.js";
 import { EditorialService } from "../src/editorial/service.js";
-import { EditorialStore } from "../src/editorial/store.js";
+import { EditorialStore, MigratingEditorialStore } from "../src/editorial/store.js";
 import { requireAdminJson } from "../src/lib/admin-guard.js";
 import { absoluteUrl, json } from "../src/lib/http.js";
 import { canWriteWorkspace, getAuthenticatedRequest, type AuthenticatedRequest } from "../src/lib/request-auth.js";
 import { vaultStore } from "../src/lib/stores.js";
+import { isProduction } from "../src/lib/env.js";
 import { createVercelNodeHandler } from "../src/lib/vercel-node-adapter.js";
 
 function response(data: unknown, requestId: string, status = 200): Response {
@@ -22,8 +24,16 @@ function response(data: unknown, requestId: string, status = 200): Response {
 }
 
 function defaultService(auth: AuthenticatedRequest): EditorialService {
+  const legacy = new EditorialStore(
+    vaultStore({ workspaceId: auth.workspaceId, accessToken: auth.accessToken }),
+  );
+  const primary = new PostgresEditorialStore(
+    createEditorialSqlClient(),
+    auth.workspaceId,
+    isProduction() ? "production" : "preview",
+  );
   return new EditorialService(
-    new EditorialStore(vaultStore({ workspaceId: auth.workspaceId, accessToken: auth.accessToken })),
+    new MigratingEditorialStore(primary, legacy),
   );
 }
 

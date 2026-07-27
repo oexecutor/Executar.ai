@@ -5,10 +5,24 @@ interface EditorialIndex {
   ids: string[];
 }
 
+export interface EditorialRepository {
+  listPublicationIds(): Promise<string[]>;
+  getPublication(id: string): Promise<EditorialPublication | null>;
+  savePublication(publication: EditorialPublication): Promise<void>;
+  deletePublication(id: string): Promise<boolean>;
+}
+
 const INDEX_KEY = "editorial/index";
 const publicationKey = (id: string) => `editorial/publication/${id}`;
 
-export class EditorialStore {
+/**
+ * Legacy KV adapter retained during the expand-and-contract migration.
+ *
+ * The relational Postgres adapter is the primary source of truth. This class
+ * remains available for rollback-compatible dual writes until the migration
+ * has been observed in production for a full release cycle.
+ */
+export class EditorialStore implements EditorialRepository {
   constructor(private readonly store: KvStore) {}
 
   private async index(): Promise<EditorialIndex> {
@@ -37,5 +51,57 @@ export class EditorialStore {
     const index = await this.index();
     await this.store.setJSON(INDEX_KEY, { ids: index.ids.filter((candidate) => candidate !== id) });
     return true;
+  }
+}
+
+/**
+ * Makes the relational repository primary while preserving the previous KV
+ * representation as a rollback source. Missing relational rows are repaired
+ * from KV on read, so a safe backfill can continue without downtime.
+ */
+export class MigratingEditorialStore implements EditorialRepository {
+  constructor(
+    private readonly primary: EditorialRepository,
+    private readonly legacy: EditorialRepository,
+  ) {}
+
+  async listPublicationIds(): Promise<string[]> {
+    const [primaryIds, legacyIds] = await Promise.all([
+      this.primary.listPublicationIds(),
+      this.legacy.listPublicationIds(),
+    ]);
+    const primarySet = new Set(primaryIds);
+    for (const id of legacyIds) {
+      if (primarySet.has(id)) continue;
+      const publication = await this.legacy.getPublication(id);
+      if (publication) {
+        await this.primary.savePublication(publication);
+        primarySet.add(id);
+      }
+    }
+    return [...new Set([...primaryIds, ...legacyIds])];
+  }
+
+  async getPublication(id: string): Promise<EditorialPublication | null> {
+    const publication = await this.primary.getPublication(id);
+    if (publication) return publication;
+    const legacyPublication = await this.legacy.getPublication(id);
+    if (legacyPublication) await this.primary.savePublication(legacyPublication);
+    return legacyPublication;
+  }
+
+  async savePublication(publication: EditorialPublication): Promise<void> {
+    // Write the rollback source first. A failed relational write is reported,
+    // and retrying the idempotent operation completes the primary write.
+    await this.legacy.savePublication(publication);
+    await this.primary.savePublication(publication);
+  }
+
+  async deletePublication(id: string): Promise<boolean> {
+    const [legacyDeleted, primaryDeleted] = await Promise.all([
+      this.legacy.deletePublication(id),
+      this.primary.deletePublication(id),
+    ]);
+    return legacyDeleted || primaryDeleted;
   }
 }

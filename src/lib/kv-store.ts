@@ -12,9 +12,9 @@ export interface KvStore {
   list(options: { prefix: string }): Promise<{ blobs: Array<{ key: string }> }>;
 }
 
-const CONNECTION_STRING_VARS = ["DATABASE_URL", "POSTGRES_URL", "DATABASE_URL_UNPOOLED", "POSTGRES_URL_NON_POOLING"];
+export const CONNECTION_STRING_VARS = ["DATABASE_URL", "POSTGRES_URL", "DATABASE_URL_UNPOOLED", "POSTGRES_URL_NON_POOLING"] as const;
 
-function connectionString(): string {
+export function postgresConnectionString(): string {
   for (const name of CONNECTION_STRING_VARS) {
     const value = process.env[name];
     if (value) return value;
@@ -30,7 +30,7 @@ export class PostgresKvStore implements KvStore {
   private readonly sql: NeonQueryFunction<false, false>;
 
   constructor(private readonly namespace: string) {
-    this.sql = neon(connectionString(), { arrayMode: false, fullResults: false });
+    this.sql = neon(postgresConnectionString(), { arrayMode: false, fullResults: false });
   }
 
   private async ensureSchema(): Promise<void> {
@@ -83,7 +83,7 @@ export class OAuthPostgresStore implements KvStore {
   private readonly sql: NeonQueryFunction<false, false>;
 
   constructor(private readonly namespace: string) {
-    this.sql = neon(connectionString(), { arrayMode: false, fullResults: false });
+    this.sql = neon(postgresConnectionString(), { arrayMode: false, fullResults: false });
   }
 
   private async ensureSchema(): Promise<void> {
