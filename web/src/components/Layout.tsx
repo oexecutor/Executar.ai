@@ -6,13 +6,14 @@ import {
   Gauge,
   LayoutGrid,
   LogOut,
+  Newspaper,
   PanelsTopLeft,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import type { WorkspaceMembership } from "../auth";
 import type { ProjectSummary } from "../types";
 
-export type AppView = "overview" | "today" | "portfolio" | "project" | "board" | "documents";
+export type AppView = "overview" | "today" | "portfolio" | "project" | "board" | "documents" | "editorial";
 
 interface LayoutProps {
   active: AppView;
@@ -32,6 +33,7 @@ const NAV: Array<{ id: AppView; label: string; icon: typeof Gauge }> = [
   { id: "project", label: "Projeto", icon: PanelsTopLeft },
   { id: "board", label: "Kanban", icon: FolderKanban },
   { id: "documents", label: "Documentos", icon: FileText },
+  { id: "editorial", label: "Editorial", icon: Newspaper },
 ];
 
 export function Layout({

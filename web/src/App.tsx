@@ -13,13 +13,16 @@ import { Overview } from "./pages/Overview";
 import { Portfolio } from "./pages/Portfolio";
 import { ProjectWorkspace } from "./pages/ProjectWorkspace";
 import { Today } from "./pages/Today";
+import { Editorial } from "./pages/Editorial";
 import type { ProjectSummary } from "./types";
 
 type Session = "checking" | "authenticated";
 
 function initialView(): AppView {
   const tab = new URLSearchParams(window.location.search).get("tab");
-  return tab === "notes" || tab === "documents" ? "documents" : "overview";
+  if (tab === "notes" || tab === "documents") return "documents";
+  if (tab === "editorial") return "editorial";
+  return "overview";
 }
 
 export function App() {
@@ -127,6 +130,7 @@ export function App() {
       )}
       {view === "board" && <Board project={selectedProject} />}
       {view === "documents" && <Documents project={selectedProject} />}
+      {view === "editorial" && <Editorial />}
     </Layout>
   );
 }

@@ -2,6 +2,15 @@
 
 Epic: [#23](https://github.com/oexecutor/Executar.ai/issues/23)
 
+## Estado de implementação — 27/07/2026
+
+- `EDV2-010`: implementado na `main` pelo PR #25.
+- `EDV2-011`: implementado na branch `feat/editorial-intake-approval`, aguardando Preview e merge.
+- `EDV2-012`: pendente; o conteúdo permanece no objeto editorial, sem pacote versionado em `content/blog`.
+- `EDV2-020` e `EDV2-021`: pendentes como automação; a interface registra manualmente branch, commit, PR e Preview sem criar ou mesclar artefatos.
+- `EDV2-022` e `EDV2-030`: interface e decisão auditável implementadas; a decisão continua vinculada ao commit registrado.
+- `EDV2-031`: registro de publicação disponível; merge automático permanece fora desta release.
+
 ## Prioridade P0 — E0 Contrato e arquitetura
 
 ### EDV2-001 — Criar módulo de domínio editorial
