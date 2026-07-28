@@ -6,6 +6,11 @@ import type {
 
 type Fetcher = typeof fetch;
 
+export const DEFAULT_EDITORIAL_VERCEL_PROJECT_ID =
+  "prj_vA765A0ctnjhBILMEe9Mw5ClWuJu";
+export const DEFAULT_EDITORIAL_VERCEL_TEAM_ID =
+  "team_td1WYpI56N0p0CFjzY9iMD5L";
+
 export interface VercelEditorialPreviewConfig {
   token: string;
   project_id: string;
@@ -121,9 +126,11 @@ export function vercelEditorialPreviewResolverFromEnv(
   environment: NodeJS.ProcessEnv = process.env,
 ): VercelEditorialPreviewResolver | null {
   const token = environment.EDITORIAL_VERCEL_TOKEN?.trim();
-  const projectId = environment.EDITORIAL_VERCEL_PROJECT_ID?.trim();
-  const teamId = environment.EDITORIAL_VERCEL_TEAM_ID?.trim();
-  if (!token || !projectId || !teamId) return null;
+  if (!token) return null;
+  const projectId = environment.EDITORIAL_VERCEL_PROJECT_ID?.trim()
+    || DEFAULT_EDITORIAL_VERCEL_PROJECT_ID;
+  const teamId = environment.EDITORIAL_VERCEL_TEAM_ID?.trim()
+    || DEFAULT_EDITORIAL_VERCEL_TEAM_ID;
   return new VercelEditorialPreviewResolver({
     token,
     project_id: projectId,
