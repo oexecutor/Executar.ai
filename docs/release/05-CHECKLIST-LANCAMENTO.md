@@ -21,7 +21,7 @@ vazio, nunca marcados como concluídos sem prova.
 ## Dados
 - [x] Backend único de persistência decidido e implementado (Vault) — Resp.: Product Owner — Evidência: `ADR-002`, `04-RISCOS-DECISOES.md` DEC-002 — Data: 2026-07-28 — Gate: G3
 - [ ] Migração de dados OAuth para Supabase (fase 2, `EXA-G3-DATA-002`) — Resp.: Execução assistida — Evidência: script de migração + paridade verificada — Data: — — Gate: G3
-- [ ] Variáveis de ambiente de produção confirmadas por presença — Resp.: Product Owner — Evidência: export/screenshot do painel Vercel — Data: — — Gate: G3 — **crítico agora**: sem `SUPABASE_URL`/`SUPABASE_PUBLISHABLE_KEY` configuradas, ninguém consegue logar (ver `/health`)
+- [ ] Variáveis de ambiente de produção confirmadas por presença — Resp.: Product Owner — Evidência: `GET /health` em produção via conector Vercel, 2026-07-28 23:55 UTC: `{"supabase":"not_configured","postgres":"configured"}` (FATO, checado ao vivo) — Data: — — Gate: G3 — **BLOQUEADOR CONFIRMADO**: Supabase não está configurado em produção agora; ninguém consegue criar conta ou logar. Sem ferramenta disponível nesta sessão para setar env vars da Vercel (só leitura); dono do produto precisa configurar `SUPABASE_URL`/`SUPABASE_PUBLISHABLE_KEY` no painel antes do G9
 
 ## Segurança
 - [x] Política de autenticação decidida e implementada — Resp.: Product Owner — Evidência: `src/lib/request-auth.ts` (diff), `04-RISCOS-DECISOES.md` DEC-001 — Data: 2026-07-28 — Gate: G3
@@ -45,13 +45,13 @@ vazio, nunca marcados como concluídos sem prova.
 - [ ] Regressão confirmada em produção real — Resp.: Execução assistida — Evidência: verificação manual — Data: — — Gate: G4
 
 ## Domínio
-- [ ] Domínio de produção confirmado e configurado — Resp.: Product Owner — Evidência: painel Vercel — Data: — — Gate: G9
+- [ ] Domínio de produção confirmado e configurado — Resp.: Product Owner — Evidência: checado ao vivo via conector Vercel 2026-07-28 — projeto só tem domínios `*.vercel.app` (`executar-ai.vercel.app` e aliases), nenhum domínio próprio — Data: — — Gate: G9 — não bloqueia lançamento (`.vercel.app` funciona), é decisão de branding
 
 ## SEO
 - [x] SEO do blog confirmado (meta tags, sitemap) — Resp.: Execução assistida — Evidência: `robots.txt`, `sitemap.xml` (gerado automaticamente no build), OG/Twitter Card e canonical em landing/blog/artigos (FATO, build local verificado) — Data: 2026-07-28 — Gate: G4
 
 ## Analytics
-- [ ] Ferramenta de analytics decidida e instalada — Resp.: Product Owner — Evidência: — — Data: — — Gate: G7
+- [x] Ferramenta de analytics decidida e instalada — Resp.: Execução assistida — Evidência: `get_web_analytics` via conector Vercel retornou dados reais (0 visitantes/pageviews no período, sem erro de "não habilitado") — Vercel Web Analytics já está ativo no projeto — Data: 2026-07-28 — Gate: G7
 
 ## Suporte
 - [x] Plano de suporte documentado — Resp.: Execução assistida — Evidência: `08-OPERACAO-POS-LANCAMENTO.md` (canal, SLA informal, triagem) — Data: 2026-07-28 — Gate: G7 — **pendência menor**: e-mail de suporte ainda é placeholder em `terms.html`/`privacy.html`
