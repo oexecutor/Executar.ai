@@ -63,7 +63,7 @@ vazio, nunca marcados como concluídos sem prova.
 - [x] Plano de rollback documentado — Resp.: Execução assistida — Evidência: `07-PLANO-DE-ROLLBACK.md` (este pacote) — Data: 2026-07-24 — Gate: G0
 
 ## Comunicação
-- [ ] Mensagem de lançamento preparada — Resp.: Product Owner — Evidência: — — Data: — — Gate: G9
+- [x] Mensagem de lançamento preparada — Resp.: Execução assistida — Evidência: `16-MENSAGEM-DE-LANCAMENTO.md` (Show HN, Product Hunt, LinkedIn/X, comunidades PKM) — Data: 2026-07-28 — Gate: G9 — revisar tom/números antes de publicar de fato
 
 ## Onboarding
 - [ ] Onboarding de primeiro uso testado com usuário real — Resp.: Product Owner — Evidência: sessão gravada — Data: — — Gate: G6
