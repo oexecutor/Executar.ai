@@ -42,16 +42,16 @@ export function assertReadyForPreviewEvidence(publication: EditorialPublication)
   ) {
     throw new DomainError(
       "QUALITY_GATE_FAILED",
-      "A publicação ainda não passou pelo gate editorial final.",
-      "Execute os três adapters e repita o gate editorial.",
+      "A publicação ainda não passou pelo gate interno da E1.",
+      "Execute as três regras internas e repita o gate da E1.",
       409,
     );
   }
   if (adapterMissing.length > 0) {
     throw new DomainError(
       "ADAPTER_EVIDENCE_REQUIRED",
-      `Adapters obrigatórios sem evidência válida: ${adapterMissing.join(", ")}.`,
-      "Execute novamente os critérios editoriais sobre a versão atual.",
+      `Regras internas sem evidência válida: ${adapterMissing.join(", ")}.`,
+      "Execute novamente as verificações internas sobre a versão atual.",
       409,
     );
   }
@@ -59,7 +59,7 @@ export function assertReadyForPreviewEvidence(publication: EditorialPublication)
     throw new DomainError(
       "QUALITY_GATE_STALE",
       "O hash validado não corresponde ao conteúdo atual.",
-      "Execute os adapters e o gate editorial novamente.",
+      "Execute as regras internas e o gate da E1 novamente.",
       409,
     );
   }
@@ -71,6 +71,47 @@ export function assertReadyForPreviewEvidence(publication: EditorialPublication)
       "QUALITY_GATE_STALE",
       "O gate editorial é anterior à última alteração do conteúdo.",
       "Valide novamente a versão atual antes de criar o Preview.",
+      409,
+    );
+  }
+}
+
+export function assertGitHubArtifactEvidence(publication: EditorialPublication): void {
+  if (
+    !publication.github.branch
+    || !publication.github.commit_sha
+    || !/^[0-9a-f]{40}$/i.test(publication.github.commit_sha)
+    || !publication.github.pull_request_number
+    || !publication.github.pull_request_url
+    || !/^https:\/\/github\.com\//i.test(publication.github.pull_request_url)
+  ) {
+    throw new DomainError(
+      "E2_GITHUB_EVIDENCE_REQUIRED",
+      "A E2 exige branch, commit e pull request criados automaticamente.",
+      "Crie novamente o artefato GitHub a partir do pacote aprovado na E1.",
+      409,
+    );
+  }
+  if (
+    publication.github.artifact_contract_version !== "1.0"
+    || publication.github.artifact_paths.length < 2
+    || !publication.github.created_at
+  ) {
+    throw new DomainError(
+      "E2_ARTIFACT_EVIDENCE_REQUIRED",
+      "O pacote editorial da E2 não possui evidência completa.",
+      "Grave artigo, metadados e assets pelo publisher automático.",
+      409,
+    );
+  }
+  if (
+    publication.github.publication_version !== publication.version
+    || publication.github.content_hash !== publication.quality.content_hash
+  ) {
+    throw new DomainError(
+      "E2_ARTIFACT_STALE",
+      "O pacote GitHub não corresponde à versão e ao hash aprovados na E1.",
+      "Gere novamente o artefato a partir do conteúdo atual.",
       409,
     );
   }
@@ -100,25 +141,44 @@ export function assertEditorialTransition(publication: EditorialPublication, tar
 
   if (target === "PREVIEW_BUILDING") {
     assertReadyForPreviewEvidence(publication);
+    assertGitHubArtifactEvidence(publication);
   }
 
   if (target === "PREVIEW_READY") {
-    if (!publication.preview.url || !publication.preview.deployment_id || !publication.github.commit_sha) {
+    assertGitHubArtifactEvidence(publication);
+    if (
+      !publication.preview.url
+      || !publication.preview.deployment_id
+      || !publication.preview.commit_sha
+    ) {
       throw new DomainError(
         "PREVIEW_REQUIRED",
         "O Preview, o deployment e o commit precisam estar registrados.",
-        "Anexe a URL imutável, o deployment da Vercel e o SHA do commit.",
+        "Capture automaticamente a URL imutável e o deployment da Vercel.",
         409,
       );
     }
-    if (
-      publication.github.publication_version !== publication.version
-      || publication.github.content_hash !== publication.quality.content_hash
-    ) {
+    if (publication.preview.commit_sha !== publication.github.commit_sha) {
       throw new DomainError(
         "PREVIEW_CONTENT_MISMATCH",
-        "O artefato GitHub não corresponde à versão editorial validada.",
-        "Registre um commit criado a partir da versão e do hash aprovados.",
+        "O Vercel Preview não corresponde ao commit do pacote editorial.",
+        "Resolva novamente o deployment usando o SHA exato do PR.",
+        409,
+      );
+    }
+  }
+
+  if (target === "IN_REVIEW") {
+    assertGitHubArtifactEvidence(publication);
+    if (
+      !publication.preview.url
+      || !publication.preview.deployment_id
+      || publication.preview.commit_sha !== publication.github.commit_sha
+    ) {
+      throw new DomainError(
+        "E2_PREVIEW_EVIDENCE_REQUIRED",
+        "A revisão humana exige a E2 concluída para o mesmo commit.",
+        "Capture automaticamente o Vercel Preview antes de iniciar a E3.",
         409,
       );
     }

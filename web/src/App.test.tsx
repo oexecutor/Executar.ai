@@ -19,12 +19,13 @@ describe("App", () => {
     localStorage.clear();
   });
 
-  it("abre o workspace diretamente quando não existe sessão (login removido)", async () => {
+  it("protege o workspace com login quando não existe sessão", async () => {
     vi.mocked(getBrowserSession).mockResolvedValue(null);
     vi.mocked(selectedWorkspace).mockReturnValue(null);
     vi.mocked(getJson).mockResolvedValue([]);
     render(<App />);
-    expect(await screen.findByRole("heading", { name: "Execução em foco." })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Entre para continuar." })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Execução em foco." })).not.toBeInTheDocument();
   });
 
   it("abre o workspace quando sessão e workspace são válidos", async () => {

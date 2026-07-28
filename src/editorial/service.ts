@@ -8,8 +8,18 @@ import {
   type EditorialAdapterRegistry,
 } from "./adapters.js";
 import { normalizeEditorialPublication } from "./compatibility.js";
+import {
+  UnavailableEditorialArtifactPublisher,
+  UnavailableEditorialPreviewResolver,
+  type EditorialArtifactPublisher,
+  type EditorialPreviewResolver,
+} from "./delivery.js";
 import { validateEditorialPublication } from "./schema.js";
-import { assertEditorialTransition, assertReadyForPreviewEvidence } from "./state-machine.js";
+import {
+  assertEditorialTransition,
+  assertGitHubArtifactEvidence,
+  assertReadyForPreviewEvidence,
+} from "./state-machine.js";
 import type { EditorialRepository } from "./store.js";
 import type {
   EditorialAdapterEvidence,
@@ -137,6 +147,8 @@ export class EditorialService {
   constructor(
     private readonly store: EditorialRepository,
     private readonly adapterRegistry: EditorialAdapterRegistry = editorialAdapterRegistry,
+    private readonly artifactPublisher: EditorialArtifactPublisher = new UnavailableEditorialArtifactPublisher(),
+    private readonly previewResolver: EditorialPreviewResolver = new UnavailableEditorialPreviewResolver(),
   ) {}
 
   validate(input: unknown) {
@@ -198,7 +210,7 @@ export class EditorialService {
         gate_result: "NOT_RUN",
         score: null,
         errors: [],
-        warnings: ["DeskGo, Frankwatching e AMES ainda não foram executados."],
+        warnings: ["As três regras internas de qualidade ainda não foram executadas."],
         checked_at: null,
         content_hash: null,
         adapters: {
@@ -214,8 +226,11 @@ export class EditorialService {
         commit_sha: null,
         publication_version: null,
         content_hash: null,
+        artifact_contract_version: null,
+        artifact_paths: [],
+        created_at: null,
       },
-      preview: { deployment_id: null, url: null, created_at: null },
+      preview: { deployment_id: null, url: null, created_at: null, commit_sha: null },
       approval: { decision: "PENDING", reviewer: null, note: null, decided_at: null, approved_commit_sha: null },
       publication: { url: null, published_at: null, commit_sha: null },
       qr: { create_url: null, preview_url: null, approve_url: null, analytics_url: null },
@@ -274,7 +289,7 @@ export class EditorialService {
       gate_result: "NOT_RUN",
       score: null,
       errors: [],
-      warnings: ["Conteúdo alterado; execute novamente os adapters e o gate editorial."],
+      warnings: ["Conteúdo alterado; execute novamente as regras internas e o gate da E1."],
       checked_at: null,
       content_hash: null,
       adapters: {
@@ -290,8 +305,11 @@ export class EditorialService {
       commit_sha: null,
       publication_version: null,
       content_hash: null,
+      artifact_contract_version: null,
+      artifact_paths: [],
+      created_at: null,
     };
-    publication.preview = { deployment_id: null, url: null, created_at: null };
+    publication.preview = { deployment_id: null, url: null, created_at: null, commit_sha: null };
     publication.approval = { decision: "PENDING", reviewer: null, note: null, decided_at: null, approved_commit_sha: null };
     publication.publication = { url: null, published_at: null, commit_sha: null };
     publication.updated_at = new Date().toISOString();
@@ -308,13 +326,13 @@ export class EditorialService {
     if (publication.status !== "ADAPTERS_APPLIED") {
       throw new DomainError(
         "ADAPTERS_REQUIRED",
-        `Não é possível executar o gate final em ${publication.status}.`,
-        "Execute DeskGo, Frankwatching e AMES antes da validação final.",
+        `Não é possível concluir o gate interno da E1 em ${publication.status}.`,
+        "Execute as três regras internas de qualidade antes da validação final.",
         409,
       );
     }
 
-    this.changeStatus(publication, "VALIDATING", actor, "Gate editorial iniciado.");
+    this.changeStatus(publication, "VALIDATING", actor, "Gate interno da E1 iniciado.");
     const contentHash = editorialContentHash(publication);
     const errors = minimumStructureErrors(publication);
     const warnings: string[] = [];
@@ -322,7 +340,7 @@ export class EditorialService {
     for (const adapter of EDITORIAL_ADAPTERS) {
       const evidence = publication.quality.adapters[adapter];
       if (!hasCurrentAppliedEvidence(evidence, publication, contentHash)) {
-        errors.push(`Adapter obrigatório ${adapter} não possui evidência APPLIED para esta versão.`);
+        errors.push(`Regra interna obrigatória ${adapter} não possui evidência APPLIED para esta versão.`);
         continue;
       }
       errors.push(...evidence.findings.errors.map((message) => `${adapter}: ${message}`));
@@ -352,10 +370,10 @@ export class EditorialService {
       "GATE_COMPLETED",
       actor,
       publication.quality.valid
-        ? `Gate técnico aprovado; pontuação editorial ${publication.quality.score}/100.`
-        : `Gate técnico reprovado; pontuação editorial ${publication.quality.score}/100.`,
+        ? `Gate interno da E1 aprovado; pontuação editorial ${publication.quality.score}/100.`
+        : `Gate interno da E1 reprovado; pontuação editorial ${publication.quality.score}/100.`,
     ));
-    this.changeStatus(publication, target, actor, publication.quality.valid ? "Gate editorial aprovado." : "Gate editorial reprovado.");
+    this.changeStatus(publication, target, actor, publication.quality.valid ? "Gate interno da E1 aprovado." : "Gate interno da E1 reprovado.");
     await this.store.savePublication(publication);
     return publication;
   }
@@ -371,6 +389,21 @@ export class EditorialService {
     return publication;
   }
 
+  async runInternalRules(
+    id: string,
+    actor: string,
+  ): Promise<EditorialPublication> {
+    return this.runAdapters(id, actor);
+  }
+
+  async runInternalRule(
+    id: string,
+    rule: EditorialAdapterName,
+    actor: string,
+  ): Promise<EditorialPublication> {
+    return this.runAdapter(id, rule, actor);
+  }
+
   async runAdapter(
     id: string,
     adapter: EditorialAdapterName,
@@ -378,7 +411,7 @@ export class EditorialService {
   ): Promise<EditorialPublication> {
     const publication = await this.requirePublication(id);
     if (!EDITORIAL_ADAPTERS.includes(adapter)) {
-      throw new DomainError("INVALID_ADAPTER", `Adapter editorial inválido: ${adapter}.`, "Use deskgo, frankwatching ou ames.", 422);
+      throw new DomainError("INVALID_ADAPTER", `Regra interna inválida: ${adapter}.`, "Use uma das três chaves de compatibilidade registradas.", 422);
     }
     if (![
       "DRAFT",
@@ -391,8 +424,8 @@ export class EditorialService {
     ].includes(publication.status)) {
       throw new DomainError(
         "QUALITY_LOCKED",
-        `Os adapters não podem ser executados em ${publication.status}.`,
-        "Edite ou devolva a publicação para rascunho antes de reaplicar critérios editoriais.",
+        `As regras internas não podem ser executadas em ${publication.status}.`,
+        "Edite ou devolva a publicação para rascunho antes de reaplicar as verificações de qualidade.",
         409,
       );
     }
@@ -401,7 +434,7 @@ export class EditorialService {
     if (structureErrors.length > 0) {
       throw new DomainError(
         "CONTENT_NOT_READY",
-        "A estrutura mínima precisa ser corrigida antes dos adapters.",
+        "A estrutura mínima precisa ser corrigida antes das regras internas.",
         structureErrors.join(" "),
         409,
       );
@@ -411,7 +444,7 @@ export class EditorialService {
       this.changeStatus(publication, "CONTENT_READY", actor, "Estrutura mínima confirmada.");
     }
     if (publication.status !== "ENRICHING") {
-      this.changeStatus(publication, "ENRICHING", actor, `Execução do adapter ${adapter} iniciada.`);
+      this.changeStatus(publication, "ENRICHING", actor, `Execução da regra interna ${adapter} iniciada.`);
     }
 
     const runner = this.adapterRegistry[adapter];
@@ -435,7 +468,7 @@ export class EditorialService {
       skip_reason: null,
     };
     publication.updated_at = startedAt;
-    publication.events.push(event("ADAPTER_STARTED", actor, `${adapter} ${runner.version} iniciado.`));
+    publication.events.push(event("ADAPTER_STARTED", actor, `Regra interna ${adapter} ${runner.version} iniciada.`));
     await this.store.savePublication(publication);
 
     try {
@@ -449,22 +482,22 @@ export class EditorialService {
           warnings: [...new Set(findings.warnings)],
           recommendations: [...new Set(findings.recommendations)],
         },
-        output_reference: `editorial://${publication.id}/v${publication.version}/adapters/${adapter}/${contentHash}`,
+        output_reference: `internal-rule://${publication.id}/v${publication.version}/${adapter}/${contentHash}`,
       };
       publication.events.push(event(
         "ADAPTER_COMPLETED",
         actor,
-        `${adapter} aplicado com ${findings.errors.length} erro(s), ${findings.warnings.length} aviso(s) e ${findings.recommendations.length} recomendação(ões).`,
+        `Regra interna ${adapter} concluída com ${findings.errors.length} erro(s), ${findings.warnings.length} aviso(s) e ${findings.recommendations.length} recomendação(ões).`,
       ));
     } catch (caught) {
-      const message = caught instanceof Error ? caught.message : "Falha desconhecida do adapter.";
+      const message = caught instanceof Error ? caught.message : "Falha desconhecida da regra interna.";
       publication.quality.adapters[adapter] = {
         ...publication.quality.adapters[adapter],
         status: "FAILED",
         completed_at: timestampAfter(startedAt),
         findings: { errors: [message], warnings: [], recommendations: [] },
       };
-      publication.events.push(event("ADAPTER_FAILED", actor, `${adapter} falhou: ${message}`));
+      publication.events.push(event("ADAPTER_FAILED", actor, `Regra interna ${adapter} falhou: ${message}`));
     }
 
     const allApplied = EDITORIAL_ADAPTERS.every((name) =>
@@ -474,16 +507,148 @@ export class EditorialService {
       publication.quality.adapters[name].status === "FAILED"
     );
     if (allApplied) {
-      this.changeStatus(publication, "ADAPTERS_APPLIED", actor, "Todos os adapters obrigatórios possuem evidência válida.");
+      this.changeStatus(publication, "ADAPTERS_APPLIED", actor, "Todas as regras internas obrigatórias possuem evidência válida.");
     } else if (anyFailed && publication.status === "ENRICHING") {
-      this.changeStatus(publication, "ADAPTER_FAILED", actor, "Um ou mais adapters falharam.");
+      this.changeStatus(publication, "ADAPTER_FAILED", actor, "Uma ou mais regras internas falharam.");
     }
     publication.updated_at = timestampAfter(publication.updated_at);
     await this.store.savePublication(publication);
     return publication;
   }
 
-  async startPreview(id: string, input: {
+  async createArtifact(
+    id: string,
+    actor: string,
+  ): Promise<EditorialPublication> {
+    const publication = await this.requirePublication(id);
+    if (publication.status !== "READY_FOR_PREVIEW") {
+      throw new DomainError(
+        "E2_NOT_READY",
+        `A E2 não pode ser iniciada em ${publication.status}.`,
+        "Conclua o pacote e o gate interno da E1 antes de criar branch, commit e PR.",
+        409,
+      );
+    }
+    assertReadyForPreviewEvidence(publication);
+    const contentHash = editorialContentHash(publication);
+    const artifact = await this.artifactPublisher.publish({
+      publication: structuredClone(publication),
+      content_hash: contentHash,
+    });
+    const branch = artifact.branch.trim();
+    const commitSha = artifact.commit_sha.trim();
+    const pullRequestUrl = artifact.pull_request_url.trim();
+    const artifactPaths = [...new Set(artifact.artifact_paths.map((path) => path.trim()).filter(Boolean))];
+    if (!branch || !/^[0-9a-f]{40}$/i.test(commitSha)) {
+      throw new DomainError(
+        "E2_GITHUB_INVALID_RESPONSE",
+        "A automação GitHub não retornou branch e commit válidos.",
+        "Verifique a resposta do publisher e tente novamente sem registrar evidência manual.",
+        502,
+      );
+    }
+    if (
+      !Number.isInteger(artifact.pull_request_number)
+      || artifact.pull_request_number < 1
+      || !/^https:\/\/github\.com\//i.test(pullRequestUrl)
+      || artifactPaths.length < 2
+    ) {
+      throw new DomainError(
+        "E2_GITHUB_INVALID_RESPONSE",
+        "A automação GitHub retornou evidência incompleta do PR ou do pacote.",
+        "O resultado deve conter número e URL do PR e os caminhos dos artefatos gravados.",
+        502,
+      );
+    }
+    publication.github = {
+      branch,
+      commit_sha: commitSha,
+      pull_request_number: artifact.pull_request_number,
+      pull_request_url: pullRequestUrl,
+      publication_version: publication.version,
+      content_hash: contentHash,
+      artifact_contract_version: "1.0",
+      artifact_paths: artifactPaths,
+      created_at: artifact.created_at,
+    };
+    this.changeStatus(
+      publication,
+      "PREVIEW_BUILDING",
+      actor,
+      `E2 criou ${branch}, commit ${commitSha.slice(0, 8)} e PR #${artifact.pull_request_number}.`,
+    );
+    await this.store.savePublication(publication);
+    return publication;
+  }
+
+  async syncPreview(
+    id: string,
+    actor: string,
+  ): Promise<EditorialPublication> {
+    const publication = await this.requirePublication(id);
+    if (!["PREVIEW_BUILDING", "PREVIEW_FAILED"].includes(publication.status)) {
+      throw new DomainError("INVALID_TRANSITION", `O preview não pode ser anexado em ${publication.status}.`, "Inicie o build do preview primeiro.", 409);
+    }
+    if (!publication.github.branch || !publication.github.commit_sha) {
+      throw new DomainError(
+        "E2_GITHUB_EVIDENCE_REQUIRED",
+        "A captura do Preview exige branch e commit criados pela E2.",
+        "Crie novamente o pacote GitHub a partir da versão editorial aprovada.",
+        409,
+      );
+    }
+    assertGitHubArtifactEvidence(publication);
+
+    const resolution = await this.previewResolver.resolve({
+      branch: publication.github.branch,
+      commit_sha: publication.github.commit_sha,
+    });
+    if (resolution.state === "PENDING") {
+      if (publication.status === "PREVIEW_FAILED") {
+        this.changeStatus(publication, "PREVIEW_BUILDING", actor, "Nova consulta automática do Vercel Preview iniciada.");
+        await this.store.savePublication(publication);
+      }
+      return publication;
+    }
+    if (resolution.state === "FAILED") {
+      if (publication.status === "PREVIEW_BUILDING") {
+        this.changeStatus(publication, "PREVIEW_FAILED", actor, resolution.detail);
+        await this.store.savePublication(publication);
+      }
+      return publication;
+    }
+    if (
+      resolution.commit_sha !== publication.github.commit_sha
+      || !/^https:\/\//i.test(resolution.url)
+      || !/^dpl_/.test(resolution.deployment_id)
+    ) {
+      throw new DomainError(
+        "E2_PREVIEW_MISMATCH",
+        "O deployment encontrado não corresponde ao commit editorial aprovado.",
+        "A Vercel deve retornar URL imutável e deployment dpl_… para o mesmo SHA do PR.",
+        409,
+      );
+    }
+    if (publication.status === "PREVIEW_FAILED") {
+      this.changeStatus(publication, "PREVIEW_BUILDING", actor, "Preview válido encontrado após nova consulta.");
+    }
+    publication.preview = {
+      url: resolution.url,
+      deployment_id: resolution.deployment_id,
+      created_at: resolution.created_at,
+      commit_sha: resolution.commit_sha,
+    };
+    publication.events.push(event("PREVIEW_ATTACHED", actor, `Preview Vercel capturado automaticamente em ${publication.preview.url}.`));
+    this.changeStatus(publication, "PREVIEW_READY", actor, "E2 concluída: Preview disponível para revisão humana.");
+    await this.store.savePublication(publication);
+    return publication;
+  }
+
+  /**
+   * Compatibility command retained so callers receive a typed failure instead
+   * of silently trusting client-supplied GitHub evidence.
+   */
+  async startPreview(_id: string, _input: {
     branch: string;
     commit_sha: string;
     pull_request_number?: number;
@@ -491,60 +656,30 @@ export class EditorialService {
     publication_version?: number;
     content_hash?: string;
     actor: string;
-  }): Promise<EditorialPublication> {
-    const publication = await this.requirePublication(id);
-    assertReadyForPreviewEvidence(publication);
-    const branch = input.branch.trim();
-    const commitSha = input.commit_sha.trim();
-    const contentHash = editorialContentHash(publication);
-    if (!branch || !/^[0-9a-f]{40}$/i.test(commitSha)) {
-      throw new DomainError("INVALID_GITHUB_EVIDENCE", "Branch e commit SHA-1 completo são obrigatórios.", "Registre a branch e os 40 caracteres hexadecimais do commit.", 422);
-    }
-    if (
-      (input.publication_version !== undefined && input.publication_version !== publication.version)
-      || (input.content_hash !== undefined && input.content_hash !== contentHash)
-    ) {
-      throw new DomainError(
-        "GITHUB_CONTENT_MISMATCH",
-        "A versão ou o hash informado não corresponde ao conteúdo aprovado.",
-        "Gere novamente o artefato GitHub a partir da versão editorial atual.",
-        409,
-      );
-    }
-    publication.github = {
-      branch,
-      commit_sha: commitSha,
-      pull_request_number: input.pull_request_number ?? null,
-      pull_request_url: input.pull_request_url?.trim() || null,
-      publication_version: publication.version,
-      content_hash: contentHash,
-    };
-    this.changeStatus(publication, "PREVIEW_BUILDING", input.actor, "Branch e commit do preview registrados.");
-    await this.store.savePublication(publication);
-    return publication;
+  }): Promise<never> {
+    throw new DomainError(
+      "E2_AUTOMATION_REQUIRED",
+      "Branch, commit e PR não podem mais ser registrados manualmente.",
+      "Use a criação automática de artefato da E2.",
+      410,
+    );
   }
 
-  async attachPreview(id: string, input: { url: string; deployment_id?: string; actor: string }): Promise<EditorialPublication> {
-    const publication = await this.requirePublication(id);
-    if (publication.status === "PREVIEW_FAILED") this.changeStatus(publication, "PREVIEW_BUILDING", input.actor, "Nova tentativa de preview iniciada.");
-    if (publication.status !== "PREVIEW_BUILDING") {
-      throw new DomainError("INVALID_TRANSITION", `O preview não pode ser anexado em ${publication.status}.`, "Inicie o build do preview primeiro.", 409);
-    }
-    const previewUrl = input.url.trim();
-    const deploymentId = input.deployment_id?.trim();
-    if (!/^https:\/\//i.test(previewUrl) || !deploymentId) {
-      throw new DomainError(
-        "INVALID_PREVIEW_EVIDENCE",
-        "URL HTTPS imutável e deployment_id são obrigatórios.",
-        "Registre a URL do Preview e o identificador dpl_… da Vercel.",
-        422,
-      );
-    }
-    publication.preview = { url: previewUrl, deployment_id: deploymentId, created_at: new Date().toISOString() };
-    publication.events.push(event("PREVIEW_ATTACHED", input.actor, `Preview registrado em ${publication.preview.url}.`));
-    this.changeStatus(publication, "PREVIEW_READY", input.actor, "Preview disponível para revisão.");
-    await this.store.savePublication(publication);
-    return publication;
+  /**
+   * Compatibility command retained so callers receive a typed failure instead
+   * of silently trusting a URL de Preview supplied by the client.
+   */
+  async attachPreview(_id: string, _input: {
+    url: string;
+    deployment_id?: string;
+    actor: string;
+  }): Promise<never> {
+    throw new DomainError(
+      "E2_AUTOMATION_REQUIRED",
+      "A URL do Vercel Preview não pode mais ser anexada manualmente.",
+      "Use a captura automática por branch e commit da E2.",
+      410,
+    );
   }
 
   async startReview(id: string, actor: string): Promise<EditorialPublication> {

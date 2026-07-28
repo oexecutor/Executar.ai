@@ -21,9 +21,9 @@ import type {
 const STATUS_LABELS: Record<EditorialStatus, string> = {
   DRAFT: "Rascunho",
   CONTENT_READY: "Conteúdo pronto",
-  ENRICHING: "Enriquecimento editorial",
-  ADAPTERS_APPLIED: "Adapters aplicados",
-  ADAPTER_FAILED: "Adapter falhou",
+  ENRICHING: "Verificação interna",
+  ADAPTERS_APPLIED: "Regras internas aplicadas",
+  ADAPTER_FAILED: "Regra interna falhou",
   VALIDATING: "Validando",
   VALIDATION_FAILED: "Ajustes necessários",
   READY_FOR_PREVIEW: "Pronto para Preview",
@@ -41,9 +41,9 @@ const STATUS_LABELS: Record<EditorialStatus, string> = {
 };
 
 const ADAPTER_LABELS: Record<EditorialAdapterName, string> = {
-  deskgo: "DeskGo",
-  frankwatching: "Frankwatching",
-  ames: "AMES",
+  deskgo: "Formato e densidade",
+  frankwatching: "Clareza e estrutura",
+  ames: "Conformidade multiformato",
 };
 
 const ADAPTER_NAMES = Object.keys(ADAPTER_LABELS) as EditorialAdapterName[];
@@ -126,14 +126,14 @@ export function Editorial() {
     else setPublication(null);
   }, [loadPublication, selectedId]);
 
-  function replacePublication(next: EditorialPublication) {
+  const replacePublication = useCallback((next: EditorialPublication) => {
     setPublication(next);
     setPublications((current) => {
       const nextSummary = summaryFrom(next);
       const remaining = current.filter((item) => item.id !== next.id);
       return [nextSummary, ...remaining];
     });
-  }
+  }, []);
 
   async function runAction(action: () => Promise<EditorialPublication>) {
     setPending(true);
@@ -185,38 +185,61 @@ export function Editorial() {
     }));
   }
 
-  async function registerGitHub(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function createArtifact() {
     if (!publication) return;
-    const data = new FormData(event.currentTarget);
-    const pullRequestNumber = Number(data.get("pull_request_number"));
-    await runAction(() => postJson<EditorialPublication>(`/api/editorial/publications/${publication.id}/preview/start`, {
-      branch: String(data.get("branch") ?? ""),
-      commit_sha: String(data.get("commit_sha") ?? ""),
-      pull_request_number: Number.isFinite(pullRequestNumber) && pullRequestNumber > 0 ? pullRequestNumber : undefined,
-      pull_request_url: String(data.get("pull_request_url") ?? ""),
-      publication_version: publication.version,
-      content_hash: publication.quality.content_hash,
+    await runAction(() => postJson<EditorialPublication>(`/api/editorial/publications/${publication.id}/artifact/create`, {
+      confirm: true,
     }));
   }
 
   async function runAdapters(adapter?: EditorialAdapterName) {
     if (!publication) return;
     await runAction(() => postJson<EditorialPublication>(
-      `/api/editorial/publications/${publication.id}/adapters/run`,
+      `/api/editorial/publications/${publication.id}/quality/rules/run`,
       adapter ? { adapter } : {},
     ));
   }
 
-  async function attachPreview(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function syncPreview() {
     if (!publication) return;
-    const data = new FormData(event.currentTarget);
-    await runAction(() => postJson<EditorialPublication>(`/api/editorial/publications/${publication.id}/preview/attach`, {
-      url: String(data.get("url") ?? ""),
-      deployment_id: String(data.get("deployment_id") ?? ""),
-    }));
+    await runAction(() => postJson<EditorialPublication>(
+      `/api/editorial/publications/${publication.id}/preview/sync`,
+      {},
+    ));
   }
+
+  const previewBuildingId = publication?.status === "PREVIEW_BUILDING"
+    ? publication.id
+    : null;
+
+  useEffect(() => {
+    if (!previewBuildingId) return;
+    let active = true;
+    let syncing = false;
+    const synchronize = async () => {
+      if (syncing) return;
+      syncing = true;
+      try {
+        const next = await postJson<EditorialPublication>(
+          `/api/editorial/publications/${previewBuildingId}/preview/sync`,
+          {},
+        );
+        if (active) replacePublication(next);
+      } catch (caught) {
+        if (active) {
+          setError(caught instanceof Error ? caught.message : "Não foi possível consultar o Vercel Preview.");
+        }
+      } finally {
+        syncing = false;
+      }
+    };
+    void synchronize();
+    const timer = window.setInterval(() => void synchronize(), 10_000);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, [previewBuildingId, replacePublication]);
 
   async function review(decision: "APPROVED" | "CHANGES_REQUESTED") {
     if (!publication) return;
@@ -251,7 +274,7 @@ export function Editorial() {
     { label: "Seções H2 no artigo", done: /^##\s+.+/m.test(publication.content.markdown) },
   ] : [];
   const structureReady = structureChecklist.every((item) => item.done);
-  const e2Available = publication && [
+  const e1QualityAvailable = publication && [
     "DRAFT",
     "CONTENT_READY",
     "ENRICHING",
@@ -348,7 +371,7 @@ export function Editorial() {
 
               <div className="editorial-grid">
                 <article className="editorial-panel">
-                  <p className="eyebrow">Etapa 1 — Estrutura mínima</p>
+                  <p className="eyebrow">E1 — Intake e pacote editorial</p>
                   <div className="editorial-checklist">
                     {structureChecklist.map((item) => (
                       <div key={item.label} className={item.done ? "is-done" : ""}>
@@ -358,7 +381,7 @@ export function Editorial() {
                     ))}
                   </div>
                   <div className={`editorial-gate-result gate-${publication.quality.gate_result.toLowerCase()}`}>
-                    <span>GATE TÉCNICO</span>
+                    <span>GATE INTERNO DA E1</span>
                     <strong>
                       {publication.quality.gate_result === "PASSED"
                         ? "APROVADO"
@@ -377,12 +400,15 @@ export function Editorial() {
 
                 <article className="editorial-panel editorial-next">
                   <p className="eyebrow">Próxima ação</p>
-                  {e2Available && (
+                  {e1QualityAvailable && (
                     <div className="editorial-e2">
                       <div className="editorial-e2-head">
-                        <span>ETAPA 2</span>
-                        <h3>Adapters editoriais</h3>
-                        <p>Execute os critérios sobre a versão atual. O servidor registra evidência e não aceita marcação manual.</p>
+                        <span>E1 · QUALIDADE INTERNA</span>
+                        <h3>Regras determinísticas do aplicativo</h3>
+                        <p>
+                          Estas verificações locais ajudam a fechar o pacote da E1. Elas não executam
+                          Desk&amp;Go, Frankwatching nem AMES; as chaves antigas permanecem apenas por compatibilidade de dados.
+                        </p>
                       </div>
 
                       <div className="editorial-adapters">
@@ -433,13 +459,13 @@ export function Editorial() {
                         disabled={pending || !structureReady}
                         onClick={() => void runAdapters()}
                       >
-                        {pending ? "Aplicando critérios…" : "Aplicar todos os critérios editoriais"}
+                        {pending ? "Executando regras…" : "Executar todas as regras internas"}
                       </button>
-                      {!structureReady && <p className="editorial-blocked">Corrija a estrutura mínima antes de executar os adapters.</p>}
+                      {!structureReady && <p className="editorial-blocked">Corrija a estrutura mínima antes de executar as regras internas.</p>}
 
                       <div className="editorial-final-gate">
-                        <span>ETAPA 3</span>
-                        <h3>Gate editorial final</h3>
+                        <span>E1 · GATE DO PACOTE</span>
+                        <h3>Concluir intake e pacote editorial</h3>
                         {publication.status === "ADAPTERS_APPLIED" ? (
                           <button
                             className="button button-orange"
@@ -447,44 +473,80 @@ export function Editorial() {
                             disabled={pending}
                             onClick={() => void runAction(() => postJson<EditorialPublication>(`/api/editorial/publications/${publication.id}/validate`, {}))}
                           >
-                            {pending ? "Validando…" : "Executar gate editorial final"} <ArrowRight size={16} />
+                            {pending ? "Validando…" : "Executar gate interno da E1"} <ArrowRight size={16} />
                           </button>
                         ) : (
-                          <p>Disponível somente quando DeskGo, Frankwatching e AMES estiverem executados com evidência válida.</p>
+                          <p>Disponível somente quando as três regras internas tiverem evidência válida para a versão atual.</p>
                         )}
                       </div>
                     </div>
                   )}
 
                   {publication.status === "READY_FOR_PREVIEW" && (
-                    <form className="editorial-action-form" onSubmit={registerGitHub}>
-                      <p className="editorial-gate-approved"><Check size={16} /> Gate aprovado — conteúdo liberado para gerar artefato GitHub.</p>
-                      <h3>Registrar artefato GitHub</h3>
-                      <p>Informe a branch e o commit exatos que serão homologados no Preview.</p>
-                      <label>Branch<input name="branch" required placeholder={`editorial/${publication.id.toLowerCase()}-${publication.content.slug}`} /></label>
-                      <label>Commit SHA<input name="commit_sha" required minLength={40} maxLength={40} /></label>
-                      <div className="editorial-form-row">
-                        <label>Nº do PR<input name="pull_request_number" inputMode="numeric" /></label>
-                        <label>URL do PR<input name="pull_request_url" type="url" /></label>
-                      </div>
-                      <button className="button button-orange" type="submit" disabled={pending}>Iniciar Preview</button>
-                    </form>
+                    <div className="editorial-action-form">
+                      <p className="editorial-gate-approved"><Check size={16} /> E1 concluída — pacote liberado para a E2 oficial.</p>
+                      <span className="eyebrow">E2 — GitHub e Vercel Preview</span>
+                      <h3>Criar branch, commit, PR e Preview</h3>
+                      <p>
+                        O servidor grava o artigo, os metadados e a capa, abre um PR draft e captura
+                        o deployment Vercel pelo SHA exato. Nenhuma evidência é digitada manualmente.
+                      </p>
+                      <button
+                        className="button button-orange"
+                        type="button"
+                        disabled={pending}
+                        onClick={() => void createArtifact()}
+                      >
+                        {pending ? "Criando E2…" : "Criar artefato e iniciar Preview"}
+                      </button>
+                    </div>
                   )}
 
                   {(publication.status === "PREVIEW_BUILDING" || publication.status === "PREVIEW_FAILED") && (
-                    <form className="editorial-action-form" onSubmit={attachPreview}>
-                      <h3>Vincular o Preview Vercel</h3>
-                      <p>O endereço fica preso ao commit registrado e será usado na revisão humana.</p>
-                      <label>URL imutável do Preview<input name="url" type="url" required /></label>
-                      <label>Deployment ID<input name="deployment_id" placeholder="dpl_…" required /></label>
-                      <button className="button button-orange" type="submit" disabled={pending}>Registrar Preview</button>
-                    </form>
+                    <div className="editorial-action-form">
+                      <span className="eyebrow">E2 — GitHub e Vercel Preview</span>
+                      <h3>{publication.status === "PREVIEW_FAILED" ? "Preview falhou" : "Aguardando Vercel Preview"}</h3>
+                      <p>
+                        A consulta automática procura um deployment não produtivo cujo SHA corresponda
+                        exatamente ao commit do pacote editorial.
+                      </p>
+                      {publication.github.pull_request_url && (
+                        <a
+                          className="button button-quiet button-compact"
+                          href={publication.github.pull_request_url}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Abrir PR #{publication.github.pull_request_number} <ExternalLink size={15} />
+                        </a>
+                      )}
+                      <code>{publication.github.commit_sha}</code>
+                      <button
+                        className="button button-orange"
+                        type="button"
+                        disabled={pending}
+                        onClick={() => void syncPreview()}
+                      >
+                        {pending ? "Consultando…" : "Atualizar status do Preview"}
+                      </button>
+                    </div>
                   )}
 
                   {publication.status === "PREVIEW_READY" && (
                     <>
-                      <h3>Preview disponível</h3>
-                      <p>Abra o artigo, confira o conteúdo e só então inicie a decisão humana.</p>
+                      <span className="eyebrow">E2 concluída</span>
+                      <h3>Preview disponível para a E3</h3>
+                      <p>O PR e o Preview estão vinculados ao mesmo commit. Abra o artigo e só então inicie a revisão humana.</p>
+                      {publication.github.pull_request_url && (
+                        <a
+                          className="button button-quiet button-compact"
+                          href={publication.github.pull_request_url}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Abrir PR #{publication.github.pull_request_number} <ExternalLink size={15} />
+                        </a>
+                      )}
                       <button
                         className="button button-orange"
                         type="button"

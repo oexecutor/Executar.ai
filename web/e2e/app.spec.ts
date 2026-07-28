@@ -68,20 +68,20 @@ function editorialPublication() {
     version: 1,
     status: "DRAFT",
     briefing: {
-      title: "Critérios editoriais antes do Preview",
-      summary: "Valida o novo gate E2.",
+      title: "Pacote editorial antes do Preview",
+      summary: "Valida o gate interno da E1.",
       audience: "Equipe editorial",
-      objective: "Impedir Preview sem adapters.",
+      objective: "Impedir Preview sem pacote aprovado.",
       author: "Leonardo Batista",
-      source_text: "# Critérios editoriais antes do Preview\n\nEste conteúdo de homologação comprova que o fluxo exige enriquecimento editorial antes de registrar qualquer artefato externo.\n\n## Gate obrigatório\n\nA próxima ação é executar DeskGo, Frankwatching e AMES.",
-      keywords: ["E2"],
+      source_text: "# Pacote editorial antes do Preview\n\nEste conteúdo de homologação comprova que o fluxo exige um pacote editorial válido antes de registrar qualquer artefato externo.\n\n## Gate obrigatório\n\nA próxima ação é executar as regras internas e iniciar a E2 oficial.",
+      keywords: ["E1", "E2"],
       channel: "EXECUTA_JOURNAL",
       language: "pt-BR",
     },
     content: {
       slug: "criterios-editoriais-antes-do-preview",
-      excerpt: "Valida o novo gate E2.",
-      markdown: "# Critérios editoriais antes do Preview\n\nEste conteúdo de homologação comprova que o fluxo exige enriquecimento editorial antes de registrar qualquer artefato externo.\n\n## Gate obrigatório\n\nA próxima ação é executar DeskGo, Frankwatching e AMES.",
+      excerpt: "Valida o gate interno da E1.",
+      markdown: "# Pacote editorial antes do Preview\n\nEste conteúdo de homologação comprova que o fluxo exige um pacote editorial válido antes de registrar qualquer artefato externo.\n\n## Gate obrigatório\n\nA próxima ação é executar as regras internas e iniciar a E2 oficial.",
       reading_time_minutes: 1,
       generated_at: null,
       updated_at: "2026-07-28T01:00:00.000Z",
@@ -107,8 +107,11 @@ function editorialPublication() {
       commit_sha: null,
       publication_version: null,
       content_hash: null,
+      artifact_contract_version: null,
+      artifact_paths: [],
+      created_at: null,
     },
-    preview: { deployment_id: null, url: null, created_at: null },
+    preview: { deployment_id: null, url: null, created_at: null, commit_sha: null },
     approval: { decision: "PENDING", reviewer: null, note: null, decided_at: null, approved_commit_sha: null },
     publication: { url: null, published_at: null, commit_sha: null },
     events: [{ id: "evt-e2e", type: "CREATED", at: "2026-07-28T01:00:00.000Z", actor: "Leonardo Batista", detail: "Briefing editorial criado." }],
@@ -118,12 +121,12 @@ function editorialPublication() {
 }
 
 test.describe("EXECUTA.AI — acesso sem login", () => {
-  test("raiz entra direto no workspace, sem tela de login", async ({ page }) => {
+  test("raiz exibe a landing pública e mantém o workspace separado", async ({ page }) => {
     const failures = trackFailures(page);
     await page.goto("/");
-    await expect(page).toHaveURL(/\/app\/?$/);
-    await expect(page.getByRole("heading", { name: "Execução em foco." })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Visão geral" })).toBeVisible();
+    await expect(page).toHaveURL(/\/$/);
+    await expect(page.getByRole("heading", { name: /Contexto complexo/ })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Entrar/ })).toBeVisible();
     await expect(page.getByLabel("E-mail")).toHaveCount(0);
     await expect(page.getByLabel("Senha")).toHaveCount(0);
     expect(failures.errors).toEqual([]);
@@ -163,8 +166,8 @@ test.describe("EXECUTA.AI — acesso sem login", () => {
   });
 });
 
-test.describe("EXECUTA.AI — gate editorial E2", () => {
-  test("executa os três adapters antes de liberar GitHub e Preview", async ({ page }) => {
+test.describe("EXECUTA.AI — E1 e E2 editoriais", () => {
+  test("fecha a E1 com regras internas e libera a automação oficial da E2", async ({ page }) => {
     const failures = trackFailures(page);
     let current = editorialPublication();
 
@@ -190,7 +193,7 @@ test.describe("EXECUTA.AI — gate editorial E2", () => {
         });
         return;
       }
-      if (request.method() === "POST" && pathname.endsWith("/adapters/run")) {
+      if (request.method() === "POST" && pathname.endsWith("/quality/rules/run")) {
         current = {
           ...current,
           status: "ADAPTERS_APPLIED",
@@ -227,12 +230,15 @@ test.describe("EXECUTA.AI — gate editorial E2", () => {
     await page.getByRole("button", { name: "Editorial" }).click();
     await expect(page.getByRole("heading", { name: current.briefing.title })).toBeVisible();
     await expect(page.getByRole("button", { name: "Executar" })).toHaveCount(3);
-    await expect(page.getByRole("button", { name: /Executar gate editorial final/ })).toHaveCount(0);
+    await expect(page.getByText(/não executam Desk&Go, Frankwatching nem AMES/i)).toBeVisible();
+    await expect(page.getByRole("button", { name: /Executar gate interno da E1/ })).toHaveCount(0);
 
-    await page.getByRole("button", { name: "Aplicar todos os critérios editoriais" }).click();
-    await page.getByRole("button", { name: /Executar gate editorial final/ }).click();
-    await expect(page.getByRole("heading", { name: "Registrar artefato GitHub" })).toBeVisible();
-    await expect(page.getByText(/Gate aprovado — conteúdo liberado/)).toBeVisible();
+    await page.getByRole("button", { name: "Executar todas as regras internas" }).click();
+    await page.getByRole("button", { name: /Executar gate interno da E1/ }).click();
+    await expect(page.getByRole("heading", { name: "Criar branch, commit, PR e Preview" })).toBeVisible();
+    await expect(page.getByText(/E1 concluída — pacote liberado/)).toBeVisible();
+    await expect(page.getByLabel("Branch")).toHaveCount(0);
+    await expect(page.getByLabel("Commit SHA")).toHaveCount(0);
     expect(failures.errors).toEqual([]);
     await assertNoSeriousAccessibilityViolations(page);
   });

@@ -1,6 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { editorialHandler, setEditorialServiceForTesting } from "../api/editorial.js";
 import { editorialAdapterRegistry } from "../src/editorial/adapters.js";
+import type {
+  EditorialArtifactPublisher,
+  EditorialPreviewResolver,
+} from "../src/editorial/delivery.js";
 import { EditorialService } from "../src/editorial/service.js";
 import { EditorialStore } from "../src/editorial/store.js";
 import { adminCookie, appCookie, signAdminSession, signAppSession } from "../src/lib/auth.js";
@@ -16,8 +20,49 @@ A EXECUTA.AI Blog Integration V2 transforma um briefing editorial em um artigo v
 
 O artigo segue para branch, pull request e Vercel Preview. Depois da revisão, o commit aprovado pode ser publicado no EXECUTA Journal e conectado a um router de QR estável.`;
 
+function delivery(): {
+  publisher: EditorialArtifactPublisher;
+  resolver: EditorialPreviewResolver;
+} {
+  return {
+    publisher: {
+      async publish({ publication }) {
+        return {
+          branch: `editorial/${publication.id.toLowerCase()}-${publication.content.slug}`,
+          commit_sha: "a".repeat(40),
+          pull_request_number: 99,
+          pull_request_url: "https://github.com/oexecutor/P1.Executar.ai/pull/99",
+          artifact_paths: [
+            `content/blog/${publication.content.slug}.md`,
+            `content/blog/${publication.content.slug}.meta.json`,
+            `public/blog/${publication.content.slug}/cover.svg`,
+          ],
+          created_at: "2026-07-28T12:03:00.000Z",
+        };
+      },
+    },
+    resolver: {
+      async resolve({ commit_sha }) {
+        return {
+          state: "READY",
+          url: "https://executar-preview.vercel.app",
+          deployment_id: "dpl_test",
+          commit_sha,
+          created_at: "2026-07-28T12:04:00.000Z",
+        };
+      },
+    },
+  };
+}
+
 function service() {
-  return new EditorialService(new EditorialStore(memoryStore()));
+  const integrations = delivery();
+  return new EditorialService(
+    new EditorialStore(memoryStore()),
+    editorialAdapterRegistry,
+    integrations.publisher,
+    integrations.resolver,
+  );
 }
 
 async function enrichAndValidate(editorial: EditorialService, id: string) {
@@ -61,18 +106,9 @@ describe("EditorialPublication domain", () => {
     expect(validated.quality.valid).toBe(true);
     expect(validated.quality.gate_result).toBe("PASSED");
 
-    await editorial.startPreview(id, {
-      branch: `editorial/${created.content.slug}`,
-      commit_sha: "a".repeat(40),
-      pull_request_number: 99,
-      pull_request_url: "https://github.com/oexecutor/Executar.ai/pull/99",
-      actor: "GitHub automation",
-    });
-    const preview = await editorial.attachPreview(id, {
-      url: "https://executar-preview.vercel.app/blog/automacao-editorial-com-qr-semantico",
-      deployment_id: "dpl_test",
-      actor: "Vercel",
-    });
+    const building = await editorial.createArtifact(id, "Leonardo");
+    expect(building.github.pull_request_number).toBe(99);
+    const preview = await editorial.syncPreview(id, "Leonardo");
     expect(preview.status).toBe("PREVIEW_READY");
 
     await editorial.startReview(id, "Leonardo");
@@ -94,6 +130,66 @@ describe("EditorialPublication domain", () => {
     });
     expect(published.status).toBe("PUBLISHED");
     expect(published.publication.url).toContain("/blog/");
+  });
+
+  it("keeps E2 building, records a Vercel failure and recovers on the exact commit", async () => {
+    const integrations = delivery();
+    let resolution: Awaited<ReturnType<EditorialPreviewResolver["resolve"]>> = { state: "PENDING" };
+    const editorial = new EditorialService(
+      new EditorialStore(memoryStore()),
+      editorialAdapterRegistry,
+      integrations.publisher,
+      { async resolve() { return resolution; } },
+    );
+    const created = await editorial.createPublication(briefing());
+    await enrichAndValidate(editorial, created.id);
+    await editorial.createArtifact(created.id, "Leonardo");
+
+    expect((await editorial.syncPreview(created.id, "Leonardo")).status).toBe("PREVIEW_BUILDING");
+    resolution = { state: "FAILED", detail: "Deployment dpl_failed terminou em ERROR." };
+    expect((await editorial.syncPreview(created.id, "Leonardo")).status).toBe("PREVIEW_FAILED");
+    resolution = {
+      state: "READY",
+      url: "https://immutable-preview.vercel.app",
+      deployment_id: "dpl_recovered",
+      commit_sha: "a".repeat(40),
+      created_at: "2026-07-28T12:05:00.000Z",
+    };
+    const recovered = await editorial.syncPreview(created.id, "Leonardo");
+    expect(recovered.status).toBe("PREVIEW_READY");
+    expect(recovered.preview.commit_sha).toBe(recovered.github.commit_sha);
+  });
+
+  it("fails closed when E2 credentials are absent or Vercel returns another commit", async () => {
+    const unconfigured = new EditorialService(new EditorialStore(memoryStore()));
+    const createdWithoutConfig = await unconfigured.createPublication(briefing());
+    await enrichAndValidate(unconfigured, createdWithoutConfig.id);
+    await expect(unconfigured.createArtifact(createdWithoutConfig.id, "Leonardo"))
+      .rejects.toMatchObject({ code: "E2_GITHUB_NOT_CONFIGURED", status: 503 });
+
+    const integrations = delivery();
+    const editorial = new EditorialService(
+      new EditorialStore(memoryStore()),
+      editorialAdapterRegistry,
+      integrations.publisher,
+      {
+        async resolve() {
+          return {
+            state: "READY",
+            url: "https://wrong-commit.vercel.app",
+            deployment_id: "dpl_wrong",
+            commit_sha: "b".repeat(40),
+            created_at: "2026-07-28T12:05:00.000Z",
+          };
+        },
+      },
+    );
+    const created = await editorial.createPublication(briefing());
+    await enrichAndValidate(editorial, created.id);
+    await editorial.createArtifact(created.id, "Leonardo");
+    await expect(editorial.syncPreview(created.id, "Leonardo"))
+      .rejects.toMatchObject({ code: "E2_PREVIEW_MISMATCH" });
+    expect((await editorial.getPublication(created.id)).status).toBe("PREVIEW_BUILDING");
   });
 
   it("invalidates approval and preview evidence when content changes", async () => {
@@ -121,11 +217,8 @@ describe("EditorialPublication domain", () => {
 
     await expect(editorial.runQualityGate(created.id, "Leonardo"))
       .rejects.toMatchObject({ code: "ADAPTERS_REQUIRED" });
-    await expect(editorial.startPreview(created.id, {
-      branch: "editorial/blocked",
-      commit_sha: "a".repeat(40),
-      actor: "Teste",
-    })).rejects.toMatchObject({ code: "QUALITY_GATE_FAILED" });
+    await expect(editorial.createArtifact(created.id, "Teste"))
+      .rejects.toMatchObject({ code: "E2_NOT_READY" });
   });
 
   it("keeps the workflow blocked when an adapter execution fails", async () => {
@@ -174,7 +267,7 @@ describe("EditorialPublication domain", () => {
   it.each([
     ["H1", sourceText.replace(/^# .+\n/m, "")],
     ["H2", sourceText.replace(/^## .+\n/gm, "")],
-  ])("blocks E2 when %s is absent", async (_heading, markdown) => {
+  ])("blocks the E1 package when %s is absent", async (_heading, markdown) => {
     const editorial = service();
     const created = await editorial.createPublication({ ...briefing(), source_text: markdown });
 
@@ -183,7 +276,7 @@ describe("EditorialPublication domain", () => {
     expect((await editorial.getPublication(created.id)).status).toBe("DRAFT");
   });
 
-  it("binds adapter evidence, final gate and GitHub artifact to the same content hash", async () => {
+  it("binds internal-rule evidence, E1 gate and automatic GitHub artifact to the same content hash", async () => {
     const editorial = service();
     const created = await editorial.createPublication(briefing());
     const validated = await enrichAndValidate(editorial, created.id);
@@ -195,23 +288,11 @@ describe("EditorialPublication domain", () => {
       expect(evidence.publication_version).toBe(validated.version);
       expect(evidence.output_reference).toBeTruthy();
     }
-    await expect(editorial.startPreview(created.id, {
-      branch: "editorial/hash-incorreto",
-      commit_sha: "c".repeat(40),
-      content_hash: "0".repeat(64),
-      publication_version: validated.version,
-      actor: "Teste",
-    })).rejects.toMatchObject({ code: "GITHUB_CONTENT_MISMATCH" });
-
-    const building = await editorial.startPreview(created.id, {
-      branch: "editorial/hash-correto",
-      commit_sha: "c".repeat(40),
-      content_hash: validated.quality.content_hash ?? undefined,
-      publication_version: validated.version,
-      actor: "Teste",
-    });
+    const building = await editorial.createArtifact(created.id, "Teste");
     expect(building.github.content_hash).toBe(validated.quality.content_hash);
     expect(building.github.publication_version).toBe(validated.version);
+    expect(building.github.artifact_contract_version).toBe("1.0");
+    expect(building.github.artifact_paths).toContain(`content/blog/${created.content.slug}.md`);
   });
 });
 
@@ -265,7 +346,7 @@ describe("/api/editorial", () => {
     expect(createdResponse.status).toBe(201);
     const created = await createdResponse.json() as { data: { id: string } };
 
-    const adaptersResponse = await call("POST", `/publications/${created.data.id}/adapters/run`, { actor: "Leonardo" });
+    const adaptersResponse = await call("POST", `/publications/${created.data.id}/quality/rules/run`, { actor: "Leonardo" });
     expect(adaptersResponse.status).toBe(200);
     expect(await adaptersResponse.json()).toMatchObject({ data: { status: "ADAPTERS_APPLIED" } });
 
@@ -280,7 +361,7 @@ describe("/api/editorial", () => {
     expect(exported.data.briefing.title).toBe(briefing().title);
   });
 
-  it("rejects manual APPLIED labels and direct Preview calls before E2", async () => {
+  it("rejects manual quality labels and all client-supplied E2 evidence", async () => {
     const created = await (await call("POST", "/publications", briefing())).json() as { data: { id: string } };
 
     const manual = await call("POST", `/publications/${created.data.id}/adapters`, {
@@ -293,7 +374,39 @@ describe("/api/editorial", () => {
       branch: "editorial/direct-call",
       commit_sha: "d".repeat(40),
     });
-    expect(preview.status).toBe(409);
-    expect(await preview.json()).toMatchObject({ error: { code: "QUALITY_GATE_FAILED" } });
+    expect(preview.status).toBe(410);
+    expect(await preview.json()).toMatchObject({ error: { code: "E2_AUTOMATION_REQUIRED" } });
+  });
+
+  it("creates the official E2 automatically and captures the Preview for the same commit", async () => {
+    const created = await (await call("POST", "/publications", briefing())).json() as { data: { id: string } };
+    await call("POST", `/publications/${created.data.id}/quality/rules/run`, {});
+    await call("POST", `/publications/${created.data.id}/validate`, {});
+
+    const confirmationRequired = await call("POST", `/publications/${created.data.id}/artifact/create`, {});
+    expect(confirmationRequired.status).toBe(422);
+    expect(await confirmationRequired.json()).toMatchObject({ error: { code: "CONFIRMATION_REQUIRED" } });
+
+    const building = await call("POST", `/publications/${created.data.id}/artifact/create`, { confirm: true });
+    expect(building.status).toBe(200);
+    expect(await building.json()).toMatchObject({
+      data: {
+        status: "PREVIEW_BUILDING",
+        github: {
+          pull_request_number: 99,
+          artifact_contract_version: "1.0",
+        },
+      },
+    });
+
+    const ready = await call("POST", `/publications/${created.data.id}/preview/sync`, {});
+    expect(ready.status).toBe(200);
+    expect(await ready.json()).toMatchObject({
+      data: {
+        status: "PREVIEW_READY",
+        github: { commit_sha: "a".repeat(40) },
+        preview: { commit_sha: "a".repeat(40), deployment_id: "dpl_test" },
+      },
+    });
   });
 });

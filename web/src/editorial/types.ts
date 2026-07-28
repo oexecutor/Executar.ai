@@ -97,11 +97,15 @@ export interface EditorialPublication {
     commit_sha: string | null;
     publication_version: number | null;
     content_hash: string | null;
+    artifact_contract_version: "1.0" | null;
+    artifact_paths: string[];
+    created_at: string | null;
   };
   preview: {
     deployment_id: string | null;
     url: string | null;
     created_at: string | null;
+    commit_sha: string | null;
   };
   approval: {
     decision: "PENDING" | "APPROVED" | "CHANGES_REQUESTED";

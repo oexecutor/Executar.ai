@@ -100,7 +100,8 @@ function normalizeAdapter(
 }
 
 /**
- * Expands records created before E2 without trusting legacy APPLIED labels.
+ * Expands records created before the evidence-backed E1 quality gate without
+ * trusting legacy APPLIED labels.
  * The API can keep reading the rollout safely while every state-changing
  * command persists the upgraded contract.
  */
@@ -138,11 +139,17 @@ export function normalizeEditorialPublication(
     raw.quality.warnings = [
       ...new Set([
         ...raw.quality.warnings,
-        "Os adapters precisam ser executados novamente com evidência E2.",
+        "As regras internas precisam ser executadas novamente com evidência E1.",
       ]),
     ];
   }
   raw.github.publication_version = raw.github.publication_version ?? null;
   raw.github.content_hash = raw.github.content_hash ?? null;
+  raw.github.artifact_contract_version = raw.github.artifact_contract_version ?? null;
+  raw.github.artifact_paths = Array.isArray(raw.github.artifact_paths)
+    ? raw.github.artifact_paths.filter((path): path is string => typeof path === "string")
+    : [];
+  raw.github.created_at = raw.github.created_at ?? null;
+  raw.preview.commit_sha = raw.preview.commit_sha ?? null;
   return raw;
 }

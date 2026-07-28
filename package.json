@@ -15,6 +15,7 @@
     "lint": "eslint . --max-warnings 0",
     "env:check": "node scripts/check-env.mjs",
     "env:check:runtime": "node scripts/check-env.mjs --runtime",
+    "env:check:editorial-e2": "node scripts/check-env.mjs --editorial-e2",
     "db:migrate": "node scripts/migrate-editorial.mjs --require",
     "check": "npm run env:check && npm run build && npm test && npm run lint",
     "build:web": "npm --prefix web run build",

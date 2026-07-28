@@ -5,6 +5,12 @@
 **Data de corte:** 27 de julho de 2026, 20:05 BRT  
 **Objetivo:** identificar PRs pendentes, divergências entre GitHub e Vercel e bloqueios para lançamento.
 
+> [!IMPORTANT]
+> **Documento histórico de corte.** Depois desta auditoria, os PRs #4, #29,
+> #30, #31 e #32 produziram novos eventos no repositório. As afirmações abaixo
+> descrevem somente o instante auditado e não devem ser usadas como estado
+> corrente. A taxonomia editorial vigente é a E0–E6 da Issue #23.
+
 ---
 
 ## 1. Decisão executiva

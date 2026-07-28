@@ -153,17 +153,30 @@ export function validateEditorialPublication(input: unknown): EditorialValidatio
     }
     for (const adapter of EDITORIAL_ADAPTERS) {
       if (!hasCurrentAppliedEvidence(publication.quality.adapters[adapter], publication, currentHash)) {
-        errors.push(`${publication.status} exige ${adapter}=APPLIED com evidência da versão atual.`);
+        errors.push(`${publication.status} exige a regra interna ${adapter}=APPLIED com evidência da versão atual.`);
       }
     }
   }
 
   if (requiresGitHubArtifact(publication.status)) {
-    if (!hasText(publication.github?.branch) || !hasText(publication.github?.commit_sha)) {
-      errors.push(`${publication.status} exige branch e github.commit_sha.`);
+    if (
+      !hasText(publication.github?.branch)
+      || !hasText(publication.github?.commit_sha)
+      || !Number.isInteger(publication.github?.pull_request_number)
+      || !hasText(publication.github?.pull_request_url)
+    ) {
+      errors.push(`${publication.status} exige branch, commit e pull request da E2.`);
     }
     if (!/^[0-9a-f]{40}$/i.test(publication.github?.commit_sha ?? "")) {
       errors.push(`${publication.status} exige github.commit_sha SHA-1 completo.`);
+    }
+    if (
+      publication.github?.artifact_contract_version !== "1.0"
+      || !Array.isArray(publication.github?.artifact_paths)
+      || publication.github.artifact_paths.length < 2
+      || !hasText(publication.github?.created_at)
+    ) {
+      errors.push(`${publication.status} exige pacote editorial automático com caminhos e timestamp.`);
     }
     if (publication.github?.publication_version !== publication.version) {
       errors.push(`${publication.status} exige github.publication_version atual.`);
@@ -176,7 +189,10 @@ export function validateEditorialPublication(input: unknown): EditorialValidatio
   if (requiresPreview(publication.status)) {
     if (!hasText(publication.preview?.url)) errors.push(`${publication.status} exige preview.url.`);
     if (!hasText(publication.preview?.deployment_id)) errors.push(`${publication.status} exige preview.deployment_id.`);
-    if (!hasText(publication.github?.commit_sha)) errors.push(`${publication.status} exige github.commit_sha.`);
+    if (!hasText(publication.preview?.commit_sha)) errors.push(`${publication.status} exige preview.commit_sha.`);
+    if (publication.preview?.commit_sha !== publication.github?.commit_sha) {
+      errors.push(`${publication.status} exige Preview do mesmo commit GitHub.`);
+    }
   }
 
   if (requiresApproval(publication.status)) {
