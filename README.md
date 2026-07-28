@@ -128,6 +128,10 @@ Use `.env.example` como contrato público e sem segredos. Para desenvolvimento l
 | `EDITORIAL_VERCEL_TOKEN` | Para E2 | Privada, servidor | Preview e Production | Token de leitura do projeto |
 | `EDITORIAL_VERCEL_PROJECT_ID` | Override opcional da E2 | Não sensível | Preview e Production | Padrão: projeto `executar-ai` |
 | `EDITORIAL_VERCEL_TEAM_ID` | Override opcional da E2 | Não sensível | Preview e Production | Padrão: equipe `oexecutor-9118s-projects` |
+
+Aliases server-side aceitos para aproveitar credenciais de CI existentes:
+`GITHUB_TOKEN` ou `GH_TOKEN` para GitHub e `VERCEL_TOKEN` para Vercel. Os nomes
+`EDITORIAL_*` têm prioridade e nenhum token pode usar prefixo público.
 | `ADMIN_PASSWORD` | Não, legado | Privada, servidor | Somente implantação legada | Não configurar sem dependência confirmada |
 | `SMOKE_BASE_URL` | Apenas testes smoke | Não sensível | Local, CI ou Preview | URL do ambiente testado |
 
