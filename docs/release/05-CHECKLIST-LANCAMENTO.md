@@ -8,7 +8,7 @@ vazio, nunca marcados como concluídos sem prova.
 
 ## Produto
 - [ ] Ciclo central validado ponta a ponta em produção — Resp.: Execução assistida — Evidência: sessão gravada — Data: — — Gate: G2
-- [ ] Onboarding de beta fechado funcional — Resp.: Product Owner — Evidência: sessão gravada — Data: — — Gate: G6
+- [ ] Onboarding de beta fechado funcional — Resp.: Product Owner — Evidência: sessão gravada — Data: — — Gate: G6 — **escopo reduzido 2026-07-28**: o fluxo já existe e é automático (trigger `create_personal_workspace` + Login.tsx, ver `17-ONBOARDING-BETA-FECHADO.md`); falta só rodar o teste de 5 min com uma pessoa real
 
 ## Engenharia
 - [x] Build backend limpo — Resp.: Execução assistida — Evidência: `npm run build` (FATO) — Data: 2026-07-28 — Gate: G0
@@ -66,7 +66,7 @@ vazio, nunca marcados como concluídos sem prova.
 - [x] Mensagem de lançamento preparada — Resp.: Execução assistida — Evidência: `16-MENSAGEM-DE-LANCAMENTO.md` (Show HN, Product Hunt, LinkedIn/X, comunidades PKM) — Data: 2026-07-28 — Gate: G9 — revisar tom/números antes de publicar de fato
 
 ## Onboarding
-- [ ] Onboarding de primeiro uso testado com usuário real — Resp.: Product Owner — Evidência: sessão gravada — Data: — — Gate: G6
+- [ ] Onboarding de primeiro uso testado com usuário real — Resp.: Product Owner — Evidência: sessão gravada — Data: — — Gate: G6 — mesmo item do bloco Produto acima; único bloqueador real é executar o teste de 5 min descrito em `17-ONBOARDING-BETA-FECHADO.md`
 
 ## Documentação
 - [x] `AGENTS.md`/`SECURITY.md`/docs estruturais atualizados (Vercel, não Netlify) — Resp.: Execução assistida — Evidência: menções a Netlify restam só como nota histórica explicitamente superada (`docs/DEPLOYMENT_STATUS.md`), sem instrução ativa — Data: 2026-07-25 — Gate: G1

@@ -70,6 +70,7 @@ Pacote de auditoria, roadmap e operação de lançamento do **EXECUTA.AI**.
 | `14-PLANO-GTM.md` | Posicionamento, ICP, monetização, canais e métricas de GTM |
 | `15-HOMOLOGACAO-E2-E4-2026-07-28.md` | Evidência operacional da E2, publicação e quatro QRs |
 | `16-MENSAGEM-DE-LANCAMENTO.md` | Rascunho de mensagem para Show HN, Product Hunt, LinkedIn/X e comunidades de nicho |
+| `17-ONBOARDING-BETA-FECHADO.md` | Achado: onboarding self-service já existe (trigger de auto-provisionamento); falta só teste real |
 
 ## Estado resumido
 
