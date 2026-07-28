@@ -1,16 +1,22 @@
 import { DomainError } from "../domain/errors.js";
+import { editorialContentHash, hasCurrentAppliedEvidence } from "./adapters.js";
+import { EDITORIAL_ADAPTERS } from "./types.js";
 import type { EditorialPublication, EditorialStatus } from "./types.js";
 
 const transitions: Record<EditorialStatus, readonly EditorialStatus[]> = {
-  DRAFT: ["VALIDATING"],
+  DRAFT: ["CONTENT_READY"],
+  CONTENT_READY: ["DRAFT", "ENRICHING"],
+  ENRICHING: ["DRAFT", "ADAPTERS_APPLIED", "ADAPTER_FAILED"],
+  ADAPTERS_APPLIED: ["DRAFT", "ENRICHING", "VALIDATING"],
+  ADAPTER_FAILED: ["DRAFT", "ENRICHING"],
   VALIDATING: ["READY_FOR_PREVIEW", "VALIDATION_FAILED"],
-  VALIDATION_FAILED: ["DRAFT", "VALIDATING"],
+  VALIDATION_FAILED: ["DRAFT", "CONTENT_READY"],
   READY_FOR_PREVIEW: ["PREVIEW_BUILDING"],
   PREVIEW_BUILDING: ["PREVIEW_READY", "PREVIEW_FAILED"],
   PREVIEW_FAILED: ["READY_FOR_PREVIEW", "PREVIEW_BUILDING"],
   PREVIEW_READY: ["IN_REVIEW"],
   IN_REVIEW: ["CHANGES_REQUESTED", "APPROVED"],
-  CHANGES_REQUESTED: ["DRAFT", "VALIDATING"],
+  CHANGES_REQUESTED: ["DRAFT", "CONTENT_READY"],
   APPROVED: ["PUBLISHING", "IN_REVIEW"],
   PUBLISHING: ["PUBLISHED", "PUBLISH_FAILED"],
   PUBLISH_FAILED: ["APPROVED", "PUBLISHING"],
@@ -21,6 +27,53 @@ const transitions: Record<EditorialStatus, readonly EditorialStatus[]> = {
 
 export function allowedEditorialTransitions(status: EditorialStatus): readonly EditorialStatus[] {
   return transitions[status];
+}
+
+export function assertReadyForPreviewEvidence(publication: EditorialPublication): void {
+  const contentHash = editorialContentHash(publication);
+  const adapterMissing = EDITORIAL_ADAPTERS.filter((adapter) =>
+    !hasCurrentAppliedEvidence(publication.quality.adapters[adapter], publication, contentHash)
+  );
+
+  if (
+    !publication.quality.valid
+    || publication.quality.gate_result !== "PASSED"
+    || publication.quality.errors.length > 0
+  ) {
+    throw new DomainError(
+      "QUALITY_GATE_FAILED",
+      "A publicação ainda não passou pelo gate editorial final.",
+      "Execute os três adapters e repita o gate editorial.",
+      409,
+    );
+  }
+  if (adapterMissing.length > 0) {
+    throw new DomainError(
+      "ADAPTER_EVIDENCE_REQUIRED",
+      `Adapters obrigatórios sem evidência válida: ${adapterMissing.join(", ")}.`,
+      "Execute novamente os critérios editoriais sobre a versão atual.",
+      409,
+    );
+  }
+  if (publication.quality.content_hash !== contentHash) {
+    throw new DomainError(
+      "QUALITY_GATE_STALE",
+      "O hash validado não corresponde ao conteúdo atual.",
+      "Execute os adapters e o gate editorial novamente.",
+      409,
+    );
+  }
+  if (
+    !publication.quality.checked_at
+    || Date.parse(publication.quality.checked_at) <= Date.parse(publication.content.updated_at)
+  ) {
+    throw new DomainError(
+      "QUALITY_GATE_STALE",
+      "O gate editorial é anterior à última alteração do conteúdo.",
+      "Valide novamente a versão atual antes de criar o Preview.",
+      409,
+    );
+  }
 }
 
 export function assertEditorialTransition(publication: EditorialPublication, target: EditorialStatus): void {
@@ -34,14 +87,7 @@ export function assertEditorialTransition(publication: EditorialPublication, tar
   }
 
   if (target === "READY_FOR_PREVIEW") {
-    if (!publication.quality.valid || publication.quality.errors.length > 0) {
-      throw new DomainError(
-        "QUALITY_GATE_FAILED",
-        "A publicação ainda não passou pelo gate editorial.",
-        "Corrija os erros e execute a validação novamente.",
-        409,
-      );
-    }
+    assertReadyForPreviewEvidence(publication);
     if (!publication.content.markdown.trim()) {
       throw new DomainError(
         "CONTENT_REQUIRED",
@@ -52,12 +98,27 @@ export function assertEditorialTransition(publication: EditorialPublication, tar
     }
   }
 
+  if (target === "PREVIEW_BUILDING") {
+    assertReadyForPreviewEvidence(publication);
+  }
+
   if (target === "PREVIEW_READY") {
-    if (!publication.preview.url || !publication.github.commit_sha) {
+    if (!publication.preview.url || !publication.preview.deployment_id || !publication.github.commit_sha) {
       throw new DomainError(
         "PREVIEW_REQUIRED",
-        "O preview e o commit precisam estar registrados.",
-        "Anexe a URL da Vercel e o SHA do commit antes de concluir o preview.",
+        "O Preview, o deployment e o commit precisam estar registrados.",
+        "Anexe a URL imutável, o deployment da Vercel e o SHA do commit.",
+        409,
+      );
+    }
+    if (
+      publication.github.publication_version !== publication.version
+      || publication.github.content_hash !== publication.quality.content_hash
+    ) {
+      throw new DomainError(
+        "PREVIEW_CONTENT_MISMATCH",
+        "O artefato GitHub não corresponde à versão editorial validada.",
+        "Registre um commit criado a partir da versão e do hash aprovados.",
         409,
       );
     }

@@ -3,6 +3,7 @@ import { DomainError } from "../src/domain/errors.js";
 import { createEditorialSqlClient, PostgresEditorialStore } from "../src/editorial/postgres-store.js";
 import { EditorialService } from "../src/editorial/service.js";
 import { EditorialStore, MigratingEditorialStore } from "../src/editorial/store.js";
+import { EDITORIAL_ADAPTERS, type EditorialAdapterName } from "../src/editorial/types.js";
 import { requireAdminJson } from "../src/lib/admin-guard.js";
 import { absoluteUrl, json } from "../src/lib/http.js";
 import { canWriteWorkspace, getAuthenticatedRequest, type AuthenticatedRequest } from "../src/lib/request-auth.js";
@@ -115,15 +116,26 @@ async function editorialHandler(request: Request): Promise<Response> {
         return response(await service.runQualityGate(publicationId, actor(body, auth)), requestId);
       }
       if (request.method === "POST" && operation === "adapters") {
-        const adapters = body.adapters && typeof body.adapters === "object" && !Array.isArray(body.adapters)
-          ? body.adapters as Record<string, unknown>
-          : {};
-        const allowed = new Set(["PENDING", "APPLIED", "FAILED"]);
-        return response(await service.recordAdapters(publicationId, {
-          ...(allowed.has(String(adapters.deskgo)) ? { deskgo: String(adapters.deskgo) as "PENDING" | "APPLIED" | "FAILED" } : {}),
-          ...(allowed.has(String(adapters.frankwatching)) ? { frankwatching: String(adapters.frankwatching) as "PENDING" | "APPLIED" | "FAILED" } : {}),
-          ...(allowed.has(String(adapters.ames)) ? { ames: String(adapters.ames) as "PENDING" | "APPLIED" | "FAILED" } : {}),
-        }, actor(body, auth)), requestId);
+        throw new DomainError(
+          "MANUAL_ADAPTER_STATE_FORBIDDEN",
+          "O estado dos adapters não pode ser marcado manualmente.",
+          "Use POST /adapters/run para executar os critérios e registrar evidência.",
+          409,
+        );
+      }
+      if (request.method === "POST" && operation === "adapters/run") {
+        const adapter = text(body, "adapter");
+        if (!adapter) {
+          return response(await service.runAdapters(publicationId, actor(body, auth)), requestId);
+        }
+        if (!EDITORIAL_ADAPTERS.includes(adapter as EditorialAdapterName)) {
+          throw new DomainError("INVALID_ADAPTER", `Adapter editorial inválido: ${adapter}.`, "Use deskgo, frankwatching ou ames.", 422);
+        }
+        return response(await service.runAdapter(
+          publicationId,
+          adapter as EditorialAdapterName,
+          actor(body, auth),
+        ), requestId);
       }
       if (request.method === "POST" && operation === "preview/start") {
         const branch = text(body, "branch");
@@ -134,6 +146,8 @@ async function editorialHandler(request: Request): Promise<Response> {
           commit_sha: commitSha,
           pull_request_number: typeof body.pull_request_number === "number" ? body.pull_request_number : undefined,
           pull_request_url: text(body, "pull_request_url"),
+          publication_version: typeof body.publication_version === "number" ? body.publication_version : undefined,
+          content_hash: text(body, "content_hash"),
           actor: actor(body, auth),
         }), requestId);
       }

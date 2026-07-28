@@ -11,6 +11,8 @@ import {
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { getJson, postJson, putJson } from "../api";
 import type {
+  EditorialAdapterEvidence,
+  EditorialAdapterName,
   EditorialPublication,
   EditorialPublicationSummary,
   EditorialStatus,
@@ -18,6 +20,10 @@ import type {
 
 const STATUS_LABELS: Record<EditorialStatus, string> = {
   DRAFT: "Rascunho",
+  CONTENT_READY: "Conteúdo pronto",
+  ENRICHING: "Enriquecimento editorial",
+  ADAPTERS_APPLIED: "Adapters aplicados",
+  ADAPTER_FAILED: "Adapter falhou",
   VALIDATING: "Validando",
   VALIDATION_FAILED: "Ajustes necessários",
   READY_FOR_PREVIEW: "Pronto para Preview",
@@ -34,12 +40,31 @@ const STATUS_LABELS: Record<EditorialStatus, string> = {
   ARCHIVED: "Arquivado",
 };
 
-const ACTION_LABELS: Partial<Record<EditorialStatus, string>> = {
-  DRAFT: "Executar validação",
-  VALIDATION_FAILED: "Validar novamente",
-  CHANGES_REQUESTED: "Validar nova versão",
-  PREVIEW_READY: "Iniciar revisão humana",
+const ADAPTER_LABELS: Record<EditorialAdapterName, string> = {
+  deskgo: "DeskGo",
+  frankwatching: "Frankwatching",
+  ames: "AMES",
 };
+
+const ADAPTER_NAMES = Object.keys(ADAPTER_LABELS) as EditorialAdapterName[];
+
+function adapterResultLabel(evidence: EditorialAdapterEvidence): string {
+  if (evidence.status === "APPLIED" && evidence.findings.errors.length > 0) {
+    return `${evidence.findings.errors.length} bloqueador(es)`;
+  }
+  if (evidence.status === "APPLIED" && evidence.findings.warnings.length > 0) {
+    return `${evidence.findings.warnings.length} alerta(s)`;
+  }
+  const labels: Record<EditorialAdapterEvidence["status"], string> = {
+    NOT_RUN: "Não executado",
+    RUNNING: "Executando",
+    APPLIED: "Aprovado",
+    FAILED: "Falhou",
+    STALE: "Desatualizado",
+    SKIPPED: "Dispensado",
+  };
+  return labels[evidence.status];
+}
 
 function formatDate(value: string): string {
   return new Intl.DateTimeFormat("pt-BR", {
@@ -170,7 +195,17 @@ export function Editorial() {
       commit_sha: String(data.get("commit_sha") ?? ""),
       pull_request_number: Number.isFinite(pullRequestNumber) && pullRequestNumber > 0 ? pullRequestNumber : undefined,
       pull_request_url: String(data.get("pull_request_url") ?? ""),
+      publication_version: publication.version,
+      content_hash: publication.quality.content_hash,
     }));
+  }
+
+  async function runAdapters(adapter?: EditorialAdapterName) {
+    if (!publication) return;
+    await runAction(() => postJson<EditorialPublication>(
+      `/api/editorial/publications/${publication.id}/adapters/run`,
+      adapter ? { adapter } : {},
+    ));
   }
 
   async function attachPreview(event: FormEvent<HTMLFormElement>) {
@@ -201,15 +236,30 @@ export function Editorial() {
     }));
   }
 
-  const editable = publication && ["DRAFT", "VALIDATION_FAILED", "CHANGES_REQUESTED"].includes(publication.status);
-  const checklist = publication ? [
+  const editable = publication && [
+    "DRAFT",
+    "CONTENT_READY",
+    "ADAPTERS_APPLIED",
+    "ADAPTER_FAILED",
+    "VALIDATION_FAILED",
+    "CHANGES_REQUESTED",
+  ].includes(publication.status);
+  const structureChecklist = publication ? [
     { label: "Briefing mínimo completo", done: Boolean(publication.briefing.title && publication.briefing.audience && publication.briefing.objective) },
     { label: "Conteúdo com pelo menos 120 caracteres", done: publication.content.markdown.trim().length >= 120 },
     { label: "Título H1 no artigo", done: /^#\s+.+/m.test(publication.content.markdown) },
     { label: "Seções H2 no artigo", done: /^##\s+.+/m.test(publication.content.markdown) },
-    { label: "Preview vinculado ao commit", done: Boolean(publication.preview.url && publication.github.commit_sha) },
-    { label: "Aprovação humana registrada", done: publication.approval.decision === "APPROVED" },
   ] : [];
+  const structureReady = structureChecklist.every((item) => item.done);
+  const e2Available = publication && [
+    "DRAFT",
+    "CONTENT_READY",
+    "ENRICHING",
+    "ADAPTERS_APPLIED",
+    "ADAPTER_FAILED",
+    "VALIDATION_FAILED",
+    "CHANGES_REQUESTED",
+  ].includes(publication.status);
 
   return (
     <section className="editorial-page">
@@ -298,18 +348,28 @@ export function Editorial() {
 
               <div className="editorial-grid">
                 <article className="editorial-panel">
-                  <p className="eyebrow">Checklist do gate</p>
+                  <p className="eyebrow">Etapa 1 — Estrutura mínima</p>
                   <div className="editorial-checklist">
-                    {checklist.map((item) => (
+                    {structureChecklist.map((item) => (
                       <div key={item.label} className={item.done ? "is-done" : ""}>
                         <i>{item.done ? <Check size={14} /> : <CircleAlert size={14} />}</i>
                         <span>{item.label}</span>
                       </div>
                     ))}
                   </div>
+                  <div className={`editorial-gate-result gate-${publication.quality.gate_result.toLowerCase()}`}>
+                    <span>GATE TÉCNICO</span>
+                    <strong>
+                      {publication.quality.gate_result === "PASSED"
+                        ? "APROVADO"
+                        : publication.quality.gate_result === "FAILED"
+                          ? "REPROVADO"
+                          : "NÃO EXECUTADO"}
+                    </strong>
+                  </div>
                   {publication.quality.score !== null && (
                     <div className="editorial-score">
-                      <span>QUALIDADE</span>
+                      <span>PONTUAÇÃO EDITORIAL</span>
                       <strong>{publication.quality.score}<small>/100</small></strong>
                     </div>
                   )}
@@ -317,24 +377,89 @@ export function Editorial() {
 
                 <article className="editorial-panel editorial-next">
                   <p className="eyebrow">Próxima ação</p>
-                  {(publication.status === "DRAFT" || publication.status === "VALIDATION_FAILED" || publication.status === "CHANGES_REQUESTED") && (
-                    <>
-                      <h3>{ACTION_LABELS[publication.status]}</h3>
-                      <p>Verifica o contrato e prepara o rascunho para receber um Preview. Nada será publicado.</p>
+                  {e2Available && (
+                    <div className="editorial-e2">
+                      <div className="editorial-e2-head">
+                        <span>ETAPA 2</span>
+                        <h3>Adapters editoriais</h3>
+                        <p>Execute os critérios sobre a versão atual. O servidor registra evidência e não aceita marcação manual.</p>
+                      </div>
+
+                      <div className="editorial-adapters">
+                        {ADAPTER_NAMES.map((adapter) => {
+                          const evidence = publication.quality.adapters[adapter];
+                          const hasReport = evidence.status !== "NOT_RUN" && evidence.status !== "RUNNING";
+                          return (
+                            <div className={`editorial-adapter adapter-${evidence.status.toLowerCase()}`} key={adapter}>
+                              <div>
+                                <strong>{ADAPTER_LABELS[adapter]}</strong>
+                                <span>{adapterResultLabel(evidence)}</span>
+                              </div>
+                              <button
+                                className="button button-quiet button-compact"
+                                type="button"
+                                disabled={pending || !structureReady || evidence.status === "RUNNING"}
+                                onClick={() => void runAdapters(adapter)}
+                              >
+                                {evidence.status === "RUNNING" ? "Executando…" : "Executar"}
+                              </button>
+                              {hasReport && (
+                                <details>
+                                  <summary>Ver relatório</summary>
+                                  <div>
+                                    <small>
+                                      {evidence.adapter_version ? `v${evidence.adapter_version}` : "sem versão"}
+                                      {" · "}
+                                      publicação v{evidence.publication_version}
+                                    </small>
+                                    {evidence.findings.errors.map((message) => <p className="is-error" key={message}>{message}</p>)}
+                                    {evidence.findings.warnings.map((message) => <p className="is-warning" key={message}>{message}</p>)}
+                                    {evidence.findings.recommendations.map((message) => <p key={message}>{message}</p>)}
+                                    {!evidence.findings.errors.length
+                                      && !evidence.findings.warnings.length
+                                      && !evidence.findings.recommendations.length
+                                      && <p>Nenhum achado.</p>}
+                                  </div>
+                                </details>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+
                       <button
-                        className="button button-orange"
+                        className="button button-dark editorial-apply-all"
                         type="button"
-                        disabled={pending}
-                        onClick={() => void runAction(() => postJson<EditorialPublication>(`/api/editorial/publications/${publication.id}/validate`, {}))}
+                        disabled={pending || !structureReady}
+                        onClick={() => void runAdapters()}
                       >
-                        {pending ? "Validando…" : ACTION_LABELS[publication.status]} <ArrowRight size={16} />
+                        {pending ? "Aplicando critérios…" : "Aplicar todos os critérios editoriais"}
                       </button>
-                    </>
+                      {!structureReady && <p className="editorial-blocked">Corrija a estrutura mínima antes de executar os adapters.</p>}
+
+                      <div className="editorial-final-gate">
+                        <span>ETAPA 3</span>
+                        <h3>Gate editorial final</h3>
+                        {publication.status === "ADAPTERS_APPLIED" ? (
+                          <button
+                            className="button button-orange"
+                            type="button"
+                            disabled={pending}
+                            onClick={() => void runAction(() => postJson<EditorialPublication>(`/api/editorial/publications/${publication.id}/validate`, {}))}
+                          >
+                            {pending ? "Validando…" : "Executar gate editorial final"} <ArrowRight size={16} />
+                          </button>
+                        ) : (
+                          <p>Disponível somente quando DeskGo, Frankwatching e AMES estiverem executados com evidência válida.</p>
+                        )}
+                      </div>
+                    </div>
                   )}
 
                   {publication.status === "READY_FOR_PREVIEW" && (
                     <form className="editorial-action-form" onSubmit={registerGitHub}>
-                      <h3>Registrar o artefato GitHub</h3>
+                      <p className="editorial-gate-approved"><Check size={16} /> Gate aprovado — conteúdo liberado para gerar artefato GitHub.</p>
+                      <h3>Registrar artefato GitHub</h3>
                       <p>Informe a branch e o commit exatos que serão homologados no Preview.</p>
                       <label>Branch<input name="branch" required placeholder={`editorial/${publication.id.toLowerCase()}-${publication.content.slug}`} /></label>
                       <label>Commit SHA<input name="commit_sha" required minLength={40} maxLength={40} /></label>
@@ -351,7 +476,7 @@ export function Editorial() {
                       <h3>Vincular o Preview Vercel</h3>
                       <p>O endereço fica preso ao commit registrado e será usado na revisão humana.</p>
                       <label>URL imutável do Preview<input name="url" type="url" required /></label>
-                      <label>Deployment ID<input name="deployment_id" placeholder="dpl_…" /></label>
+                      <label>Deployment ID<input name="deployment_id" placeholder="dpl_…" required /></label>
                       <button className="button button-orange" type="submit" disabled={pending}>Registrar Preview</button>
                     </form>
                   )}

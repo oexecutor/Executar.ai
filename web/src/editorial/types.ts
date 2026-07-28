@@ -1,5 +1,9 @@
 export type EditorialStatus =
   | "DRAFT"
+  | "CONTENT_READY"
+  | "ENRICHING"
+  | "ADAPTERS_APPLIED"
+  | "ADAPTER_FAILED"
   | "VALIDATING"
   | "VALIDATION_FAILED"
   | "READY_FOR_PREVIEW"
@@ -14,6 +18,33 @@ export type EditorialStatus =
   | "PUBLISHED"
   | "QR_FAILED"
   | "ARCHIVED";
+
+export type EditorialAdapterName = "deskgo" | "frankwatching" | "ames";
+export type EditorialAdapterStatus =
+  | "NOT_RUN"
+  | "RUNNING"
+  | "APPLIED"
+  | "FAILED"
+  | "STALE"
+  | "SKIPPED";
+
+export interface EditorialAdapterEvidence {
+  adapter: EditorialAdapterName;
+  status: EditorialAdapterStatus;
+  adapter_version: string | null;
+  publication_version: number;
+  content_hash: string | null;
+  started_at: string | null;
+  completed_at: string | null;
+  findings: {
+    errors: string[];
+    warnings: string[];
+    recommendations: string[];
+  };
+  output_reference: string | null;
+  actor: string | null;
+  skip_reason: string | null;
+}
 
 export interface EditorialPublicationSummary {
   id: string;
@@ -47,24 +78,25 @@ export interface EditorialPublication {
     markdown: string;
     reading_time_minutes: number;
     generated_at: string | null;
+    updated_at: string;
   };
   quality: {
     valid: boolean;
+    gate_result: "NOT_RUN" | "PASSED" | "FAILED";
     score: number | null;
     errors: string[];
     warnings: string[];
     checked_at: string | null;
-    adapters: {
-      deskgo: "PENDING" | "APPLIED" | "FAILED";
-      frankwatching: "PENDING" | "APPLIED" | "FAILED";
-      ames: "PENDING" | "APPLIED" | "FAILED";
-    };
+    content_hash: string | null;
+    adapters: Record<EditorialAdapterName, EditorialAdapterEvidence>;
   };
   github: {
     branch: string | null;
     pull_request_number: number | null;
     pull_request_url: string | null;
     commit_sha: string | null;
+    publication_version: number | null;
+    content_hash: string | null;
   };
   preview: {
     deployment_id: string | null;

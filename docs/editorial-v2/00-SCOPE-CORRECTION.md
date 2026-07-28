@@ -113,6 +113,9 @@ O conteúdo impresso nunca aponta diretamente para uma URL efêmera. O QR conté
 
 ```text
 DRAFT
+→ CONTENT_READY
+→ ENRICHING
+→ ADAPTERS_APPLIED
 → VALIDATING
 → READY_FOR_PREVIEW
 → PREVIEW_BUILDING
@@ -128,6 +131,7 @@ Estados de falha devem ser explícitos e recuperáveis:
 
 ```text
 VALIDATION_FAILED
+ADAPTER_FAILED
 PREVIEW_FAILED
 PUBLISH_FAILED
 QR_FAILED
@@ -139,10 +143,11 @@ QR_FAILED
 |---|---|---|
 | E0 | contrato, arquitetura e separação de domínio | EM EXECUÇÃO |
 | E1 | intake e pacote editorial | NÃO INICIADO |
-| E2 | branch, PR e Vercel Preview | NÃO INICIADO |
-| E3 | aprovação, merge e publicação | NÃO INICIADO |
-| E4 | QR Router semântico | NÃO INICIADO |
-| E5 | painel e impressão | NÃO INICIADO |
+| E2 | enriquecimento e validação com DeskGo, Frankwatching e AMES | EM CORREÇÃO — `DEF-E2-001` |
+| E3 | branch, PR e Vercel Preview | BLOQUEADO POR E2 |
+| E4 | aprovação, merge e publicação | BLOQUEADO POR E2 |
+| E5 | QR Router semântico | NÃO INICIADO |
+| E6 | painel e impressão | NÃO INICIADO |
 | E6 | analytics e operação | NÃO INICIADO |
 
 ## 8. Primeiro vertical slice

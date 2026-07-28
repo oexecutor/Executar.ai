@@ -33,25 +33,33 @@ if (!connectionString) {
 }
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const migrationPath = path.join(root, "supabase/migrations/202607270001_editorial_postgres.sql");
-const migration = await fs.readFile(migrationPath, "utf8");
-const checksum = crypto.createHash("sha256").update(migration).digest("hex");
-const statements = migration
-  .split(/\n-- statement-breakpoint\n/g)
-  .map((statement) => statement.trim())
-  .filter(Boolean);
-
 const sql = neon(connectionString, { arrayMode: false, fullResults: false });
-await sql.transaction((transactionSql) =>
-  statements.map((statement) => transactionSql.query(statement))
-);
+const migrationsDirectory = path.join(root, "supabase/migrations");
+const migrationFiles = (await fs.readdir(migrationsDirectory))
+  .filter((name) => /^\d+_editorial_.*\.sql$/.test(name))
+  .sort();
+const applied = [];
 
-await sql.query(
-  `UPDATE public.app_schema_migrations
-      SET checksum = $1
-    WHERE migration_id = '202607270001_editorial_postgres'`,
-  [checksum],
-);
+for (const migrationFile of migrationFiles) {
+  const migrationPath = path.join(migrationsDirectory, migrationFile);
+  const migration = await fs.readFile(migrationPath, "utf8");
+  const checksum = crypto.createHash("sha256").update(migration).digest("hex");
+  const statements = migration
+    .split(/\n-- statement-breakpoint\n/g)
+    .map((statement) => statement.trim())
+    .filter(Boolean);
+  await sql.transaction((transactionSql) =>
+    statements.map((statement) => transactionSql.query(statement))
+  );
+  const migrationId = path.basename(migrationFile, ".sql");
+  await sql.query(
+    `UPDATE public.app_schema_migrations
+        SET checksum = $1
+      WHERE migration_id = $2`,
+    [checksum, migrationId],
+  );
+  applied.push({ migration: migrationId, checksum });
+}
 
 const counts = await sql.query(
   `SELECT
@@ -61,8 +69,7 @@ const counts = await sql.query(
 );
 const evidence = counts[0] ?? {};
 console.log(JSON.stringify({
-  migration: "202607270001_editorial_postgres",
-  checksum,
+  migrations: applied,
   backup_rows: evidence.backup_rows ?? 0,
   publication_rows: evidence.publication_rows ?? 0,
   event_rows: evidence.event_rows ?? 0,

@@ -2,7 +2,11 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getJson, postJson, putJson } from "../api";
-import type { EditorialPublication } from "../editorial/types";
+import type {
+  EditorialAdapterEvidence,
+  EditorialAdapterName,
+  EditorialPublication,
+} from "../editorial/types";
 import { Editorial } from "./Editorial";
 
 vi.mock("../api", () => ({
@@ -10,6 +14,26 @@ vi.mock("../api", () => ({
   postJson: vi.fn(),
   putJson: vi.fn(),
 }));
+
+function adapterEvidence(
+  adapter: EditorialAdapterName,
+  status: EditorialAdapterEvidence["status"] = "NOT_RUN",
+): EditorialAdapterEvidence {
+  const applied = status === "APPLIED";
+  return {
+    adapter,
+    status,
+    adapter_version: applied ? "1.0.0" : null,
+    publication_version: 1,
+    content_hash: applied ? "a".repeat(64) : null,
+    started_at: applied ? "2026-07-27T12:01:00.000Z" : null,
+    completed_at: applied ? "2026-07-27T12:01:01.000Z" : null,
+    findings: { errors: [], warnings: [], recommendations: [] },
+    output_reference: applied ? `editorial://test/${adapter}` : null,
+    actor: applied ? "Leonardo Batista" : null,
+    skip_reason: null,
+  };
+}
 
 function publication(status: EditorialPublication["status"] = "DRAFT"): EditorialPublication {
   return {
@@ -33,16 +57,30 @@ function publication(status: EditorialPublication["status"] = "DRAFT"): Editoria
       markdown: "# Agentes com governança\n\nConteúdo de origem suficientemente longo para validar o contrato editorial sem publicar automaticamente.\n\n## Preview antes do merge\n\nA aprovação humana permanece explícita.",
       reading_time_minutes: 1,
       generated_at: null,
+      updated_at: "2026-07-27T12:00:00.000Z",
     },
     quality: {
       valid: false,
+      gate_result: "NOT_RUN",
       score: null,
       errors: [],
       warnings: [],
       checked_at: null,
-      adapters: { deskgo: "PENDING", frankwatching: "PENDING", ames: "PENDING" },
+      content_hash: null,
+      adapters: {
+        deskgo: adapterEvidence("deskgo"),
+        frankwatching: adapterEvidence("frankwatching"),
+        ames: adapterEvidence("ames"),
+      },
     },
-    github: { branch: null, pull_request_number: null, pull_request_url: null, commit_sha: null },
+    github: {
+      branch: null,
+      pull_request_number: null,
+      pull_request_url: null,
+      commit_sha: null,
+      publication_version: null,
+      content_hash: null,
+    },
     preview: { deployment_id: null, url: null, created_at: null },
     approval: { decision: "PENDING", reviewer: null, note: null, decided_at: null, approved_commit_sha: null },
     publication: { url: null, published_at: null, commit_sha: null },
@@ -82,13 +120,32 @@ describe("Editorial", () => {
     expect(screen.getAllByText("Rascunho")).toHaveLength(2);
   });
 
-  it("expõe a validação como próxima ação sem publicar", async () => {
+  it("executa E2 antes de liberar o gate e o artefato GitHub", async () => {
     const user = userEvent.setup();
     const draft = publication();
-    const validated = {
+    const enriched = {
       ...draft,
+      status: "ADAPTERS_APPLIED" as const,
+      quality: {
+        ...draft.quality,
+        adapters: {
+          deskgo: adapterEvidence("deskgo", "APPLIED"),
+          frankwatching: adapterEvidence("frankwatching", "APPLIED"),
+          ames: adapterEvidence("ames", "APPLIED"),
+        },
+      },
+    };
+    const validated = {
+      ...enriched,
       status: "READY_FOR_PREVIEW" as const,
-      quality: { ...draft.quality, valid: true, score: 90 },
+      quality: {
+        ...enriched.quality,
+        valid: true,
+        gate_result: "PASSED" as const,
+        score: 90,
+        checked_at: "2026-07-27T12:02:00.000Z",
+        content_hash: "a".repeat(64),
+      },
     };
     vi.mocked(getJson)
       .mockResolvedValueOnce([{
@@ -102,13 +159,26 @@ describe("Editorial", () => {
         updated_at: draft.updated_at,
       }])
       .mockResolvedValueOnce(draft);
-    vi.mocked(postJson).mockResolvedValue(validated);
+    vi.mocked(postJson)
+      .mockResolvedValueOnce(enriched)
+      .mockResolvedValueOnce(validated);
 
     render(<Editorial />);
-    await user.click(await screen.findByRole("button", { name: "Executar validação" }));
+    expect(await screen.findAllByRole("button", { name: "Executar" })).toHaveLength(3);
+    expect(screen.queryByRole("button", { name: /executar gate editorial final/i })).not.toBeInTheDocument();
 
-    await waitFor(() => expect(postJson).toHaveBeenCalledWith(`/api/editorial/publications/${draft.id}/validate`, {}));
-    expect(await screen.findByRole("heading", { name: "Registrar o artefato GitHub" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /aplicar todos os critérios editoriais/i }));
+    await waitFor(() => expect(postJson).toHaveBeenCalledWith(
+      `/api/editorial/publications/${draft.id}/adapters/run`,
+      {},
+    ));
+
+    await user.click(await screen.findByRole("button", { name: /executar gate editorial final/i }));
+    await waitFor(() => expect(postJson).toHaveBeenCalledWith(
+      `/api/editorial/publications/${draft.id}/validate`,
+      {},
+    ));
+    expect(await screen.findByRole("heading", { name: "Registrar artefato GitHub" })).toBeInTheDocument();
     expect(putJson).not.toHaveBeenCalled();
   });
 });
