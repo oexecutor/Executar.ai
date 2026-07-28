@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Guia de uso — QR semântico P0</title>
+  <style>
+    :root { color-scheme: light; --ink: #171717; --paper: #fff; --soft: #efefeb; --accent: #ff5a00; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--paper); color: var(--ink); font-family: Arial, Helvetica, sans-serif; }
+    body { max-width: 210mm; margin: 0 auto; padding: 14mm; }
+    header { border-bottom: .8mm solid var(--ink); padding-bottom: 7mm; }
+    .eyebrow { color: var(--accent); font: 700 8pt/1 ui-monospace, SFMono-Regular, Consolas, monospace; text-transform: uppercase; }
+    h1 { margin: 3mm 0 2mm; max-width: 150mm; font-size: 31pt; line-height: .92; letter-spacing: -.05em; }
+    .lead { margin: 0; max-width: 165mm; font-size: 11pt; line-height: 1.45; }
+    h2 { margin: 10mm 0 3mm; font-size: 16pt; line-height: 1; letter-spacing: -.025em; }
+    p, li { font-size: 9.5pt; line-height: 1.45; }
+    ol, ul { padding-left: 6mm; }
+    li + li { margin-top: 2mm; }
+    .facts { display: grid; grid-template-columns: 36mm 1fr; border-top: .35mm solid var(--ink); }
+    .facts dt, .facts dd { margin: 0; padding: 2.5mm 0; border-bottom: .2mm solid #aaa; font-size: 8.5pt; }
+    .facts dt { font-weight: 700; }
+    .facts dd { overflow-wrap: anywhere; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+    .routes { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .routes th, .routes td { border: .25mm solid var(--ink); padding: 2.5mm; text-align: left; vertical-align: top; font-size: 8pt; line-height: 1.35; }
+    .routes th { background: var(--soft); font-size: 7pt; text-transform: uppercase; }
+    .routes td:first-child { width: 22mm; font-weight: 700; }
+    .routes td:nth-child(2) { width: 36mm; }
+    .routes a { color: inherit; overflow-wrap: anywhere; }
+    .proof { border-left: 2mm solid var(--accent); background: var(--soft); padding: 4mm 5mm; }
+    .proof p { margin: 0; }
+    .warning { border: .5mm solid var(--ink); padding: 4mm 5mm; }
+    footer { margin-top: 10mm; padding-top: 3mm; border-top: .35mm solid var(--ink); font: 7pt/1.4 ui-monospace, SFMono-Regular, Consolas, monospace; }
+    @page { size: A4 portrait; margin: 0; }
+    @media print { a { color: inherit; text-decoration: none; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="eyebrow">EXECUTA.AI · Guia operacional</div>
+    <h1>Como usar o QR semântico P0</h1>
+    <p class="lead">Os códigos abaixo apontam para tokens opacos e estáveis do EXECUTA.AI. O destino é resolvido no servidor, por intenção, sem gravar URL temporária do fornecedor no material impresso.</p>
+  </header>
+
+  <h2>Publicação homologada</h2>
+  <dl class="facts">
+    <dt>Publicação</dt><dd>PUB-20260728-b4fbb3cc</dd>
+    <dt>Título</dt><dd>Homologação do QR semântico P0</dd>
+    <dt>Status</dt><dd>PUBLISHED</dd>
+    <dt>Commit</dt><dd>8ac77233569b75e53af7c117666f1cd571d983f8</dd>
+    <dt>PR editorial</dt><dd><a href="https://github.com/oexecutor/P1.Executar.ai/pull/39">github.com/oexecutor/P1.Executar.ai/pull/39</a></dd>
+    <dt>Artigo</dt><dd><a href="https://executa-journal-preview.vercel.app/blog/homologacao-do-qr-semantico-p0">executa-journal-preview.vercel.app/blog/homologacao-do-qr-semantico-p0</a></dd>
+  </dl>
+
+  <h2>Teste no celular</h2>
+  <ol>
+    <li>Imprima a folha A4 em escala <strong>100%</strong>. Desative “ajustar à página”.</li>
+    <li>Abra a câmera nativa do celular e enquadre um QR por vez, mantendo o papel plano e bem iluminado.</li>
+    <li>Confirme que o domínio exibido é <strong>executar-ai.vercel.app</strong>.</li>
+    <li>Abra o link e compare o destino com a tabela abaixo.</li>
+    <li>Repita a leitura a aproximadamente 25 cm, 50 cm e sob luz ambiente normal.</li>
+  </ol>
+
+  <h2>O que cada código faz</h2>
+  <table class="routes">
+    <thead>
+      <tr><th>Ação</th><th>Acesso</th><th>Resultado esperado</th><th>Rota estável</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>QR-01<br>Criar</td>
+        <td>Contexto autenticado</td>
+        <td>Abre o painel editorial com <code>intent=create</code>. Não cria nem publica sozinho.</td>
+        <td><a href="https://executar-ai.vercel.app/q/qr_z1Ag1VwVUKwFdxWIg3PySsHI">/q/qr_z1Ag1VwVUKwFdxWIg3PySsHI</a></td>
+      </tr>
+      <tr>
+        <td>QR-02<br>Preview</td>
+        <td>Público</td>
+        <td>Redireciona ao Preview Vercel verificado para o commit aprovado.</td>
+        <td><a href="https://executar-ai.vercel.app/q/qr_rkWf6RILbDhYC6oqiHkFzNXG">/q/qr_rkWf6RILbDhYC6oqiHkFzNXG</a></td>
+      </tr>
+      <tr>
+        <td>QR-03<br>Aprovar</td>
+        <td>Contexto autenticado</td>
+        <td>Abre o painel com <code>intent=approve</code>. A decisão humana continua obrigatória.</td>
+        <td><a href="https://executar-ai.vercel.app/q/qr_hF-QAxVI8csmdNflfdvVVb1U">/q/qr_hF-QAxVI8csmdNflfdvVVb1U</a></td>
+      </tr>
+      <tr>
+        <td>QR-04<br>Medir</td>
+        <td>Contexto autenticado</td>
+        <td>Abre o painel com <code>intent=analytics</code> e registra a leitura na trilha de acesso.</td>
+        <td><a href="https://executar-ai.vercel.app/q/qr_ePutIGQ2_1egiUmfreul83eZ">/q/qr_ePutIGQ2_1egiUmfreul83eZ</a></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Evidência técnica desta emissão</h2>
+  <div class="proof">
+    <p>Os quatro tokens estão <strong>ACTIVE</strong>. As quatro rotas responderam HTTP 302 para o destino semântico esperado e os quatro endpoints <code>.svg</code> responderam com SVG válido. Os dois deploys produtivos ficaram READY e não apresentaram erros de runtime no período de verificação.</p>
+  </div>
+
+  <h2>Cuidados</h2>
+  <div class="warning">
+    <ul>
+      <li>Não recorte dentro da área branca ao redor do QR.</li>
+      <li>Evite reduzir o QR abaixo do tamanho presente nos arquivos fornecidos.</li>
+      <li>CREATE, APPROVE e ANALYTICS podem pedir login; isso é comportamento esperado.</li>
+      <li>O QR de aprovação nunca executa uma aprovação silenciosa.</li>
+      <li>Se um destino mudar, preserve o token impresso e altere apenas a resolução no servidor.</li>
+    </ul>
+  </div>
+
+  <footer>
+    Emitido em 28/07/2026 · publication hash 13d89d65b4e22d3303b1ac95ad270620be9d7898c978748a3813cb8bd316d496
+  </footer>
+</body>
+</html>

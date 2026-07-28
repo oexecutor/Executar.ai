@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QR semântico P0 — folha A4</title>
+  <style>
+    :root { color-scheme: light; --ink: #171717; --paper: #fff; --soft: #efefeb; --accent: #ff5a00; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--paper); color: var(--ink); font-family: Arial, Helvetica, sans-serif; }
+    body { padding: 10mm; }
+    header { display: flex; align-items: end; justify-content: space-between; gap: 8mm; margin-bottom: 6mm; border-bottom: .7mm solid var(--ink); padding-bottom: 4mm; }
+    header h1 { margin: 0; font-size: 20pt; line-height: .95; letter-spacing: -.04em; }
+    header p { margin: 0; max-width: 80mm; text-align: right; font: 8.5pt/1.35 ui-monospace, SFMono-Regular, Consolas, monospace; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6mm; }
+    .card { min-height: 123mm; border: .45mm solid var(--ink); padding: 6mm; display: flex; flex-direction: column; break-inside: avoid; }
+    .card-top { display: flex; align-items: center; justify-content: space-between; gap: 4mm; }
+    .number { color: var(--accent); font: 700 10pt/1 ui-monospace, SFMono-Regular, Consolas, monospace; }
+    .policy { background: var(--soft); padding: 1.5mm 2mm; font: 700 6.8pt/1.1 ui-monospace, SFMono-Regular, Consolas, monospace; text-transform: uppercase; }
+    h2 { margin: 3mm 0 1.5mm; font-size: 19pt; line-height: .95; letter-spacing: -.035em; }
+    .purpose { min-height: 12mm; margin: 0; font-size: 8.5pt; line-height: 1.35; }
+    .qr { width: 49mm; height: 49mm; margin: 4mm auto 3mm; display: block; image-rendering: pixelated; }
+    .instruction { margin: auto 0 2mm; border-top: .35mm solid var(--ink); padding-top: 2.5mm; font-size: 8pt; font-weight: 700; }
+    .url { overflow-wrap: anywhere; font: 5.8pt/1.25 ui-monospace, SFMono-Regular, Consolas, monospace; }
+    footer { margin-top: 4mm; display: flex; justify-content: space-between; font: 6.5pt/1.2 ui-monospace, SFMono-Regular, Consolas, monospace; }
+    a { color: inherit; text-decoration: none; }
+    @page { size: A4 portrait; margin: 0; }
+    @media print {
+      body { padding: 10mm; }
+      a { text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>QR semântico<br>P0</h1>
+    <p>PUB-20260728-b4fbb3cc<br>Homologação do QR semântico P0<br>Emitido em 28/07/2026</p>
+  </header>
+
+  <main class="grid">
+    <article class="card">
+      <div class="card-top"><span class="number">QR-01</span><span class="policy">Contexto autenticado</span></div>
+      <h2>Criar</h2>
+      <p class="purpose">Abre o painel editorial no contexto de criação desta publicação.</p>
+      <a href="https://executar-ai.vercel.app/q/qr_z1Ag1VwVUKwFdxWIg3PySsHI"><img class="qr" src="qr-01-criar.svg" alt="QR Criar"></a>
+      <p class="instruction">Aponte a câmera e confirme “Criar”. Nenhuma publicação é feita automaticamente.</p>
+      <div class="url">executar-ai.vercel.app/q/qr_z1Ag1VwVUKwFdxWIg3PySsHI</div>
+    </article>
+
+    <article class="card">
+      <div class="card-top"><span class="number">QR-02</span><span class="policy">Acesso público</span></div>
+      <h2>Preview</h2>
+      <p class="purpose">Abre o Preview Vercel verificado para o mesmo commit editorial aprovado.</p>
+      <a href="https://executar-ai.vercel.app/q/qr_rkWf6RILbDhYC6oqiHkFzNXG"><img class="qr" src="qr-02-preview.svg" alt="QR Preview"></a>
+      <p class="instruction">Aponte a câmera e confirme o título “Homologação do QR semântico P0”.</p>
+      <div class="url">executar-ai.vercel.app/q/qr_rkWf6RILbDhYC6oqiHkFzNXG</div>
+    </article>
+
+    <article class="card">
+      <div class="card-top"><span class="number">QR-03</span><span class="policy">Contexto autenticado</span></div>
+      <h2>Aprovar</h2>
+      <p class="purpose">Abre o painel no contexto de aprovação, sem executar decisão silenciosa.</p>
+      <a href="https://executar-ai.vercel.app/q/qr_hF-QAxVI8csmdNflfdvVVb1U"><img class="qr" src="qr-03-aprovar.svg" alt="QR Aprovar"></a>
+      <p class="instruction">Aponte a câmera e confirme “Aprovar”. A decisão continua exigindo ação humana.</p>
+      <div class="url">executar-ai.vercel.app/q/qr_hF-QAxVI8csmdNflfdvVVb1U</div>
+    </article>
+
+    <article class="card">
+      <div class="card-top"><span class="number">QR-04</span><span class="policy">Contexto autenticado</span></div>
+      <h2>Medir</h2>
+      <p class="purpose">Abre o painel editorial no contexto de métricas e trilha de acessos.</p>
+      <a href="https://executar-ai.vercel.app/q/qr_ePutIGQ2_1egiUmfreul83eZ"><img class="qr" src="qr-04-medir.svg" alt="QR Medir"></a>
+      <p class="instruction">Aponte a câmera e confirme “Medir”. O acesso ao painel pode exigir login.</p>
+      <div class="url">executar-ai.vercel.app/q/qr_ePutIGQ2_1egiUmfreul83eZ</div>
+    </article>
+  </main>
+
+  <footer>
+    <span>Imprimir em A4 · escala 100% · sem “ajustar à página”</span>
+    <span>EXECUTA.AI · QR SEMÂNTICO</span>
+  </footer>
+</body>
+</html>
