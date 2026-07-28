@@ -14,6 +14,15 @@ import {
   type EditorialArtifactPublisher,
   type EditorialPreviewResolver,
 } from "./delivery.js";
+import {
+  createEditorialQrToken,
+  emptyEditorialQrState,
+  qrAccessPolicy,
+  qrStateFromRegistrations,
+  UnavailableEditorialQrRepository,
+  type EditorialQrRegistration,
+  type EditorialQrRepository,
+} from "./qr.js";
 import { validateEditorialPublication } from "./schema.js";
 import {
   assertEditorialTransition,
@@ -29,7 +38,7 @@ import type {
   EditorialPublicationSummary,
   EditorialStatus,
 } from "./types.js";
-import { EDITORIAL_ADAPTERS } from "./types.js";
+import { EDITORIAL_ADAPTERS, EDITORIAL_QR_ACTIONS } from "./types.js";
 
 interface CreatePublicationInput {
   title?: string;
@@ -149,6 +158,7 @@ export class EditorialService {
     private readonly adapterRegistry: EditorialAdapterRegistry = editorialAdapterRegistry,
     private readonly artifactPublisher: EditorialArtifactPublisher = new UnavailableEditorialArtifactPublisher(),
     private readonly previewResolver: EditorialPreviewResolver = new UnavailableEditorialPreviewResolver(),
+    private readonly qrRepository: EditorialQrRepository = new UnavailableEditorialQrRepository(),
   ) {}
 
   validate(input: unknown) {
@@ -233,7 +243,7 @@ export class EditorialService {
       preview: { deployment_id: null, url: null, created_at: null, commit_sha: null },
       approval: { decision: "PENDING", reviewer: null, note: null, decided_at: null, approved_commit_sha: null },
       publication: { url: null, published_at: null, commit_sha: null },
-      qr: { create_url: null, preview_url: null, approve_url: null, analytics_url: null },
+      qr: emptyEditorialQrState(),
       events: [event("CREATED", actor, "Briefing editorial criado.")],
       created_at: now,
       updated_at: now,
@@ -312,6 +322,7 @@ export class EditorialService {
     publication.preview = { deployment_id: null, url: null, created_at: null, commit_sha: null };
     publication.approval = { decision: "PENDING", reviewer: null, note: null, decided_at: null, approved_commit_sha: null };
     publication.publication = { url: null, published_at: null, commit_sha: null };
+    publication.qr = emptyEditorialQrState();
     publication.updated_at = new Date().toISOString();
     publication.events.push(event("CONTENT_UPDATED", input.actor?.trim() || publication.briefing.author, `Conteúdo atualizado para a versão ${publication.version}.`));
     if (previous !== "DRAFT") {
@@ -724,6 +735,120 @@ export class EditorialService {
     publication.events.push(event("PUBLISHED", input.actor, `Publicação confirmada em ${publication.publication.url}.`));
     await this.store.savePublication(publication);
     return publication;
+  }
+
+  async issueQrCodes(
+    id: string,
+    input: { actor: string; public_base_url: string },
+  ): Promise<EditorialPublication> {
+    const publication = await this.requirePublication(id);
+    if (!["PUBLISHED", "QR_FAILED"].includes(publication.status)) {
+      throw new DomainError(
+        "QR_PUBLICATION_REQUIRED",
+        `Os QRs semânticos não podem ser emitidos em ${publication.status}.`,
+        "Conclua a E3 e registre o commit publicado antes de iniciar a E4.",
+        409,
+      );
+    }
+    const actor = input.actor.trim() || publication.briefing.author;
+
+    try {
+      const existing = await this.qrRepository.listRoutes(publication.id);
+      const existingByAction = new Map(
+        existing.map((registration) => [registration.action, registration]),
+      );
+      const issuedAt = new Date().toISOString();
+      const registrations: EditorialQrRegistration[] =
+        EDITORIAL_QR_ACTIONS.map((action) => {
+          const current = existingByAction.get(action);
+          return current
+            ? {
+                ...current,
+                status: "ACTIVE",
+                access_policy: qrAccessPolicy(action),
+                issued_by: actor,
+              }
+            : {
+                publication_id: publication.id,
+                action,
+                token: createEditorialQrToken(),
+                status: "ACTIVE",
+                access_policy: qrAccessPolicy(action),
+                issued_at: issuedAt,
+                issued_by: actor,
+              };
+        });
+
+      await this.qrRepository.saveRoutes(publication.id, registrations);
+      const persisted = await this.qrRepository.listRoutes(publication.id);
+      const activeActions = new Set(
+        persisted
+          .filter((route) => route.status === "ACTIVE")
+          .map((route) => route.action),
+      );
+      if (!EDITORIAL_QR_ACTIONS.every((action) => activeActions.has(action))) {
+        throw new DomainError(
+          "QR_REGISTRY_INCOMPLETE",
+          "O registro não confirmou os quatro QRs obrigatórios.",
+          "Não imprima o painel; repita a emissão depois de verificar a migração E4.",
+          502,
+        );
+      }
+
+      const previousTokens = EDITORIAL_QR_ACTIONS.map(
+        (action) => publication.qr.routes[action]?.token ?? null,
+      );
+      publication.qr = qrStateFromRegistrations(
+        input.public_base_url,
+        persisted,
+      );
+      const currentTokens = EDITORIAL_QR_ACTIONS.map(
+        (action) => publication.qr.routes[action]?.token ?? null,
+      );
+      const changed = previousTokens.some(
+        (token, index) => token !== currentTokens[index],
+      );
+      if (publication.status === "QR_FAILED") {
+        this.changeStatus(
+          publication,
+          "PUBLISHED",
+          actor,
+          "E4 recuperada; os quatro QRs semânticos estão ativos.",
+        );
+      }
+      if (changed) {
+        publication.events.push(event(
+          "QR_ISSUED",
+          actor,
+          "E4 emitiu QR-01 Criar, QR-02 Preview, QR-03 Aprovar e QR-04 Medir com tokens estáveis.",
+        ));
+      }
+      publication.updated_at = timestampAfter(publication.updated_at);
+      await this.store.savePublication(publication);
+      return publication;
+    } catch (caught) {
+      if (publication.status === "PUBLISHED") {
+        this.changeStatus(
+          publication,
+          "QR_FAILED",
+          actor,
+          "A emissão dos QRs semânticos falhou sem desfazer a publicação.",
+        );
+      }
+      publication.events.push(event(
+        "QR_ISSUE_FAILED",
+        actor,
+        caught instanceof Error ? caught.message : "Falha desconhecida na E4.",
+      ));
+      await this.store.savePublication(publication);
+      if (caught instanceof DomainError) throw caught;
+      throw new DomainError(
+        "QR_ISSUE_FAILED",
+        "Não foi possível emitir os QRs semânticos.",
+        "A publicação permanece disponível; verifique o registro E4 e tente novamente.",
+        502,
+      );
+    }
   }
 
   async exportPackage(id: string): Promise<EditorialPublication> {

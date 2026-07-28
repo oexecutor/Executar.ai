@@ -1,11 +1,18 @@
 import {
   EDITORIAL_ADAPTERS,
   EDITORIAL_ADAPTER_STATUSES,
+  EDITORIAL_QR_ACTIONS,
   type EditorialAdapterEvidence,
   type EditorialAdapterName,
   type EditorialPublication,
+  type EditorialQrAction,
+  type EditorialQrRoute,
 } from "./types.js";
 import { createInitialAdapterEvidence } from "./adapters.js";
+import {
+  EDITORIAL_QR_TOKEN_PATTERN,
+  emptyEditorialQrState,
+} from "./qr.js";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -13,6 +20,29 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function stringArray(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+}
+
+function normalizeQrRoute(
+  action: EditorialQrAction,
+  value: unknown,
+): EditorialQrRoute | null {
+  if (!isRecord(value)) return null;
+  if (
+    value.action !== action
+    || typeof value.token !== "string"
+    || !EDITORIAL_QR_TOKEN_PATTERN.test(value.token)
+    || typeof value.url !== "string"
+    || !/^https?:\/\//i.test(value.url)
+    || !["ACTIVE", "REVOKED"].includes(String(value.status))
+    || !["PUBLIC_REDIRECT", "AUTHENTICATED_CONTEXT"].includes(
+      String(value.access_policy),
+    )
+    || typeof value.issued_at !== "string"
+    || typeof value.issued_by !== "string"
+  ) {
+    return null;
+  }
+  return value as unknown as EditorialQrRoute;
 }
 
 function normalizeAdapter(
@@ -119,6 +149,9 @@ export function normalizeEditorialPublication(
       publication_version?: number | null;
       content_hash?: string | null;
     };
+    qr?: Partial<EditorialPublication["qr"]> & {
+      routes?: Partial<Record<EditorialQrAction, unknown>>;
+    };
   };
 
   raw.content.updated_at = raw.content.updated_at ?? raw.content.generated_at ?? raw.created_at;
@@ -151,5 +184,21 @@ export function normalizeEditorialPublication(
     : [];
   raw.github.created_at = raw.github.created_at ?? null;
   raw.preview.commit_sha = raw.preview.commit_sha ?? null;
+  const qr = raw.qr;
+  const emptyQr = emptyEditorialQrState();
+  raw.qr = {
+    create_url: typeof qr?.create_url === "string" ? qr.create_url : null,
+    preview_url: typeof qr?.preview_url === "string" ? qr.preview_url : null,
+    approve_url: typeof qr?.approve_url === "string" ? qr.approve_url : null,
+    analytics_url: typeof qr?.analytics_url === "string" ? qr.analytics_url : null,
+    routes: Object.fromEntries(
+      EDITORIAL_QR_ACTIONS.map((action) => [
+        action,
+        normalizeQrRoute(action, qr?.routes?.[action]),
+      ]),
+    ) as EditorialPublication["qr"]["routes"],
+    issued_at: typeof qr?.issued_at === "string" ? qr.issued_at : null,
+  };
+  if (!qr) raw.qr = emptyQr;
   return raw;
 }

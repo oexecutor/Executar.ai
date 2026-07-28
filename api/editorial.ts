@@ -6,15 +6,16 @@ import {
 } from "../src/editorial/delivery.js";
 import { githubEditorialPublisherFromEnv } from "../src/editorial/github-publisher.js";
 import { createEditorialSqlClient, PostgresEditorialStore } from "../src/editorial/postgres-store.js";
+import { PostgresEditorialQrStore } from "../src/editorial/qr-store.js";
 import { EditorialService } from "../src/editorial/service.js";
 import { EditorialStore, MigratingEditorialStore } from "../src/editorial/store.js";
 import { EDITORIAL_ADAPTERS, type EditorialAdapterName } from "../src/editorial/types.js";
 import { vercelEditorialPreviewResolverFromEnv } from "../src/editorial/vercel-preview.js";
 import { requireAdminJson } from "../src/lib/admin-guard.js";
+import { baseUrl, isProduction } from "../src/lib/env.js";
 import { absoluteUrl, json } from "../src/lib/http.js";
 import { canWriteWorkspace, getAuthenticatedRequest, type AuthenticatedRequest } from "../src/lib/request-auth.js";
 import { vaultStore } from "../src/lib/stores.js";
-import { isProduction } from "../src/lib/env.js";
 import { createVercelNodeHandler } from "../src/lib/vercel-node-adapter.js";
 
 function response(data: unknown, requestId: string, status = 200): Response {
@@ -31,19 +32,22 @@ function response(data: unknown, requestId: string, status = 200): Response {
 }
 
 function defaultService(auth: AuthenticatedRequest): EditorialService {
+  const sqlClient = createEditorialSqlClient();
+  const environment = isProduction() ? "production" : "preview";
   const legacy = new EditorialStore(
     vaultStore({ workspaceId: auth.workspaceId, accessToken: auth.accessToken }),
   );
   const primary = new PostgresEditorialStore(
-    createEditorialSqlClient(),
+    sqlClient,
     auth.workspaceId,
-    isProduction() ? "production" : "preview",
+    environment,
   );
   return new EditorialService(
     new MigratingEditorialStore(primary, legacy),
     undefined,
     githubEditorialPublisherFromEnv() ?? new UnavailableEditorialArtifactPublisher(),
     vercelEditorialPreviewResolverFromEnv() ?? new UnavailableEditorialPreviewResolver(),
+    new PostgresEditorialQrStore(sqlClient, environment, auth.workspaceId),
   );
 }
 
@@ -205,6 +209,20 @@ async function editorialHandler(request: Request): Promise<Response> {
           url: publicationUrl,
           commit_sha: commitSha,
           actor: actor(body, auth),
+        }), requestId);
+      }
+      if (request.method === "POST" && operation === "qr") {
+        if (body.confirm !== true) {
+          throw new DomainError(
+            "CONFIRMATION_REQUIRED",
+            "A emissão dos quatro QRs semânticos exige confirmação explícita.",
+            "Envie confirm=true somente depois que a publicação estiver concluída.",
+            422,
+          );
+        }
+        return response(await service.issueQrCodes(publicationId, {
+          actor: actor(body, auth),
+          public_base_url: baseUrl(),
         }), requestId);
       }
       if (request.method === "DELETE" && operation === "") {

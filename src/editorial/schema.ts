@@ -1,7 +1,9 @@
 import { editorialContentHash, hasCurrentAppliedEvidence } from "./adapters.js";
+import { EDITORIAL_QR_TOKEN_PATTERN } from "./qr.js";
 import {
   EDITORIAL_ADAPTERS,
   EDITORIAL_ADAPTER_STATUSES,
+  EDITORIAL_QR_ACTIONS,
   EDITORIAL_STATUSES,
   type EditorialPublication,
   type EditorialValidationResult,
@@ -212,6 +214,57 @@ export function validateEditorialPublication(input: unknown): EditorialValidatio
     }
     if (publication.publication?.commit_sha !== publication.github?.commit_sha) {
       errors.push("A publicação deve apontar para o mesmo commit aprovado.");
+    }
+  }
+
+  if (!isRecord(publication.qr)) {
+    errors.push("qr é obrigatório.");
+  } else if (!isRecord(publication.qr.routes)) {
+    errors.push("qr.routes é obrigatório.");
+  } else {
+    const activeTokens = new Set<string>();
+    const issued = hasText(publication.qr.issued_at)
+      || EDITORIAL_QR_ACTIONS.some((action) =>
+        isRecord(publication.qr.routes[action])
+      );
+    for (const action of EDITORIAL_QR_ACTIONS) {
+      const route = publication.qr.routes[action];
+      if (!isRecord(route)) {
+        if (issued) errors.push(`qr.routes.${action} é obrigatório após a emissão E4.`);
+        continue;
+      }
+      if (route.action !== action) errors.push(`qr.routes.${action}.action não corresponde à chave.`);
+      if (
+        !hasText(route.token)
+        || !EDITORIAL_QR_TOKEN_PATTERN.test(route.token)
+      ) {
+        errors.push(`qr.routes.${action}.token deve ser opaco e estável.`);
+      } else if (activeTokens.has(route.token)) {
+        errors.push("Cada intenção QR deve usar um token distinto.");
+      } else {
+        activeTokens.add(route.token);
+      }
+      if (
+        !hasText(route.url)
+        || !route.url.endsWith(`/q/${route.token}`)
+      ) {
+        errors.push(`qr.routes.${action}.url deve apontar para o QR Router estável.`);
+      }
+      if (!["ACTIVE", "REVOKED"].includes(route.status)) {
+        errors.push(`qr.routes.${action}.status inválido.`);
+      }
+      const expectedPolicy = action === "PREVIEW"
+        ? "PUBLIC_REDIRECT"
+        : "AUTHENTICATED_CONTEXT";
+      if (route.access_policy !== expectedPolicy) {
+        errors.push(`qr.routes.${action}.access_policy inválida.`);
+      }
+      if (!hasText(route.issued_at) || !hasText(route.issued_by)) {
+        errors.push(`qr.routes.${action} exige issued_at e issued_by.`);
+      }
+    }
+    if (issued && !hasText(publication.qr.issued_at)) {
+      errors.push("qr.issued_at é obrigatório após a emissão E4.");
     }
   }
 

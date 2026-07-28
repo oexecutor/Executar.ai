@@ -82,10 +82,20 @@ export interface EditorialPublication {
   };
 
   qr: {
-    createToken?: string;
-    previewToken?: string;
-    approveToken?: string;
-    analyticsToken?: string;
+    create_url?: string;
+    preview_url?: string;
+    approve_url?: string;
+    analytics_url?: string;
+    routes: Record<"CREATE" | "PREVIEW" | "APPROVE" | "ANALYTICS", {
+      action: "CREATE" | "PREVIEW" | "APPROVE" | "ANALYTICS";
+      token: string;
+      url: string;
+      status: "ACTIVE" | "REVOKED";
+      access_policy: "PUBLIC_REDIRECT" | "AUTHENTICATED_CONTEXT";
+      issued_at: string;
+      issued_by: string;
+    } | null>;
+    issued_at?: string;
     printArtifactPath?: string;
   };
 
@@ -181,6 +191,7 @@ POST   /api/editorial/publications/:id/publish
 POST   /api/editorial/publications/:id/qr
 POST   /api/editorial/publications/:id/print
 GET    /q/:token
+GET    /q/:token.svg
 ```
 
 ## 7. Operações MCP candidatas

@@ -7,6 +7,8 @@ import {
   type EditorialSqlClient,
   type EditorialSqlStatement,
 } from "../src/editorial/postgres-store.js";
+import { PostgresEditorialQrStore } from "../src/editorial/qr-store.js";
+import type { EditorialQrRepository } from "../src/editorial/qr.js";
 import { editorialAdapterRegistry } from "../src/editorial/adapters.js";
 import type { EditorialRepository } from "../src/editorial/store.js";
 import { EditorialService } from "../src/editorial/service.js";
@@ -16,6 +18,7 @@ import { memoryStore } from "./helpers/memory-store.js";
 const migrationUrls = [
   new URL("../supabase/migrations/202607270001_editorial_postgres.sql", import.meta.url),
   new URL("../supabase/migrations/202607280001_editorial_e2.sql", import.meta.url),
+  new URL("../supabase/migrations/202607280002_editorial_qr.sql", import.meta.url),
 ];
 
 const article = `# Persistência editorial relacional
@@ -41,7 +44,11 @@ function briefing(suffix = "") {
   };
 }
 
-function serviceWithDelivery(store: EditorialRepository, commitSha = "a".repeat(40)) {
+function serviceWithDelivery(
+  store: EditorialRepository,
+  commitSha = "a".repeat(40),
+  qrRepository?: EditorialQrRepository,
+) {
   return new EditorialService(
     store,
     editorialAdapterRegistry,
@@ -72,6 +79,7 @@ function serviceWithDelivery(store: EditorialRepository, commitSha = "a".repeat(
         };
       },
     },
+    qrRepository,
   );
 }
 
@@ -131,7 +139,7 @@ describe("Editorial Postgres migration", () => {
         (select count(*)::integer from editorial_legacy_backup) as backups,
         (select count(*)::integer from app_schema_migrations) as migrations
     `);
-    expect(counts.rows[0]).toEqual({ publications: 0, backups: 0, migrations: 2 });
+    expect(counts.rows[0]).toEqual({ publications: 0, backups: 0, migrations: 3 });
     await database.close();
   }, 15_000);
 
@@ -210,7 +218,16 @@ describe("PostgresEditorialStore", () => {
     const client = pgliteClient(database);
     const workspaceA = new PostgresEditorialStore(client, "workspace-a", "preview");
     const workspaceB = new PostgresEditorialStore(client, "workspace-b", "preview");
-    const service = serviceWithDelivery(workspaceA);
+    const qrRegistry = new PostgresEditorialQrStore(
+      client,
+      "preview",
+      "workspace-a",
+    );
+    const service = serviceWithDelivery(
+      workspaceA,
+      "a".repeat(40),
+      qrRegistry,
+    );
 
     const created = await service.createPublication(briefing());
     await service.updateContent(created.id, {
@@ -234,6 +251,19 @@ describe("PostgresEditorialStore", () => {
       commit_sha: "a".repeat(40),
       actor: "Teste automatizado",
     });
+    const issued = await service.issueQrCodes(created.id, {
+      actor: "Teste automatizado",
+      public_base_url: "https://executar-ai.vercel.app",
+    });
+    const previewToken = issued.qr.routes.PREVIEW?.token ?? "";
+    const publicResolver = new PostgresEditorialQrStore(client, "preview");
+    expect((await publicResolver.resolveRoute(previewToken))?.registration.action)
+      .toBe("PREVIEW");
+    await publicResolver.recordAccess(
+      previewToken,
+      "REDIRECTED",
+      "2026-07-28T15:00:00.000Z",
+    );
 
     const restarted = new PostgresEditorialStore(client, "workspace-a", "preview");
     expect((await restarted.getPublication(created.id))?.status).toBe("PUBLISHED");
@@ -248,9 +278,19 @@ describe("PostgresEditorialStore", () => {
       ["workspace-a", "preview", created.id],
     );
     expect(eventCount.rows[0]?.count).toBeGreaterThanOrEqual(8);
+    const qrEvidence = await database.query<{
+      routes: number;
+      accesses: number;
+    }>(`
+      select
+        (select count(*)::integer from editorial_qr_routes) as routes,
+        (select count(*)::integer from editorial_qr_access_events) as accesses
+    `);
+    expect(qrEvidence.rows[0]).toEqual({ routes: 4, accesses: 1 });
 
     expect(await restarted.deletePublication(created.id)).toBe(true);
     expect(await restarted.getPublication(created.id)).toBeNull();
+    expect(await publicResolver.resolveRoute(previewToken)).toBeNull();
     expect(await restarted.deletePublication(created.id)).toBe(false);
     await database.close();
   });

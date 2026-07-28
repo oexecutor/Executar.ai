@@ -87,6 +87,14 @@ function publication(status: EditorialPublication["status"] = "DRAFT"): Editoria
     preview: { deployment_id: null, url: null, created_at: null, commit_sha: null },
     approval: { decision: "PENDING", reviewer: null, note: null, decided_at: null, approved_commit_sha: null },
     publication: { url: null, published_at: null, commit_sha: null },
+    qr: {
+      create_url: null,
+      preview_url: null,
+      approve_url: null,
+      analytics_url: null,
+      routes: { CREATE: null, PREVIEW: null, APPROVE: null, ANALYTICS: null },
+      issued_at: null,
+    },
     events: [{ id: "evt-1", type: "CREATED", at: "2026-07-27T12:00:00.000Z", actor: "Leonardo Batista", detail: "Briefing editorial criado." }],
     created_at: "2026-07-27T12:00:00.000Z",
     updated_at: "2026-07-27T12:00:00.000Z",
@@ -96,6 +104,7 @@ function publication(status: EditorialPublication["status"] = "DRAFT"): Editoria
 describe("Editorial", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.history.replaceState({}, "", "/app/");
   });
 
   it("cria um briefing como rascunho sem publicar", async () => {
@@ -251,5 +260,69 @@ describe("Editorial", () => {
       "href",
       "https://github.com/oexecutor/P1.Executar.ai/pull/42",
     );
+  });
+
+  it("emite e exibe os quatro QRs semânticos com fallback textual", async () => {
+    const user = userEvent.setup();
+    const published = publication("PUBLISHED");
+    published.publication = {
+      url: "https://executar.test/blog/agentes-com-governanca",
+      published_at: "2026-07-28T14:00:00.000Z",
+      commit_sha: "b".repeat(40),
+    };
+    const actions = ["CREATE", "PREVIEW", "APPROVE", "ANALYTICS"] as const;
+    const issued: EditorialPublication = {
+      ...published,
+      qr: {
+        create_url: "https://executar.test/q/qr_AAAAAAAAAAAAAAAAAAAAAAAA",
+        preview_url: "https://executar.test/q/qr_BBBBBBBBBBBBBBBBBBBBBBBB",
+        approve_url: "https://executar.test/q/qr_CCCCCCCCCCCCCCCCCCCCCCCC",
+        analytics_url: "https://executar.test/q/qr_DDDDDDDDDDDDDDDDDDDDDDDD",
+        routes: Object.fromEntries(actions.map((action, index) => {
+          const token = `qr_${String.fromCharCode(65 + index).repeat(24)}`;
+          return [action, {
+            action,
+            token,
+            url: `https://executar.test/q/${token}`,
+            status: "ACTIVE",
+            access_policy: action === "PREVIEW"
+              ? "PUBLIC_REDIRECT"
+              : "AUTHENTICATED_CONTEXT",
+            issued_at: "2026-07-28T14:01:00.000Z",
+            issued_by: "Leonardo Batista",
+          }];
+        })) as EditorialPublication["qr"]["routes"],
+        issued_at: "2026-07-28T14:01:00.000Z",
+      },
+    };
+    vi.mocked(getJson)
+      .mockResolvedValueOnce([{
+        id: published.id,
+        title: published.briefing.title,
+        slug: published.content.slug,
+        status: published.status,
+        version: published.version,
+        preview_url: null,
+        publication_url: published.publication.url,
+        updated_at: published.updated_at,
+      }])
+      .mockResolvedValueOnce(published);
+    vi.mocked(postJson).mockResolvedValueOnce(issued);
+
+    render(<Editorial />);
+    await user.click(await screen.findByRole("button", {
+      name: /emitir quatro qrs semânticos/i,
+    }));
+    await waitFor(() => expect(postJson).toHaveBeenCalledWith(
+      `/api/editorial/publications/${published.id}/qr`,
+      { confirm: true },
+    ));
+    expect(await screen.findAllByRole("img", {
+      name: /QR-0[1-4]/,
+    })).toHaveLength(4);
+    expect(screen.getAllByRole("link", {
+      name: "Continuar tarefa atual neste dispositivo.",
+    })).toHaveLength(4);
+    expect(screen.getByText(/nunca aprova nem faz merge sozinho/i)).toBeInTheDocument();
   });
 });

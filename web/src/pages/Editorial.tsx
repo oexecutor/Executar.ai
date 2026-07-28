@@ -5,6 +5,7 @@ import {
   ExternalLink,
   FileCheck2,
   Plus,
+  QrCode,
   RefreshCw,
   X,
 } from "lucide-react";
@@ -15,6 +16,7 @@ import type {
   EditorialAdapterName,
   EditorialPublication,
   EditorialPublicationSummary,
+  EditorialQrAction,
   EditorialStatus,
 } from "../editorial/types";
 
@@ -47,6 +49,43 @@ const ADAPTER_LABELS: Record<EditorialAdapterName, string> = {
 };
 
 const ADAPTER_NAMES = Object.keys(ADAPTER_LABELS) as EditorialAdapterName[];
+
+const QR_LABELS: Record<EditorialQrAction, {
+  code: string;
+  title: string;
+  description: string;
+}> = {
+  CREATE: {
+    code: "QR-01",
+    title: "Criar / Processar",
+    description: "Abre o intake editorial; nenhuma publicação é criada pelo GET.",
+  },
+  PREVIEW: {
+    code: "QR-02",
+    title: "Revisar Preview",
+    description: "Resolve o Preview atual do commit editorial.",
+  },
+  APPROVE: {
+    code: "QR-03",
+    title: "Aprovar / Publicar",
+    description: "Abre o contexto autorizado; nunca aprova nem faz merge sozinho.",
+  },
+  ANALYTICS: {
+    code: "QR-04",
+    title: "Medir",
+    description: "Abre histórico e analytics disponíveis para a publicação.",
+  },
+};
+
+const QR_ACTIONS = Object.keys(QR_LABELS) as EditorialQrAction[];
+
+function initialEditorialContext() {
+  const query = new URLSearchParams(window.location.search);
+  return {
+    publicationId: query.get("publication"),
+    intent: query.get("intent"),
+  };
+}
 
 function adapterResultLabel(evidence: EditorialAdapterEvidence): string {
   if (evidence.status === "APPLIED" && evidence.findings.errors.length > 0) {
@@ -87,10 +126,11 @@ function summaryFrom(publication: EditorialPublication): EditorialPublicationSum
 }
 
 export function Editorial() {
+  const [initialContext] = useState(initialEditorialContext);
   const [publications, setPublications] = useState<EditorialPublicationSummary[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [publication, setPublication] = useState<EditorialPublication | null>(null);
-  const [creating, setCreating] = useState(false);
+  const [creating, setCreating] = useState(initialContext.intent === "create");
   const [pending, setPending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -100,7 +140,13 @@ export function Editorial() {
   const loadList = useCallback(async (preferredId?: string) => {
     const list = await getJson<EditorialPublicationSummary[]>("/api/editorial/publications");
     setPublications(list);
-    setSelectedId((current) => preferredId ?? current ?? list[0]?.id ?? null);
+    setSelectedId((current) => {
+      if (preferredId && list.some((item) => item.id === preferredId)) {
+        return preferredId;
+      }
+      if (current && list.some((item) => item.id === current)) return current;
+      return list[0]?.id ?? null;
+    });
   }, []);
 
   const loadPublication = useCallback(async (id: string) => {
@@ -116,10 +162,10 @@ export function Editorial() {
   }, []);
 
   useEffect(() => {
-    loadList()
+    loadList(initialContext.publicationId ?? undefined)
       .catch((caught) => setError(caught instanceof Error ? caught.message : "Não foi possível carregar a fila editorial."))
       .finally(() => setLoading(false));
-  }, [loadList]);
+  }, [initialContext.publicationId, loadList]);
 
   useEffect(() => {
     if (selectedId) void loadPublication(selectedId);
@@ -259,6 +305,14 @@ export function Editorial() {
     }));
   }
 
+  async function issueQrCodes() {
+    if (!publication) return;
+    await runAction(() => postJson<EditorialPublication>(
+      `/api/editorial/publications/${publication.id}/qr`,
+      { confirm: true },
+    ));
+  }
+
   const editable = publication && [
     "DRAFT",
     "CONTENT_READY",
@@ -298,6 +352,22 @@ export function Editorial() {
       </header>
 
       {error && <p className="inline-error" role="alert">{error}</p>}
+
+      {initialContext.intent === "preview-unavailable" && (
+        <p className="editorial-context-notice" role="status">
+          O QR-02 encontrou um Preview indisponível e trouxe você ao fallback seguro.
+        </p>
+      )}
+      {initialContext.intent === "approve" && (
+        <p className="editorial-context-notice" role="status">
+          O QR-03 abriu o contexto de revisão. Escanear não aprova, não faz merge e não publica.
+        </p>
+      )}
+      {initialContext.intent === "analytics" && (
+        <p className="editorial-context-notice" role="status">
+          O QR-04 abriu a trilha da publicação. Métricas completas pertencem à E6.
+        </p>
+      )}
 
       <div className="editorial-workspace">
         <aside className="editorial-queue" aria-label="Fila editorial">
@@ -599,12 +669,62 @@ export function Editorial() {
                     </form>
                   )}
 
-                  {publication.status === "PUBLISHED" && (
-                    <>
-                      <h3>Publicação concluída</h3>
-                      <p>O artigo, o commit e a decisão humana estão registrados na mesma trilha de auditoria.</p>
-                      <span className="editorial-complete"><Check size={18} /> Publicado em {publication.publication.published_at ? formatDate(publication.publication.published_at) : "produção"}</span>
-                    </>
+                  {(publication.status === "PUBLISHED" || publication.status === "QR_FAILED") && (
+                    <div className="editorial-action-form">
+                      <span className="eyebrow">E4 — QR Router semântico · P0</span>
+                      <h3>
+                        {publication.qr.issued_at
+                          ? "Quatro rotas semânticas ativas"
+                          : publication.status === "QR_FAILED"
+                            ? "Emissão de QR falhou"
+                            : "Emitir QR-01 a QR-04"}
+                      </h3>
+                      <p>
+                        Cada imagem codifica somente uma rota estável do EXECUTA.AI.
+                        Destino, fornecedor e URL de Preview são resolvidos no servidor.
+                      </p>
+                      {!publication.qr.issued_at && (
+                        <button
+                          className="button button-orange"
+                          type="button"
+                          disabled={pending}
+                          onClick={() => void issueQrCodes()}
+                        >
+                          <QrCode size={17} />
+                          {pending ? "Emitindo QRs…" : "Emitir quatro QRs semânticos"}
+                        </button>
+                      )}
+                      {publication.qr.issued_at && (
+                        <div className="editorial-qr-grid" aria-label="QR Codes semânticos">
+                          {QR_ACTIONS.map((action) => {
+                            const route = publication.qr.routes[action];
+                            if (!route) return null;
+                            const label = QR_LABELS[action];
+                            return (
+                              <article className="editorial-qr-card" key={action}>
+                                <header>
+                                  <span>{label.code}</span>
+                                  <strong>{label.title}</strong>
+                                </header>
+                                <img
+                                  src={`/q/${route.token}.svg`}
+                                  alt={`${label.code} — ${label.title}`}
+                                  width="180"
+                                  height="180"
+                                />
+                                <p>{label.description}</p>
+                                <a href={route.url}>
+                                  Continuar tarefa atual neste dispositivo.
+                                </a>
+                              </article>
+                            );
+                          })}
+                        </div>
+                      )}
+                      <span className="editorial-complete">
+                        <Check size={18} /> Publicado em {publication.publication.published_at ? formatDate(publication.publication.published_at) : "produção"}
+                      </span>
+                    </div>
                   )}
                 </article>
               </div>

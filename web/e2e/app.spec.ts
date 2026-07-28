@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { checkA11y, injectAxe } from "axe-playwright";
+import type { EditorialPublication } from "../src/editorial/types";
 import { resetState, startMockServer } from "./mock-server";
 
 const PORT = 4173;
@@ -114,6 +115,14 @@ function editorialPublication() {
     preview: { deployment_id: null, url: null, created_at: null, commit_sha: null },
     approval: { decision: "PENDING", reviewer: null, note: null, decided_at: null, approved_commit_sha: null },
     publication: { url: null, published_at: null, commit_sha: null },
+    qr: {
+      create_url: null,
+      preview_url: null,
+      approve_url: null,
+      analytics_url: null,
+      routes: { CREATE: null, PREVIEW: null, APPROVE: null, ANALYTICS: null },
+      issued_at: null,
+    },
     events: [{ id: "evt-e2e", type: "CREATED", at: "2026-07-28T01:00:00.000Z", actor: "Leonardo Batista", detail: "Briefing editorial criado." }],
     created_at: "2026-07-28T01:00:00.000Z",
     updated_at: "2026-07-28T01:00:00.000Z",
@@ -169,7 +178,7 @@ test.describe("EXECUTA.AI — acesso sem login", () => {
 test.describe("EXECUTA.AI — E1 e E2 editoriais", () => {
   test("fecha a E1 com regras internas e libera a automação oficial da E2", async ({ page }) => {
     const failures = trackFailures(page);
-    let current = editorialPublication();
+    let current = editorialPublication() as EditorialPublication;
 
     await page.route("**/api/editorial/publications**", async (route) => {
       const request = route.request();
@@ -241,6 +250,125 @@ test.describe("EXECUTA.AI — E1 e E2 editoriais", () => {
     await expect(page.getByLabel("Commit SHA")).toHaveCount(0);
     expect(failures.errors).toEqual([]);
     await assertNoSeriousAccessibilityViolations(page);
+  });
+});
+
+test.describe("EXECUTA.AI — E4 QR semântico P0", () => {
+  test("emite quatro rotas estáveis e abre aprovação apenas como contexto no mobile", async ({ page }) => {
+    const failures = trackFailures(page);
+    await page.setViewportSize({ width: 390, height: 844 });
+    let current = editorialPublication();
+    current = {
+      ...current,
+      status: "PUBLISHED",
+      publication: {
+        url: "https://executar-ai.vercel.app/blog/qr-semantico",
+        published_at: "2026-07-28T14:00:00.000Z",
+        commit_sha: "b".repeat(40),
+      },
+    };
+    const actions = ["CREATE", "PREVIEW", "APPROVE", "ANALYTICS"] as const;
+
+    await page.route("**/api/editorial/publications**", async (route) => {
+      const request = route.request();
+      const pathname = new URL(request.url()).pathname;
+      if (request.method() === "GET" && pathname.endsWith("/publications")) {
+        await route.fulfill({
+          contentType: "application/json",
+          body: JSON.stringify({
+            ok: true,
+            data: [{
+              id: current.id,
+              title: current.briefing.title,
+              slug: current.content.slug,
+              status: current.status,
+              version: current.version,
+              preview_url: current.preview.url,
+              publication_url: current.publication.url,
+              updated_at: current.updated_at,
+            }],
+          }),
+        });
+        return;
+      }
+      if (request.method() === "POST" && pathname.endsWith("/qr")) {
+        const routes = Object.fromEntries(actions.map((action, index) => {
+          const token = `qr_${String.fromCharCode(65 + index).repeat(24)}`;
+          return [action, {
+            action,
+            token,
+            url: `http://localhost:${PORT}/q/${token}`,
+            status: "ACTIVE",
+            access_policy: action === "PREVIEW"
+              ? "PUBLIC_REDIRECT"
+              : "AUTHENTICATED_CONTEXT",
+            issued_at: "2026-07-28T14:01:00.000Z",
+            issued_by: "Leonardo Batista",
+          }];
+        })) as EditorialPublication["qr"]["routes"];
+        current = {
+          ...current,
+          qr: {
+            create_url: routes.CREATE.url,
+            preview_url: routes.PREVIEW.url,
+            approve_url: routes.APPROVE.url,
+            analytics_url: routes.ANALYTICS.url,
+            routes,
+            issued_at: "2026-07-28T14:01:00.000Z",
+          },
+        };
+      }
+      await route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify({
+          ok: true,
+          data: current,
+          warnings: [],
+          request_id: "req_e4_e2e",
+        }),
+      });
+    });
+
+    await page.route("**/q/**", async (route) => {
+      const pathname = new URL(route.request().url()).pathname;
+      if (pathname.endsWith(".svg")) {
+        await route.fulfill({
+          contentType: "image/svg+xml",
+          body: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><rect width="10" height="10"/></svg>',
+        });
+        return;
+      }
+      await route.fulfill({
+        status: 302,
+        headers: {
+          location: `http://localhost:${PORT}/app/?tab=editorial&publication=${current.id}&intent=approve`,
+        },
+      });
+    });
+
+    await page.goto("/app/?tab=editorial");
+    await expect(page.getByRole("heading", { name: current.briefing.title })).toBeVisible();
+    await page.getByRole("button", { name: /Emitir quatro QRs semânticos/ }).click();
+    await expect(page.getByRole("img", { name: "QR-01 — Criar / Processar" })).toBeVisible();
+    await expect(page.getByRole("img", { name: "QR-04 — Medir" })).toBeVisible();
+    await expect(page.getByRole("link", {
+      name: "Continuar tarefa atual neste dispositivo.",
+    })).toHaveCount(4);
+    expect(await page.evaluate(() =>
+      document.documentElement.scrollWidth <= window.innerWidth
+    )).toBe(true);
+    await assertNoSeriousAccessibilityViolations(page);
+
+    await page.locator(".editorial-qr-card")
+      .filter({ hasText: "QR-03" })
+      .getByRole("link", {
+        name: "Continuar tarefa atual neste dispositivo.",
+      })
+      .click();
+    await expect(page).toHaveURL(/intent=approve/);
+    await expect(page.getByText(/Escanear não aprova, não faz merge e não publica/)).toBeVisible();
+    await expect(page.getByRole("heading", { name: current.briefing.title })).toBeVisible();
+    expect(failures.errors).toEqual([]);
   });
 });
 
