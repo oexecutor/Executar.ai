@@ -4,6 +4,7 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 import { neon } from "@neondatabase/serverless";
+import { planEditorialMigrations } from "./editorial-migration-plan.mjs";
 
 const canonicalProject = "executar-ai";
 const projectName = process.env.VERCEL_PROJECT_NAME?.trim();
@@ -38,27 +39,49 @@ const migrationsDirectory = path.join(root, "supabase/migrations");
 const migrationFiles = (await fs.readdir(migrationsDirectory))
   .filter((name) => /^\d+_editorial_.*\.sql$/.test(name))
   .sort();
+const migrations = await Promise.all(
+  migrationFiles.map(async (migrationFile) => {
+    const migrationPath = path.join(migrationsDirectory, migrationFile);
+    const source = await fs.readFile(migrationPath, "utf8");
+    return {
+      id: path.basename(migrationFile, ".sql"),
+      file: migrationFile,
+      source,
+      checksum: crypto.createHash("sha256").update(source).digest("hex"),
+    };
+  }),
+);
+const ledgerState = await sql.query(
+  `SELECT to_regclass('public.app_schema_migrations')::text AS relation`,
+);
+const ledgerRows = ledgerState[0]?.relation
+  ? await sql.query(
+      `SELECT migration_id, checksum
+         FROM public.app_schema_migrations
+        ORDER BY migration_id`,
+    )
+  : [];
+const migrationPlan = planEditorialMigrations(migrations, ledgerRows);
 const applied = [];
 
-for (const migrationFile of migrationFiles) {
-  const migrationPath = path.join(migrationsDirectory, migrationFile);
-  const migration = await fs.readFile(migrationPath, "utf8");
-  const checksum = crypto.createHash("sha256").update(migration).digest("hex");
-  const statements = migration
+for (const migration of migrationPlan.pending) {
+  const statements = migration.source
     .split(/\n-- statement-breakpoint\n/g)
     .map((statement) => statement.trim())
     .filter(Boolean);
   await sql.transaction((transactionSql) =>
     statements.map((statement) => transactionSql.query(statement))
   );
-  const migrationId = path.basename(migrationFile, ".sql");
   await sql.query(
     `UPDATE public.app_schema_migrations
         SET checksum = $1
       WHERE migration_id = $2`,
-    [checksum, migrationId],
+    [migration.checksum, migration.id],
   );
-  applied.push({ migration: migrationId, checksum });
+  applied.push({
+    migration: migration.id,
+    checksum: migration.checksum,
+  });
 }
 
 const counts = await sql.query(
@@ -72,6 +95,10 @@ const counts = await sql.query(
 const evidence = counts[0] ?? {};
 console.log(JSON.stringify({
   migrations: applied,
+  verified_migrations: migrationPlan.verified.map((migration) => ({
+    migration: migration.id,
+    checksum: migration.checksum,
+  })),
   backup_rows: evidence.backup_rows ?? 0,
   publication_rows: evidence.publication_rows ?? 0,
   event_rows: evidence.event_rows ?? 0,
