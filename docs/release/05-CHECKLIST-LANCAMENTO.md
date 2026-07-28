@@ -35,7 +35,7 @@ vazio, nunca marcados como concluídos sem prova.
 
 ## Acessibilidade
 - [x] `axe-playwright` sem violações críticas/sérias nos fluxos cobertos — Resp.: Execução assistida — Evidência: `web/e2e/app.spec.ts` (FATO) — Data: 2026-07-24 — Gate: G0
-- [ ] Cobertura de a11y avaliada além do fluxo raiz/blog — Resp.: Execução assistida — Evidência: relatório de cobertura — Data: — — Gate: G5
+- [x] Cobertura de a11y avaliada além do fluxo raiz/blog — Resp.: Execução assistida — Evidência: `web/e2e/app.spec.ts` cobre raiz, portfólio/projeto, editorial E1/E2, QR E4, índice e artigo do blog (6 pontos, FATO) — Data: 2026-07-28 — Gate: G5 — restam fora: página de login (não testada em e2e, usa mock) e telas administrativas
 
 ## Conteúdo
 - [x] EXECUTA Journal (blog) integrado ao build — Resp.: Execução assistida — Evidência: `web/src/blog/*`, testes verdes (FATO) — Data: 2026-07-24 — Gate: G0
@@ -48,7 +48,7 @@ vazio, nunca marcados como concluídos sem prova.
 - [ ] Domínio de produção confirmado e configurado — Resp.: Product Owner — Evidência: painel Vercel — Data: — — Gate: G9
 
 ## SEO
-- [ ] SEO do blog confirmado (meta tags, sitemap) — Resp.: Execução assistida — Evidência: verificação manual — Data: — — Gate: G4
+- [x] SEO do blog confirmado (meta tags, sitemap) — Resp.: Execução assistida — Evidência: `robots.txt`, `sitemap.xml` (gerado automaticamente no build), OG/Twitter Card e canonical em landing/blog/artigos (FATO, build local verificado) — Data: 2026-07-28 — Gate: G4
 
 ## Analytics
 - [ ] Ferramenta de analytics decidida e instalada — Resp.: Product Owner — Evidência: — — Data: — — Gate: G7
@@ -72,4 +72,4 @@ vazio, nunca marcados como concluídos sem prova.
 - [x] `AGENTS.md`/`SECURITY.md`/docs estruturais atualizados (Vercel, não Netlify) — Resp.: Execução assistida — Evidência: menções a Netlify restam só como nota histórica explicitamente superada (`docs/DEPLOYMENT_STATUS.md`), sem instrução ativa — Data: 2026-07-25 — Gate: G1
 
 ## Operação pós-lançamento
-- [ ] Cadência de revisão 24h/7d/30d definida — Resp.: Product Owner — Evidência: `08-OPERACAO-POS-LANCAMENTO.md` — Data: — — Gate: G10
+- [x] Cadência de revisão 24h/7d/30d definida — Resp.: Execução assistida — Evidência: `08-OPERACAO-POS-LANCAMENTO.md` (checklist concreto por janela) — Data: 2026-07-28 — Gate: G10

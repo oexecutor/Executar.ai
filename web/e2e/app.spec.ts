@@ -427,6 +427,8 @@ test.describe("EXECUTA Journal — blog", () => {
     await expect(page.getByRole("heading", { level: 1, name: /Checkpoints: progresso não é apenas tarefa concluída/ })).toBeVisible();
     expect(failures.errors.some((entry) => entry.includes("404"))).toBe(false);
 
+    await assertNoSeriousAccessibilityViolations(page);
+
     await page.getByRole("navigation", { name: "Breadcrumb" }).getByRole("link", { name: "Blog" }).click();
     await expect(page).toHaveURL(/\/blog\/?$/);
     await expect(page.getByRole("heading", { name: /Ideias para transformar contexto em execução/ })).toBeVisible();
