@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "publication_id": "PUB-20260728-b4fbb3cc",
+  "publication_version": 1,
+  "content_hash": "13d89d65b4e22d3303b1ac95ad270620be9d7898c978748a3813cb8bd316d496",
+  "slug": "homologacao-do-qr-semantico-p0",
+  "title": "Homologação do QR semântico P0",
+  "excerpt": "Publicação operacional para validar ponta a ponta a emissão, impressão e resolução dos quatro QR semânticos do EXECUTA.AI.",
+  "author": "Leonardo Batista",
+  "category": "Produto",
+  "language": "pt-BR",
+  "channel": "EXECUTA_JOURNAL",
+  "reading_minutes": 1,
+  "updated_at": "2026-07-28T14:37:21.247Z",
+  "quality_checked_at": "2026-07-28T14:37:44.076Z",
+  "cover_pattern": "steps",
+  "cover_label": "PREVIEW / PUB-20260728-b4fbb3cc",
+  "assets": [
+    "public/blog/homologacao-do-qr-semantico-p0/cover.svg"
+  ]
+}
