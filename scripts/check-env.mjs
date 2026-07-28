@@ -12,15 +12,22 @@ const requiredVariables = [
   "DATABASE_URL",
 ];
 
-const editorialE2Variables = [
+const editorialE2RequiredVariables = [
   "EDITORIAL_GITHUB_TOKEN",
+  "EDITORIAL_VERCEL_TOKEN",
+];
+const editorialE2ConfigurationVariables = [
+  ...editorialE2RequiredVariables,
   "EDITORIAL_GITHUB_REPOSITORY",
   "EDITORIAL_GITHUB_BASE_BRANCH",
-  "EDITORIAL_VERCEL_TOKEN",
   "EDITORIAL_VERCEL_PROJECT_ID",
   "EDITORIAL_VERCEL_TEAM_ID",
 ];
-const optionalVariables = ["ADMIN_PASSWORD", "SMOKE_BASE_URL", ...editorialE2Variables];
+const optionalVariables = [
+  "ADMIN_PASSWORD",
+  "SMOKE_BASE_URL",
+  ...editorialE2ConfigurationVariables,
+];
 const runtimeMode = process.argv.includes("--runtime");
 const editorialE2Mode = process.argv.includes("--editorial-e2");
 
@@ -62,7 +69,7 @@ if (!runtimeMode && !editorialE2Mode) {
 
 const requiredForInvocation = [
   ...(runtimeMode ? requiredVariables : []),
-  ...(editorialE2Mode ? editorialE2Variables : []),
+  ...(editorialE2Mode ? editorialE2RequiredVariables : []),
 ];
 const missingRuntimeVariables = requiredForInvocation.filter((name) => {
   const value = process.env[name];

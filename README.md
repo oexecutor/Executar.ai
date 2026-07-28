@@ -123,11 +123,11 @@ Use `.env.example` como contrato público e sem segredos. Para desenvolvimento l
 | `SUPABASE_SERVICE_ROLE_KEY` | Sim | Privada, servidor | Preview e Production | Supabase API Settings |
 | `DATABASE_URL` | Sim durante a migração OAuth | Privada, servidor | Local, Preview e Production | Supabase/Postgres, preferencialmente pooler |
 | `EDITORIAL_GITHUB_TOKEN` | Para E2 | Privada, servidor | Preview e Production | Token granular: Contents e Pull requests com escrita |
-| `EDITORIAL_GITHUB_REPOSITORY` | Para E2 | Não sensível | Preview e Production | `oexecutor/P1.Executar.ai` |
-| `EDITORIAL_GITHUB_BASE_BRANCH` | Para E2 | Não sensível | Preview e Production | `main` |
+| `EDITORIAL_GITHUB_REPOSITORY` | Override opcional da E2 | Não sensível | Preview e Production | Padrão: `oexecutor/P1.Executar.ai` |
+| `EDITORIAL_GITHUB_BASE_BRANCH` | Override opcional da E2 | Não sensível | Preview e Production | Padrão: `main` |
 | `EDITORIAL_VERCEL_TOKEN` | Para E2 | Privada, servidor | Preview e Production | Token de leitura do projeto |
-| `EDITORIAL_VERCEL_PROJECT_ID` | Para E2 | Não sensível | Preview e Production | ID `prj_…` do projeto editorial |
-| `EDITORIAL_VERCEL_TEAM_ID` | Para E2 | Não sensível | Preview e Production | ID `team_…` |
+| `EDITORIAL_VERCEL_PROJECT_ID` | Override opcional da E2 | Não sensível | Preview e Production | Padrão: projeto `executar-ai` |
+| `EDITORIAL_VERCEL_TEAM_ID` | Override opcional da E2 | Não sensível | Preview e Production | Padrão: equipe `oexecutor-9118s-projects` |
 | `ADMIN_PASSWORD` | Não, legado | Privada, servidor | Somente implantação legada | Não configurar sem dependência confirmada |
 | `SMOKE_BASE_URL` | Apenas testes smoke | Não sensível | Local, CI ou Preview | URL do ambiente testado |
 
