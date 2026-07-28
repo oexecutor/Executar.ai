@@ -7,6 +7,10 @@ Pacote de auditoria, roadmap e operação de lançamento do **EXECUTA.AI**.
 - Início do G2 — contrato e teste do ciclo central: **2026-07-25**.
 - Defeito editorial histórico `DEF-E2-001`: PR #30 aprovado e mesclado, mas
   reclassificado como gate interno da E1; a E2 oficial permanece **NO-GO**.
+- Auditoria independente + plano de GTM: **2026-07-28** (`13`, `14`) —
+  primeira cobertura formal de posicionamento/público/canais do pacote;
+  também resolve `RISK-004`/`EXA-G5-QA-001` (teste e2e intermitente) por
+  re-execução confirmada nesta data.
 - Ambiente canônico: **Vercel**, projeto `executar-ai`.
 - Fonte documental: branch `main` de `oexecutor/P1.Executar.ai`.
 
@@ -21,17 +25,23 @@ Pacote de auditoria, roadmap e operação de lançamento do **EXECUTA.AI**.
 
 ## Leitura recomendada
 
-1. [`12-HOMOLOGACAO-E2-2026-07-28.md`](./12-HOMOLOGACAO-E2-2026-07-28.md) —
+1. [`13-AUDITORIA-RIGOROSA-2026-07-28.md`](./13-AUDITORIA-RIGOROSA-2026-07-28.md) —
+   auditoria independente mais recente: re-verificação por evidência direta,
+   achados novos e recomendações objetivas para as decisões pendentes.
+2. [`14-PLANO-GTM.md`](./14-PLANO-GTM.md) — posicionamento, público-alvo,
+   monetização e canais de lançamento; lacuna que não existia no pacote
+   antes de 2026-07-28.
+3. [`12-HOMOLOGACAO-E2-2026-07-28.md`](./12-HOMOLOGACAO-E2-2026-07-28.md) —
    correção do alcance: evidência do PR #30, não homologação da E2 oficial.
-2. [`11-DEF-E2-001-NO-GO.md`](./11-DEF-E2-001-NO-GO.md) — registro histórico
+4. [`11-DEF-E2-001-NO-GO.md`](./11-DEF-E2-001-NO-GO.md) — registro histórico
    do defeito P0 e dos critérios que bloquearam o lançamento.
-3. [`10-G2-CONTRATO-CICLO-CENTRAL.md`](./10-G2-CONTRATO-CICLO-CENTRAL.md) —
+5. [`10-G2-CONTRATO-CICLO-CENTRAL.md`](./10-G2-CONTRATO-CICLO-CENTRAL.md) —
    decisão canônica do ciclo 3–9–36, integração PLANGEN e lacunas de homologação.
-4. [`09-HOMOLOGACAO-G1-2026-07-25.md`](./09-HOMOLOGACAO-G1-2026-07-25.md) —
+6. [`09-HOMOLOGACAO-G1-2026-07-25.md`](./09-HOMOLOGACAO-G1-2026-07-25.md) —
    fechamento do G1, produção homologada, PRs resolvidos e decisões vigentes.
-5. [`01-ROADMAP-LANCAMENTO.md`](./01-ROADMAP-LANCAMENTO.md) — Gates G0–G10,
+7. [`01-ROADMAP-LANCAMENTO.md`](./01-ROADMAP-LANCAMENTO.md) — Gates G0–G10,
    fases, dependências e caminho crítico.
-6. [`04-RISCOS-DECISOES.md`](./04-RISCOS-DECISOES.md) — riscos atuais e
+8. [`04-RISCOS-DECISOES.md`](./04-RISCOS-DECISOES.md) — riscos atuais e
    decisões de autenticação, persistência e MCP.
 
 ## Pacote completo
@@ -53,6 +63,8 @@ Pacote de auditoria, roadmap e operação de lançamento do **EXECUTA.AI**.
 | `10-G2-CONTRATO-CICLO-CENTRAL.md` | Contrato, decisão PLANGEN, comparação de domínios e smoke test G2 |
 | `11-DEF-E2-001-NO-GO.md` | Defeito P0, decisão NO-GO e critérios de saída |
 | `12-HOMOLOGACAO-E2-2026-07-28.md` | Registro histórico do PR #30 e correção de classificação |
+| `13-AUDITORIA-RIGOROSA-2026-07-28.md` | Auditoria independente, achados novos e recomendações de decisão |
+| `14-PLANO-GTM.md` | Posicionamento, ICP, monetização, canais e métricas de GTM |
 
 ## Estado resumido
 
@@ -69,6 +81,13 @@ Pacote de auditoria, roadmap e operação de lançamento do **EXECUTA.AI**.
   evidência histórica, não homologação.
 - **AMES:** o pacote do antigo PR #4 passou a existir na `main`, mas os
   validadores internos do aplicativo não executam essa skill.
+- **G5 — teste e2e intermitente:** **RESOLVIDO** em 2026-07-28 por mudança
+  arquitetural (raiz virou landing pública distinta, sem redirecionamento
+  automático); re-executado 39/39 e 8/8 sem flakiness nesta auditoria.
+- **GTM:** pacote antes não cobria posicionamento/público/canais —
+  `14-PLANO-GTM.md` preenche a lacuna, com caminho híbrido recomendado
+  (uso pessoal agora + beta fechado convidado em G6/G7) sujeito a
+  confirmação do dono do produto.
 
 ## Regra de escrita externa
 
