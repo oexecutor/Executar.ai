@@ -9,6 +9,15 @@ PWA multiusuário para transformar contexto em execução verificável. O produt
 - vault de documentos, evidências, importação e exportação;
 - landing pública e workspace autenticado com a identidade EXECUTA.AI.
 
+> [!IMPORTANT]
+> ## Auditoria GitHub × Vercel — Gate de lançamento
+> **Status atual: CORRIGIR antes do lançamento.**
+>
+> A auditoria consolidada de repositórios, pull requests, branches e deployments está disponível em:
+> **[MASTER INDEX E RELATÓRIO DE AUDITORIA — GITHUB × VERCEL](MASTER_INDEX_AUDITORIA_GITHUB_VERCEL_2026-07-27.md)**.
+>
+> Prioridades bloqueantes: corrigir o deployment Git-linked do `P2.executar.business`, eliminar a duplicidade de projetos Vercel e migrar o pacote AMES antes de encerrar o PR #4 sem merge.
+
 ## Estado
 
 A Fase 4 entrega a fundação funcional em uma branch de Preview. Ela não autoriza publicação em produção. A promoção só pode ocorrer depois de:
