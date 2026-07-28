@@ -15,6 +15,12 @@ node_modules/
 # Keep the public, secret-free template versioned
 !.env.example
 
+# Secure environment packs. Only *.example and documentation may be committed.
+/env/*.env
+/env/*.local
+/env/*.secret
+/env/tokens/
+
 *.log
 coverage/
 .DS_Store
