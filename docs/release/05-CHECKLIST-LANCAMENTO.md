@@ -28,10 +28,10 @@ vazio, nunca marcados como concluídos sem prova.
 - [x] PR #9 fechado ou rebaseado conscientemente — Resp.: Product Owner — Evidência: encerrado sem merge em 2026-07-25 (`04-RISCOS-DECISOES.md` RISK-007) — Data: 2026-07-25 — Gate: G1
 
 ## Jurídico
-- [ ] Termos de uso reais publicados — Resp.: Product Owner — Evidência: URL publicada — Data: — — Gate: G7
+- [ ] Termos de uso reais publicados — Resp.: Product Owner — Evidência: `web/public/terms.html` — conteúdo substantivo redigido (2026-07-28), não placeholder — **falta**: preencher razão social/CNPJ-CPF e comarca, e revisão jurídica antes de valer como termo vinculante — Data: — — Gate: G7
 
 ## Privacidade
-- [ ] Política de privacidade real publicada e revisada — Resp.: Product Owner — Evidência: URL publicada — Data: — — Gate: G7
+- [ ] Política de privacidade real publicada e revisada — Resp.: Product Owner — Evidência: `web/public/privacy.html` — política completa (LGPD, base legal por categoria, direitos do titular, sub-processadores nomeados) redigida 2026-07-28, não placeholder — **falta**: preencher identidade do controlador e revisão jurídica — Data: — — Gate: G7
 
 ## Acessibilidade
 - [x] `axe-playwright` sem violações críticas/sérias nos fluxos cobertos — Resp.: Execução assistida — Evidência: `web/e2e/app.spec.ts` (FATO) — Data: 2026-07-24 — Gate: G0
@@ -54,10 +54,10 @@ vazio, nunca marcados como concluídos sem prova.
 - [ ] Ferramenta de analytics decidida e instalada — Resp.: Product Owner — Evidência: — — Data: — — Gate: G7
 
 ## Suporte
-- [ ] Plano de suporte documentado — Resp.: Product Owner — Evidência: `08-OPERACAO-POS-LANCAMENTO.md` — Data: — — Gate: G7
+- [x] Plano de suporte documentado — Resp.: Execução assistida — Evidência: `08-OPERACAO-POS-LANCAMENTO.md` (canal, SLA informal, triagem) — Data: 2026-07-28 — Gate: G7 — **pendência menor**: e-mail de suporte ainda é placeholder em `terms.html`/`privacy.html`
 
 ## Incidentes
-- [ ] Processo de resposta a incidentes documentado — Resp.: Product Owner — Evidência: `07-PLANO-DE-ROLLBACK.md` — Data: — — Gate: G7
+- [x] Processo de resposta a incidentes documentado — Resp.: Execução assistida — Evidência: `07-PLANO-DE-ROLLBACK.md` (identificação, rollback de auth, comunicação, registro pós-incidente) — Data: 2026-07-28 — Gate: G7
 
 ## Rollback
 - [x] Plano de rollback documentado — Resp.: Execução assistida — Evidência: `07-PLANO-DE-ROLLBACK.md` (este pacote) — Data: 2026-07-24 — Gate: G0

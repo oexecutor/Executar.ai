@@ -8,9 +8,29 @@
   avisos de "default export returned a Response").
 - Falha de build/deploy no painel Vercel.
 - Queda de disponibilidade do `/health` (rota pública, sem autenticação,
-  deve sempre responder).
-- Relato de usuário de dados de outro workspace aparecendo no próprio (dado
-  o risco RISK-001 do workspace público).
+  deve sempre responder) — consultar também os campos `dependencies.supabase`
+  e `dependencies.postgres` que ele expõe (presença de configuração, nunca
+  valores).
+- **Ninguém consegue logar** (2026-07-28+): sintoma mais provável se
+  `SUPABASE_URL`/`SUPABASE_PUBLISHABLE_KEY` não estiverem configuradas em
+  produção — ver "Rollback específico de autenticação" abaixo.
+- Relato de usuário de dados de outro workspace aparecendo no próprio.
+
+## Rollback específico de autenticação (DEC-001, 2026-07-28)
+
+Autenticação real é o padrão desde 2026-07-28. Se isso quebrar o acesso
+(ex.: Supabase não configurado naquele ambiente), o rollback **não precisa
+de reverter código nem redeploy**:
+
+1. Painel Vercel → projeto `executar-ai` → Settings → Environment Variables.
+2. Definir `ALLOW_PUBLIC_WORKSPACE_FALLBACK=true` no ambiente afetado
+   (Production e/ou Preview).
+3. Redeploy (ou aguardar a próxima invocação — variáveis de ambiente
+   Vercel exigem redeploy para valer em funções já compiladas).
+4. Confirmar via `/health` e `/api/auth/me` que o acesso voltou.
+5. Assim que `SUPABASE_URL`/`SUPABASE_PUBLISHABLE_KEY` estiverem
+   configuradas corretamente, remover a variável de novo — este é um
+   rollback temporário, não o estado desejado de produção pública.
 
 ## Como interromper o rollout
 
@@ -38,8 +58,10 @@
   "backups before bulk/destructive changes".
 - Se o incidente for de corrupção de dados (não só de código), o rollback de
   deployment sozinho não resolve — precisa de restauração de backup do
-  banco (Neon/Supabase), fora do escopo deste plano até `DECISÃO NECESSÁRIA
-  #2` definir qual é o backend único de produção.
+  banco. Supabase é o backend canônico (DEC-002, `ADR-002`): usar os backups
+  automáticos do próprio painel Supabase (Database → Backups) para o Vault;
+  o registro OAuth segue em Neon até a migração da Fase 2
+  (`EXA-G3-DATA-002`) e usa os backups nativos do Neon até lá.
 
 ## Como comunicar
 
