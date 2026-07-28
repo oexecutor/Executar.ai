@@ -4,6 +4,7 @@ import {
   UnavailableEditorialArtifactPublisher,
   UnavailableEditorialPreviewResolver,
 } from "../src/editorial/delivery.js";
+import { EditorialConnectorEvidenceVerifier } from "../src/editorial/connector-evidence.js";
 import { githubEditorialPublisherFromEnv } from "../src/editorial/github-publisher.js";
 import { createEditorialSqlClient, PostgresEditorialStore } from "../src/editorial/postgres-store.js";
 import { PostgresEditorialQrStore } from "../src/editorial/qr-store.js";
@@ -52,9 +53,16 @@ function defaultService(auth: AuthenticatedRequest): EditorialService {
 }
 
 let serviceFactory: (auth: AuthenticatedRequest) => EditorialService = defaultService;
+let connectorEvidenceVerifier = new EditorialConnectorEvidenceVerifier();
 
 export function setEditorialServiceForTesting(factory: (() => EditorialService) | null): void {
   serviceFactory = factory ?? defaultService;
+}
+
+export function setEditorialConnectorEvidenceVerifierForTesting(
+  verifier: EditorialConnectorEvidenceVerifier | null,
+): void {
+  connectorEvidenceVerifier = verifier ?? new EditorialConnectorEvidenceVerifier();
 }
 
 function requireWrite(auth: AuthenticatedRequest): void {
@@ -164,8 +172,83 @@ async function editorialHandler(request: Request): Promise<Response> {
         }
         return response(await service.createArtifact(publicationId, actor(body, auth)), requestId);
       }
+      if (
+        request.method === "POST"
+        && operation === "artifact/register-connector-evidence"
+      ) {
+        if (body.confirm !== true) {
+          throw new DomainError(
+            "CONFIRMATION_REQUIRED",
+            "O registro da execução do conector GitHub exige confirmação explícita.",
+            "Envie confirm=true junto com o número do PR criado pelo conector.",
+            422,
+          );
+        }
+        const pullRequestNumber = body.pull_request_number;
+        if (
+          typeof pullRequestNumber !== "number"
+          || !Number.isInteger(pullRequestNumber)
+          || pullRequestNumber < 1
+        ) {
+          throw new DomainError(
+            "INVALID_INPUT",
+            "pull_request_number deve ser um inteiro positivo.",
+            "Informe o PR criado pelo conector GitHub.",
+            422,
+          );
+        }
+        const current = await service.getPublication(publicationId);
+        const artifact = await connectorEvidenceVerifier.verifyArtifact(
+          current,
+          pullRequestNumber,
+        );
+        return response(
+          await service.registerVerifiedArtifact(
+            publicationId,
+            artifact,
+            actor(body, auth),
+          ),
+          requestId,
+        );
+      }
       if (request.method === "POST" && operation === "preview/sync") {
         return response(await service.syncPreview(publicationId, actor(body, auth)), requestId);
+      }
+      if (
+        request.method === "POST"
+        && operation === "preview/register-connector-evidence"
+      ) {
+        if (body.confirm !== true) {
+          throw new DomainError(
+            "CONFIRMATION_REQUIRED",
+            "O registro do Preview verificado exige confirmação explícita.",
+            "Envie confirm=true com URL imutável e deployment_id retornados pelo conector Vercel.",
+            422,
+          );
+        }
+        const previewUrl = text(body, "url");
+        const deploymentId = text(body, "deployment_id");
+        if (!previewUrl || !deploymentId) {
+          throw new DomainError(
+            "INVALID_INPUT",
+            "url e deployment_id são obrigatórios.",
+            "Use a evidência do deployment READY retornada pelo conector Vercel.",
+            422,
+          );
+        }
+        const current = await service.getPublication(publicationId);
+        const resolution = await connectorEvidenceVerifier.verifyPreview(
+          current,
+          { url: previewUrl, deployment_id: deploymentId },
+        );
+        return response(
+          await service.registerVerifiedPreview(
+            publicationId,
+            resolution,
+            actor(body, auth),
+          ),
+          requestId,
+        );
       }
       if (request.method === "POST" && operation === "preview/start") {
         throw new DomainError(
