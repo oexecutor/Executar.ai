@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { getJson } from "./api";
 import {
+  getBrowserSession,
   restoreWorkspaceFromAppSession,
   selectedWorkspace,
   signOut,
@@ -9,14 +10,15 @@ import { Layout, type AppView } from "./components/Layout";
 
 import { Board } from "./pages/Board";
 import { Documents } from "./pages/Documents";
+import { Editorial } from "./pages/Editorial";
+import { Login } from "./pages/Login";
 import { Overview } from "./pages/Overview";
 import { Portfolio } from "./pages/Portfolio";
 import { ProjectWorkspace } from "./pages/ProjectWorkspace";
 import { Today } from "./pages/Today";
-import { Editorial } from "./pages/Editorial";
 import type { ProjectSummary } from "./types";
 
-type Session = "checking" | "authenticated";
+type Session = "checking" | "authenticated" | "anonymous";
 
 function initialView(): AppView {
   const tab = new URLSearchParams(window.location.search).get("tab");
@@ -46,15 +48,20 @@ export function App() {
   }, []);
 
   const checkSession = useCallback(async () => {
-    await restoreWorkspaceFromAppSession();
-    // Login removed: every caller without a real session uses the shared
-    // public workspace on the backend. Treat anonymous as authenticated.
+    const appWorkspace = await restoreWorkspaceFromAppSession();
+    if (!appWorkspace) {
+      const browserSession = await getBrowserSession();
+      if (!browserSession || !selectedWorkspace()) {
+        setSession("anonymous");
+        return;
+      }
+    }
+
     try {
       await loadProjects();
       setSession("authenticated");
     } catch {
-      // Even on failure, render the workspace (the backend serves public data).
-      setSession("authenticated");
+      setSession("anonymous");
     }
   }, [loadProjects]);
 
@@ -71,8 +78,7 @@ export function App() {
     await signOut();
     setProjects([]);
     setSelectedProjectId(null);
-    setSession("checking");
-    await checkSession();
+    setSession("anonymous");
   }
 
   if (session === "checking") {
@@ -83,6 +89,10 @@ export function App() {
         <p>Preparando seu workspace…</p>
       </main>
     );
+  }
+
+  if (session === "anonymous") {
+    return <Login onSuccess={() => void checkSession()} />;
   }
 
   const selectedProject = projects.find((project) => project.id === selectedProjectId) ?? null;
