@@ -45,8 +45,19 @@ function escapeXml(value: string): string {
     .replaceAll("'", "&apos;");
 }
 
-function branchFor(publicationId: string, slug: string): string {
+export function editorialArtifactBranch(
+  publicationId: string,
+  slug: string,
+): string {
   return `editorial/${publicationId.toLowerCase()}-${slug}`.slice(0, 220);
+}
+
+export function editorialArtifactPaths(slug: string): [string, string, string] {
+  return [
+    `content/blog/${slug}.md`,
+    `content/blog/${slug}.meta.json`,
+    `public/blog/${slug}/cover.svg`,
+  ];
 }
 
 function coverSvg(title: string, publicationId: string): string {
@@ -112,7 +123,10 @@ export class GitHubEditorialPublisher implements EditorialArtifactPublisher {
 
   async publish(input: EditorialArtifactInput): Promise<EditorialArtifactResult> {
     const { publication } = input;
-    const branch = branchFor(publication.id, publication.content.slug);
+    const branch = editorialArtifactBranch(
+      publication.id,
+      publication.content.slug,
+    );
     const encodedBranch = branch.split("/").map(encodeURIComponent).join("/");
     const baseBranch = this.config.base_branch.trim();
 
@@ -138,10 +152,8 @@ export class GitHubEditorialPublisher implements EditorialArtifactPublisher {
     const parentTreeSha = parentCommit.tree?.sha;
     if (!parentTreeSha) throw this.invalidResponse("O commit de origem não contém tree SHA.");
 
-    const markdownPath = `content/blog/${publication.content.slug}.md`;
-    const metadataPath = `content/blog/${publication.content.slug}.meta.json`;
-    const coverPath = `public/blog/${publication.content.slug}/cover.svg`;
-    const artifactPaths = [markdownPath, metadataPath, coverPath];
+    const artifactPaths = editorialArtifactPaths(publication.content.slug);
+    const [markdownPath, metadataPath, coverPath] = artifactPaths;
     const tree = await this.request<GitHubTree>(
       "POST",
       `/repos/${this.owner}/${this.repo}/git/trees`,

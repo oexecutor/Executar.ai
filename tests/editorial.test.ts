@@ -376,6 +376,29 @@ describe("/api/editorial", () => {
     });
     expect(preview.status).toBe(410);
     expect(await preview.json()).toMatchObject({ error: { code: "E2_AUTOMATION_REQUIRED" } });
+
+    const unconfirmedArtifactEvidence = await call(
+      "POST",
+      `/publications/${created.data.id}/artifact/register-connector-evidence`,
+      { pull_request_number: 99 },
+    );
+    expect(unconfirmedArtifactEvidence.status).toBe(422);
+    expect(await unconfirmedArtifactEvidence.json()).toMatchObject({
+      error: { code: "CONFIRMATION_REQUIRED" },
+    });
+
+    const unconfirmedPreviewEvidence = await call(
+      "POST",
+      `/publications/${created.data.id}/preview/register-connector-evidence`,
+      {
+        url: "https://immutable-preview.vercel.app",
+        deployment_id: "dpl_test",
+      },
+    );
+    expect(unconfirmedPreviewEvidence.status).toBe(422);
+    expect(await unconfirmedPreviewEvidence.json()).toMatchObject({
+      error: { code: "CONFIRMATION_REQUIRED" },
+    });
   });
 
   it("creates the official E2 automatically and captures the Preview for the same commit", async () => {
