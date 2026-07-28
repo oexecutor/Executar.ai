@@ -144,8 +144,9 @@ export interface EditorialEvent {
 createPublication
 validatePublication
 prepareEditorialPackage
-requestPreview
-registerPreview
+runInternalQualityRules
+createGitHubArtifact
+syncVercelPreview
 requestReview
 requestChanges
 approvePublication
@@ -171,7 +172,9 @@ POST   /api/editorial/publications
 GET    /api/editorial/publications
 GET    /api/editorial/publications/:id
 POST   /api/editorial/publications/:id/validate
-POST   /api/editorial/publications/:id/preview
+POST   /api/editorial/publications/:id/quality/rules/run
+POST   /api/editorial/publications/:id/artifact/create
+POST   /api/editorial/publications/:id/preview/sync
 POST   /api/editorial/publications/:id/review
 POST   /api/editorial/publications/:id/approve
 POST   /api/editorial/publications/:id/publish
@@ -195,7 +198,10 @@ editorial_issue_qr
 editorial_generate_print
 ```
 
-Ações com efeitos externos — criar PR, publicar, fazer merge ou trocar destino de QR — exigem confirmação explícita e autorização adequada.
+Ações com efeitos externos — criar PR, publicar, fazer merge ou trocar destino
+de QR — exigem confirmação explícita e autorização adequada. A API não aceita
+branch, SHA, PR ou URL de Preview fornecidos pelo cliente como substituto da
+automação E2.
 
 ## 8. Contrato do primeiro vertical slice
 

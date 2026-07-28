@@ -7,6 +7,8 @@ import {
   type EditorialSqlClient,
   type EditorialSqlStatement,
 } from "../src/editorial/postgres-store.js";
+import { editorialAdapterRegistry } from "../src/editorial/adapters.js";
+import type { EditorialRepository } from "../src/editorial/store.js";
 import { EditorialService } from "../src/editorial/service.js";
 import { EditorialStore, MigratingEditorialStore } from "../src/editorial/store.js";
 import { memoryStore } from "./helpers/memory-store.js";
@@ -37,6 +39,40 @@ function briefing(suffix = "") {
     author: "Teste automatizado",
     source_text: article,
   };
+}
+
+function serviceWithDelivery(store: EditorialRepository, commitSha = "a".repeat(40)) {
+  return new EditorialService(
+    store,
+    editorialAdapterRegistry,
+    {
+      async publish({ publication }) {
+        return {
+          branch: `editorial/${publication.id.toLowerCase()}-${publication.content.slug}`,
+          commit_sha: commitSha,
+          pull_request_number: 99,
+          pull_request_url: "https://github.com/oexecutor/P1.Executar.ai/pull/99",
+          artifact_paths: [
+            `content/blog/${publication.content.slug}.md`,
+            `content/blog/${publication.content.slug}.meta.json`,
+            `public/blog/${publication.content.slug}/cover.svg`,
+          ],
+          created_at: "2026-07-28T12:03:00.000Z",
+        };
+      },
+    },
+    {
+      async resolve({ commit_sha }) {
+        return {
+          state: "READY",
+          url: "https://preview.example.test",
+          deployment_id: "dpl_test",
+          commit_sha,
+          created_at: "2026-07-28T12:04:00.000Z",
+        };
+      },
+    },
+  );
 }
 
 function pgliteClient(database: PGliteInterface): EditorialSqlClient {
@@ -174,7 +210,7 @@ describe("PostgresEditorialStore", () => {
     const client = pgliteClient(database);
     const workspaceA = new PostgresEditorialStore(client, "workspace-a", "preview");
     const workspaceB = new PostgresEditorialStore(client, "workspace-b", "preview");
-    const service = new EditorialService(workspaceA);
+    const service = serviceWithDelivery(workspaceA);
 
     const created = await service.createPublication(briefing());
     await service.updateContent(created.id, {
@@ -183,16 +219,8 @@ describe("PostgresEditorialStore", () => {
     });
     await service.runAdapters(created.id, "Teste automatizado");
     await service.runQualityGate(created.id, "Teste automatizado");
-    await service.startPreview(created.id, {
-      branch: "editorial/persistencia-relacional",
-      commit_sha: "a".repeat(40),
-      actor: "Teste automatizado",
-    });
-    await service.attachPreview(created.id, {
-      url: "https://preview.example.test/blog/persistencia-relacional",
-      deployment_id: "dpl_test",
-      actor: "Teste automatizado",
-    });
+    await service.createArtifact(created.id, "Teste automatizado");
+    await service.syncPreview(created.id, "Teste automatizado");
     await service.startReview(created.id, "Teste automatizado");
     await expect(service.startPublishing(created.id, "Teste automatizado"))
       .rejects.toMatchObject({ code: "INVALID_TRANSITION" });
@@ -231,20 +259,12 @@ describe("PostgresEditorialStore", () => {
     const database = new PGlite();
     await applyMigration(database);
     const store = new PostgresEditorialStore(pgliteClient(database), "workspace-review", "preview");
-    const service = new EditorialService(store);
+    const service = serviceWithDelivery(store, "b".repeat(40));
     const created = await service.createPublication(briefing(" revisão"));
     await service.runAdapters(created.id, "Teste automatizado");
     await service.runQualityGate(created.id, "Teste automatizado");
-    await service.startPreview(created.id, {
-      branch: "editorial/revisao",
-      commit_sha: "b".repeat(40),
-      actor: "Teste automatizado",
-    });
-    await service.attachPreview(created.id, {
-      url: "https://preview.example.test/blog/revisao",
-      deployment_id: "dpl_review",
-      actor: "Teste automatizado",
-    });
+    await service.createArtifact(created.id, "Teste automatizado");
+    await service.syncPreview(created.id, "Teste automatizado");
     await service.startReview(created.id, "Teste automatizado");
     const reviewed = await service.review(created.id, {
       decision: "CHANGES_REQUESTED",

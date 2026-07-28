@@ -1,9 +1,15 @@
 import crypto from "node:crypto";
 import { DomainError } from "../src/domain/errors.js";
+import {
+  UnavailableEditorialArtifactPublisher,
+  UnavailableEditorialPreviewResolver,
+} from "../src/editorial/delivery.js";
+import { githubEditorialPublisherFromEnv } from "../src/editorial/github-publisher.js";
 import { createEditorialSqlClient, PostgresEditorialStore } from "../src/editorial/postgres-store.js";
 import { EditorialService } from "../src/editorial/service.js";
 import { EditorialStore, MigratingEditorialStore } from "../src/editorial/store.js";
 import { EDITORIAL_ADAPTERS, type EditorialAdapterName } from "../src/editorial/types.js";
+import { vercelEditorialPreviewResolverFromEnv } from "../src/editorial/vercel-preview.js";
 import { requireAdminJson } from "../src/lib/admin-guard.js";
 import { absoluteUrl, json } from "../src/lib/http.js";
 import { canWriteWorkspace, getAuthenticatedRequest, type AuthenticatedRequest } from "../src/lib/request-auth.js";
@@ -35,6 +41,9 @@ function defaultService(auth: AuthenticatedRequest): EditorialService {
   );
   return new EditorialService(
     new MigratingEditorialStore(primary, legacy),
+    undefined,
+    githubEditorialPublisherFromEnv() ?? new UnavailableEditorialArtifactPublisher(),
+    vercelEditorialPreviewResolverFromEnv() ?? new UnavailableEditorialPreviewResolver(),
   );
 }
 
@@ -118,47 +127,57 @@ async function editorialHandler(request: Request): Promise<Response> {
       if (request.method === "POST" && operation === "adapters") {
         throw new DomainError(
           "MANUAL_ADAPTER_STATE_FORBIDDEN",
-          "O estado dos adapters não pode ser marcado manualmente.",
-          "Use POST /adapters/run para executar os critérios e registrar evidência.",
+          "O estado das regras internas não pode ser marcado manualmente.",
+          "Use POST /quality/rules/run para executar as verificações e registrar evidência.",
           409,
         );
       }
-      if (request.method === "POST" && operation === "adapters/run") {
+      if (
+        request.method === "POST"
+        && (operation === "quality/rules/run" || operation === "adapters/run")
+      ) {
         const adapter = text(body, "adapter");
         if (!adapter) {
-          return response(await service.runAdapters(publicationId, actor(body, auth)), requestId);
+          return response(await service.runInternalRules(publicationId, actor(body, auth)), requestId);
         }
         if (!EDITORIAL_ADAPTERS.includes(adapter as EditorialAdapterName)) {
-          throw new DomainError("INVALID_ADAPTER", `Adapter editorial inválido: ${adapter}.`, "Use deskgo, frankwatching ou ames.", 422);
+          throw new DomainError("INVALID_ADAPTER", `Regra interna inválida: ${adapter}.`, "Use uma das chaves de compatibilidade registradas.", 422);
         }
-        return response(await service.runAdapter(
+        return response(await service.runInternalRule(
           publicationId,
           adapter as EditorialAdapterName,
           actor(body, auth),
         ), requestId);
       }
+      if (request.method === "POST" && operation === "artifact/create") {
+        if (body.confirm !== true) {
+          throw new DomainError(
+            "CONFIRMATION_REQUIRED",
+            "A criação de branch, commit e PR exige confirmação explícita.",
+            "Envie confirm=true depois que o usuário acionar a E2.",
+            422,
+          );
+        }
+        return response(await service.createArtifact(publicationId, actor(body, auth)), requestId);
+      }
+      if (request.method === "POST" && operation === "preview/sync") {
+        return response(await service.syncPreview(publicationId, actor(body, auth)), requestId);
+      }
       if (request.method === "POST" && operation === "preview/start") {
-        const branch = text(body, "branch");
-        const commitSha = text(body, "commit_sha");
-        if (!branch || !commitSha) throw new DomainError("INVALID_INPUT", "branch e commit_sha são obrigatórios.", "Registre o artefato GitHub antes do build.", 422);
-        return response(await service.startPreview(publicationId, {
-          branch,
-          commit_sha: commitSha,
-          pull_request_number: typeof body.pull_request_number === "number" ? body.pull_request_number : undefined,
-          pull_request_url: text(body, "pull_request_url"),
-          publication_version: typeof body.publication_version === "number" ? body.publication_version : undefined,
-          content_hash: text(body, "content_hash"),
-          actor: actor(body, auth),
-        }), requestId);
+        throw new DomainError(
+          "E2_AUTOMATION_REQUIRED",
+          "A API não aceita mais branch, commit ou PR fornecidos pelo cliente.",
+          "Use POST /artifact/create com confirmação explícita.",
+          410,
+        );
       }
       if (request.method === "POST" && operation === "preview/attach") {
-        const previewUrl = text(body, "url");
-        if (!previewUrl) throw new DomainError("INVALID_INPUT", "url é obrigatória.", "Informe a URL imutável do Vercel Preview.", 422);
-        return response(await service.attachPreview(publicationId, {
-          url: previewUrl,
-          deployment_id: text(body, "deployment_id"),
-          actor: actor(body, auth),
-        }), requestId);
+        throw new DomainError(
+          "E2_AUTOMATION_REQUIRED",
+          "A API não aceita mais URL ou deployment fornecidos pelo cliente.",
+          "Use POST /preview/sync para capturar o deployment do commit exato.",
+          410,
+        );
       }
       if (request.method === "POST" && operation === "review/start") {
         return response(await service.startReview(publicationId, actor(body, auth)), requestId);

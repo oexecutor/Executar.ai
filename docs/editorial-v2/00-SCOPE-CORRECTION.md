@@ -1,7 +1,7 @@
 # EXECUTA.AI Blog Integration V2 — Correção de Escopo
 
 Status: **E0 — EM EXECUÇÃO**  
-Epic: [#23](https://github.com/oexecutor/Executar.ai/issues/23)
+Epic: [#23](https://github.com/oexecutor/P1.Executar.ai/issues/23)
 
 ## 1. Decisão
 
@@ -73,6 +73,12 @@ O pacote AMES permanece uma dependência de especificação/skill. Seu conteúdo
 3. identidade visual e AMES adaptam as saídas;
 4. o sistema produz um pacote editorial validável.
 
+As verificações determinísticas hoje implementadas no aplicativo são regras
+internas auxiliares da E1. Elas não executam nem substituem Desk&Go,
+Frankwatching Editor ou AMES. As chaves históricas `deskgo`,
+`frankwatching` e `ames` são mantidas no documento persistido somente por
+compatibilidade com os registros criados pelo PR #30.
+
 ### Etapa C — Preview
 
 1. criar branch dedicada;
@@ -141,14 +147,16 @@ QR_FAILED
 
 | Gate | Entrega | Situação |
 |---|---|---|
-| E0 | contrato, arquitetura e separação de domínio | EM EXECUÇÃO |
-| E1 | intake e pacote editorial | NÃO INICIADO |
-| E2 | enriquecimento e validação com DeskGo, Frankwatching e AMES | EM CORREÇÃO — `DEF-E2-001` |
-| E3 | branch, PR e Vercel Preview | BLOQUEADO POR E2 |
-| E4 | aprovação, merge e publicação | BLOQUEADO POR E2 |
-| E5 | QR Router semântico | NÃO INICIADO |
-| E6 | painel e impressão | NÃO INICIADO |
+| E0 | contrato editorial e arquitetura | IMPLEMENTADO PARCIALMENTE |
+| E1 | intake e pacote editorial, incluindo gate interno | IMPLEMENTADO PARCIALMENTE |
+| E2 | branch, artigo/assets, PR e Vercel Preview | EM CORREÇÃO — NO-GO ATÉ TESTE PONTA A PONTA |
+| E3 | aprovação, merge e publicação | PARCIAL; BLOQUEADO PELA E2 |
+| E4 | QR Router semântico | NÃO INICIADO |
+| E5 | painel e impressão | NÃO INICIADO |
 | E6 | analytics e operação | NÃO INICIADO |
+
+Esta taxonomia E0–E6 reproduz integralmente a Issue #23. Nenhuma etapa
+intermediária pode renumerar as fases oficiais.
 
 ## 8. Primeiro vertical slice
 

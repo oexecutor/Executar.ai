@@ -9,9 +9,9 @@ describe("Phase 4 React surfaces", () => {
   const styles = fs.readFileSync(new URL("../web/src/styles.css", import.meta.url), "utf8");
 
   it("ships a public product landing and the authenticated workspace separately", () => {
-    expect(landing).toContain("window.location.replace");
-    expect(landing).toContain("window.location.search");
-    expect(landing).toContain("boot-screen");
+    expect(landing).toContain('href="/entrar"');
+    expect(landing).toContain('href="/blog"');
+    expect(landing).toContain('window.location.pathname.startsWith("/entrar")');
     expect(app).toContain("<Overview");
     expect(app).toContain("<ProjectWorkspace");
     expect(app).toContain("<Board");

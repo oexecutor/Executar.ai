@@ -512,7 +512,7 @@ h1, h2, h3, p { margin-top: 0; }
 .editorial-status { padding: 0.42rem 0.55rem; background: var(--canvas-deep); color: var(--ink); text-transform: uppercase; }
 .status-approved, .status-published { background: #dce9e0; color: var(--success); }
 .status-validation_failed, .status-adapter_failed, .status-preview_failed, .status-publish_failed { background: #f5ded9; color: var(--danger); }
-.status-content_ready, .status-enriching, .status-adapters_applied, .status-ready_for_preview, .status-preview_ready, .status-in_review { background: var(--orange-soft); color: var(--orange-dark); }
+.status-content_ready, .status-enriching, .status-adapters_applied, .status-ready_for_preview, .status-preview_ready, .status-in_review { background: var(--orange-soft); color: var(--orange-text); }
 .editorial-grid { display: grid; grid-template-columns: minmax(220px, 0.7fr) minmax(320px, 1.3fr); gap: 1rem; }
 .editorial-panel { min-height: 360px; padding: clamp(1.2rem, 3vw, 2rem); border: 1px solid var(--line); background: var(--surface); }
 .editorial-panel h3 { margin: 2.2rem 0 0.7rem; font-size: clamp(1.7rem, 3vw, 3rem); line-height: 0.98; letter-spacing: -0.045em; }

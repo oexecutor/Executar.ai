@@ -80,8 +80,11 @@ function publication(status: EditorialPublication["status"] = "DRAFT"): Editoria
       commit_sha: null,
       publication_version: null,
       content_hash: null,
+      artifact_contract_version: null,
+      artifact_paths: [],
+      created_at: null,
     },
-    preview: { deployment_id: null, url: null, created_at: null },
+    preview: { deployment_id: null, url: null, created_at: null, commit_sha: null },
     approval: { decision: "PENDING", reviewer: null, note: null, decided_at: null, approved_commit_sha: null },
     publication: { url: null, published_at: null, commit_sha: null },
     events: [{ id: "evt-1", type: "CREATED", at: "2026-07-27T12:00:00.000Z", actor: "Leonardo Batista", detail: "Briefing editorial criado." }],
@@ -120,7 +123,7 @@ describe("Editorial", () => {
     expect(screen.getAllByText("Rascunho")).toHaveLength(2);
   });
 
-  it("executa E2 antes de liberar o gate e o artefato GitHub", async () => {
+  it("executa as regras internas dentro da E1 antes de liberar a E2 oficial", async () => {
     const user = userEvent.setup();
     const draft = publication();
     const enriched = {
@@ -165,20 +168,88 @@ describe("Editorial", () => {
 
     render(<Editorial />);
     expect(await screen.findAllByRole("button", { name: "Executar" })).toHaveLength(3);
-    expect(screen.queryByRole("button", { name: /executar gate editorial final/i })).not.toBeInTheDocument();
+    expect(screen.getByText(/não executam desk&go, frankwatching nem ames/i)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /executar gate interno da e1/i })).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: /aplicar todos os critérios editoriais/i }));
+    await user.click(screen.getByRole("button", { name: /executar todas as regras internas/i }));
     await waitFor(() => expect(postJson).toHaveBeenCalledWith(
-      `/api/editorial/publications/${draft.id}/adapters/run`,
+      `/api/editorial/publications/${draft.id}/quality/rules/run`,
       {},
     ));
 
-    await user.click(await screen.findByRole("button", { name: /executar gate editorial final/i }));
+    await user.click(await screen.findByRole("button", { name: /executar gate interno da e1/i }));
     await waitFor(() => expect(postJson).toHaveBeenCalledWith(
       `/api/editorial/publications/${draft.id}/validate`,
       {},
     ));
-    expect(await screen.findByRole("heading", { name: "Registrar artefato GitHub" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Criar branch, commit, PR e Preview" })).toBeInTheDocument();
     expect(putJson).not.toHaveBeenCalled();
+  });
+
+  it("inicia a E2 sem aceitar branch, commit, PR ou URL digitados", async () => {
+    const user = userEvent.setup();
+    const ready = publication("READY_FOR_PREVIEW");
+    ready.quality = {
+      ...ready.quality,
+      valid: true,
+      gate_result: "PASSED",
+      score: 92,
+      checked_at: "2026-07-27T12:02:00.000Z",
+      content_hash: "a".repeat(64),
+      adapters: {
+        deskgo: adapterEvidence("deskgo", "APPLIED"),
+        frankwatching: adapterEvidence("frankwatching", "APPLIED"),
+        ames: adapterEvidence("ames", "APPLIED"),
+      },
+    };
+    const building: EditorialPublication = {
+      ...ready,
+      status: "PREVIEW_BUILDING",
+      github: {
+        branch: `editorial/${ready.id.toLowerCase()}-${ready.content.slug}`,
+        pull_request_number: 42,
+        pull_request_url: "https://github.com/oexecutor/P1.Executar.ai/pull/42",
+        commit_sha: "b".repeat(40),
+        publication_version: 1,
+        content_hash: "a".repeat(64),
+        artifact_contract_version: "1.0",
+        artifact_paths: [
+          `content/blog/${ready.content.slug}.md`,
+          `content/blog/${ready.content.slug}.meta.json`,
+        ],
+        created_at: "2026-07-27T12:03:00.000Z",
+      },
+    };
+    vi.mocked(getJson)
+      .mockResolvedValueOnce([{
+        id: ready.id,
+        title: ready.briefing.title,
+        slug: ready.content.slug,
+        status: ready.status,
+        version: 1,
+        preview_url: null,
+        publication_url: null,
+        updated_at: ready.updated_at,
+      }])
+      .mockResolvedValueOnce(ready);
+    vi.mocked(postJson)
+      .mockResolvedValueOnce(building)
+      .mockResolvedValue(building);
+
+    render(<Editorial />);
+    expect(await screen.findByText(/nenhuma evidência é digitada manualmente/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText("Branch")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Commit SHA")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("URL imutável do Preview")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /criar artefato e iniciar preview/i }));
+    await waitFor(() => expect(postJson).toHaveBeenCalledWith(
+      `/api/editorial/publications/${ready.id}/artifact/create`,
+      { confirm: true },
+    ));
+    expect(await screen.findByRole("link", { name: /abrir pr #42/i })).toHaveAttribute(
+      "href",
+      "https://github.com/oexecutor/P1.Executar.ai/pull/42",
+    );
   });
 });

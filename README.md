@@ -16,22 +16,30 @@ PWA multiusuário para transformar contexto em execução verificável. O produt
 > A auditoria consolidada de repositórios, pull requests, branches e deployments está disponível em:
 > **[MASTER INDEX E RELATÓRIO DE AUDITORIA — GITHUB × VERCEL](MASTER_INDEX_AUDITORIA_GITHUB_VERCEL_2026-07-27.md)**.
 >
-> Prioridades bloqueantes: corrigir o deployment Git-linked do `P2.executar.business`, eliminar a duplicidade de projetos Vercel e migrar o pacote AMES antes de encerrar o PR #4 sem merge.
+> O relatório preserva o estado observado em 27/07/2026. Mudanças posteriores,
+> incluindo o merge do PR #4, devem ser avaliadas como eventos novos e não
+> alteram retroativamente as evidências daquela auditoria.
 
 ## Estado
 
 > [!CAUTION]
-> **Gate editorial E2 — NO-GO para lançamento.** A publicação não pode avançar ao Preview enquanto DeskGo, Frankwatching e AMES estiverem pendentes ou sem evidência. Consulte o plano obrigatório [DEF-E2-001 — Enriquecimento e validação editorial antes do Preview](docs/editorial-v2/DEF-E2-001-ENRICHMENT-VALIDATION-GATE.md).
+> **E2 oficial da Issue #23 — NO-GO para lançamento.** A E2 é a automação
+> GitHub + Vercel Preview. O gate determinístico atual pertence à E1 e não
+> executa Desk&Go, Frankwatching ou AMES. Consulte o
+> [contrato da E2](docs/editorial-v2/03-E2-GITHUB-VERCEL-AUTOMATION.md) e o
+> [registro de reclassificação](docs/editorial-v2/DEF-E2-001-ENRICHMENT-VALIDATION-GATE.md).
 
 A Fase 4 entrega a fundação funcional em uma branch de Preview. Ela não autoriza publicação em produção. A promoção só pode ocorrer depois de:
 
 1. aplicar e validar a migração Supabase;
 2. configurar os secrets do Preview;
 3. executar a suíte completa e a homologação humana;
-4. corrigir e aprovar o gate editorial E2;
+4. homologar a automação GitHub + Vercel Preview da E2 ponta a ponta;
 5. registrar a aprovação de lançamento.
 
-Consulte [docs/PHASE_4_IMPLEMENTATION.md](docs/PHASE_4_IMPLEMENTATION.md), [docs/PARITY_MATRIX_PHASE_4.md](docs/PARITY_MATRIX_PHASE_4.md) e o [plano obrigatório do gate E2](docs/editorial-v2/DEF-E2-001-ENRICHMENT-VALIDATION-GATE.md).
+Consulte [docs/PHASE_4_IMPLEMENTATION.md](docs/PHASE_4_IMPLEMENTATION.md),
+[docs/PARITY_MATRIX_PHASE_4.md](docs/PARITY_MATRIX_PHASE_4.md) e o
+[contrato da automação E2](docs/editorial-v2/03-E2-GITHUB-VERCEL-AUTOMATION.md).
 
 ## Arquitetura
 
@@ -114,6 +122,12 @@ Use `.env.example` como contrato público e sem segredos. Para desenvolvimento l
 | `SUPABASE_PUBLISHABLE_KEY` | Sim | Pública | Local, Preview e Production | Supabase API Settings |
 | `SUPABASE_SERVICE_ROLE_KEY` | Sim | Privada, servidor | Preview e Production | Supabase API Settings |
 | `DATABASE_URL` | Sim durante a migração OAuth | Privada, servidor | Local, Preview e Production | Supabase/Postgres, preferencialmente pooler |
+| `EDITORIAL_GITHUB_TOKEN` | Para E2 | Privada, servidor | Preview e Production | Token granular: Contents e Pull requests com escrita |
+| `EDITORIAL_GITHUB_REPOSITORY` | Para E2 | Não sensível | Preview e Production | `oexecutor/P1.Executar.ai` |
+| `EDITORIAL_GITHUB_BASE_BRANCH` | Para E2 | Não sensível | Preview e Production | `main` |
+| `EDITORIAL_VERCEL_TOKEN` | Para E2 | Privada, servidor | Preview e Production | Token de leitura do projeto |
+| `EDITORIAL_VERCEL_PROJECT_ID` | Para E2 | Não sensível | Preview e Production | ID `prj_…` do projeto editorial |
+| `EDITORIAL_VERCEL_TEAM_ID` | Para E2 | Não sensível | Preview e Production | ID `team_…` |
 | `ADMIN_PASSWORD` | Não, legado | Privada, servidor | Somente implantação legada | Não configurar sem dependência confirmada |
 | `SMOKE_BASE_URL` | Apenas testes smoke | Não sensível | Local, CI ou Preview | URL do ambiente testado |
 
@@ -127,6 +141,9 @@ npm run env:check
 
 # Confere os valores reais do ambiente atual antes de Preview/produção
 npm run env:check:runtime
+
+# Exige e valida as seis variáveis server-side da E2
+npm run env:check:editorial-e2
 ```
 
 A checagem padrão também faz parte de `npm run check`. A checagem de runtime exige que as variáveis obrigatórias estejam efetivamente cadastradas no ambiente atual.
@@ -149,11 +166,13 @@ As 11 ferramentas `executar_*` cobrem validação, criação, leitura, status, p
 O fluxo oficial é:
 
 ```text
-briefing → conteúdo estruturado → adapters DeskGo/Frankwatching/AMES
-→ gate editorial final → branch → pull request → Vercel Preview
+E1: briefing → conteúdo estruturado → regras internas → pacote aprovado
+→ E2: artigo/assets → branch → commit → PR draft → Vercel Preview do mesmo SHA
 → testes → homologação → aprovação humana → produção
 ```
 
-O Preview deve ser bloqueado enquanto o gate E2 estiver incompleto, pendente, falho ou desatualizado em relação à versão e ao hash atuais do conteúdo.
+O Preview é bloqueado enquanto a E1 estiver incompleta e só pode ser
+registrado pela E2 automática. Branch, SHA, PR, URL e deployment fornecidos
+pelo cliente são rejeitados.
 
 Rollback antes da produção consiste em fechar o PR e remover o Preview. Depois da promoção, reverta o commit de release e restaure o backup do banco conforme o runbook de lançamento.

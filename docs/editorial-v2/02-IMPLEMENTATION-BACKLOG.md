@@ -1,13 +1,12 @@
 # Backlog de implementação — EXECUTA.AI Blog Integration V2
 
-Epic: [#23](https://github.com/oexecutor/Executar.ai/issues/23)
+Epic: [#23](https://github.com/oexecutor/P1.Executar.ai/issues/23)
 
 ## Estado de implementação — 27/07/2026
 
 - `EDV2-010`: implementado na `main` pelo PR #25.
 - `EDV2-011`: implementado na branch `feat/editorial-intake-approval`, aguardando Preview e merge.
-- `EDV2-012`: pendente; o conteúdo permanece no objeto editorial, sem pacote versionado em `content/blog`.
-- `EDV2-020` e `EDV2-021`: pendentes como automação; a interface registra manualmente branch, commit, PR e Preview sem criar ou mesclar artefatos.
+- `EDV2-012`, `EDV2-020` e `EDV2-021`: implementados na branch de correção da Issue #23, ainda sem homologação ponta a ponta com credenciais server-side.
 - `EDV2-022` e `EDV2-030`: interface e decisão auditável implementadas; a decisão continua vinculada ao commit registrado.
 - `EDV2-031`: registro de publicação disponível; merge automático permanece fora desta release.
 
@@ -111,21 +110,21 @@ content/blog/<slug>.meta.json
 - slug sem colisão;
 - preview local do artigo.
 
-## Prioridade P0 — E2 Enriquecimento e validação editorial
+### DEF-E2-001 — Gate interno reclassificado para a E1
 
-### DEF-E2-001 — Executar adapters e proteger o Preview
+O identificador é preservado como evidência histórica do defeito, mas não
+define a fase. O código introduzido pelo PR #30 pertence ao fechamento da E1.
 
 **Aceite**
 
-- DeskGo, Frankwatching e AMES são executados, não marcados pelo cliente;
+- as verificações são identificadas como regras internas, sem alegar execução de Desk&Go, Frankwatching ou AMES;
 - cada resultado registra versão, hash, horários, achados, saída e ator;
 - alteração de conteúdo torna resultados anteriores `STALE`;
 - H1, H2, conteúdo mínimo e briefing completo são bloqueadores;
-- somente os três adapters `APPLIED` com evidência liberam o gate final;
-- `preview/start` revalida estado, gate, versão e hash server-side;
+- somente as três regras internas `APPLIED` com evidência liberam o pacote;
 - pontuação editorial não substitui o gate técnico.
 
-## Prioridade P0 — E3 GitHub e Vercel Preview
+## Prioridade P0 — E2 GitHub e Vercel Preview
 
 ### EDV2-020 — Criar branch e PR
 
@@ -135,6 +134,7 @@ content/blog/<slug>.meta.json
 - commit contém apenas pacote editorial necessário;
 - PR referencia a publicação e checklist;
 - operação requer confirmação explícita.
+- branch, SHA e PR não são aceitos quando enviados manualmente pelo cliente.
 
 ### EDV2-021 — Registrar Vercel Preview
 
@@ -142,6 +142,7 @@ content/blog/<slug>.meta.json
 
 - identificar deployment do commit/PR;
 - salvar deployment ID e URL imutável;
+- rejeitar deployment de produção e SHA diferente;
 - validar `/blog/:slug` por Playwright;
 - registrar falha como `PREVIEW_FAILED`.
 
@@ -153,7 +154,7 @@ content/blog/<slug>.meta.json
 - botões `Solicitar alterações` e `Aprovar`;
 - nenhuma ação de merge no primeiro clique sem confirmação.
 
-## Prioridade P0 — E4 Aprovação e publicação
+## Prioridade P0 — E3 Aprovação e publicação
 
 ### EDV2-030 — Aprovação auditável
 
@@ -173,7 +174,7 @@ content/blog/<slug>.meta.json
 - atualiza estado para `PUBLISHED`;
 - registra rollback disponível.
 
-## Prioridade P1 — E5 QR Router
+## Prioridade P1 — E4 QR Router
 
 ### EDV2-040 — Contrato de token semântico
 
@@ -204,7 +205,7 @@ Token resolve:
 - leitura validada em celular real;
 - teste automatizado de resolução.
 
-## Prioridade P1 — E6 Impressão
+## Prioridade P1 — E5 Impressão
 
 ### EDV2-050 — Painel A4 editorial
 
@@ -224,7 +225,7 @@ Token resolve:
 - verificação de contraste, overflow e QR;
 - dados estruturados paralelos ao visual.
 
-## Prioridade P2 — E7 Analytics
+## Prioridade P2 — E6 Analytics
 
 ### EDV2-060 — Métricas por publicação
 
@@ -246,15 +247,17 @@ Token resolve:
 
 ```text
 Sprint editorial 01: EDV2-001 → 002 → 003
-Sprint editorial 02: EDV2-010 → 011 → 012
-Sprint editorial 03: DEF-E2-001
-Sprint editorial 04: EDV2-020 → 021 → 022
-Sprint editorial 05: EDV2-030 → 031
-Sprint editorial 06: EDV2-040 → 041
-Sprint editorial 07: EDV2-050 → 051
-Sprint editorial 08: EDV2-060 → 061
+Sprint editorial 02: EDV2-010 → 011 → DEF-E2-001 → 012
+Sprint editorial 03: EDV2-020 → 021 → 022
+Sprint editorial 04: EDV2-030 → 031
+Sprint editorial 05: EDV2-040 → 041
+Sprint editorial 06: EDV2-050 → 051
+Sprint editorial 07: EDV2-060 → 061
 ```
 
 ## Gate imediato
 
-A próxima implementação deve começar por **EDV2-001**, acompanhada de testes unitários da máquina de estados. Não iniciar QR, impressão ou analytics antes de o objeto editorial persistir e recuperar corretamente.
+A decisão permanece **NO-GO** até `EDV2-020` e `EDV2-021` funcionarem
+ponta a ponta em Preview: clique confirmado no painel → pacote → branch →
+commit → PR draft → deployment Vercel do mesmo SHA → `/blog/:slug` visível.
+Não iniciar QR, impressão ou analytics antes dessa evidência.

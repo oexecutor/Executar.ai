@@ -25,6 +25,18 @@ export type EditorialStatus = typeof EDITORIAL_STATUSES[number];
 export const EDITORIAL_ADAPTERS = ["deskgo", "frankwatching", "ames"] as const;
 export type EditorialAdapterName = typeof EDITORIAL_ADAPTERS[number];
 
+/**
+ * Compatibility keys persisted by PR #30.
+ *
+ * They identify deterministic internal quality rules. They do not prove that
+ * the external Desk&Go, Frankwatching or AMES skills were executed.
+ */
+export const EDITORIAL_INTERNAL_RULE_LABELS: Record<EditorialAdapterName, string> = {
+  deskgo: "Formato e densidade — regra interna",
+  frankwatching: "Clareza e estrutura — regra interna",
+  ames: "Conformidade multiformato — regra interna",
+};
+
 export const EDITORIAL_ADAPTER_STATUSES = [
   "NOT_RUN",
   "RUNNING",
@@ -94,12 +106,16 @@ export interface EditorialGitHubState {
   commit_sha: string | null;
   publication_version: number | null;
   content_hash: string | null;
+  artifact_contract_version: "1.0" | null;
+  artifact_paths: string[];
+  created_at: string | null;
 }
 
 export interface EditorialPreviewState {
   deployment_id: string | null;
   url: string | null;
   created_at: string | null;
+  commit_sha: string | null;
 }
 
 export interface EditorialApproval {

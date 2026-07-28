@@ -1,4 +1,5 @@
 import type { BlogCategory, BlogPost } from "./types";
+import { generatedBlogPosts } from "./generated-content";
 
 export const blogCategories: BlogCategory[] = [
   "Método EXECUTA",
@@ -9,7 +10,7 @@ export const blogCategories: BlogCategory[] = [
   "Governança",
 ];
 
-export const blogPosts: BlogPost[] = [
+const seedBlogPosts: BlogPost[] = [
   {
     slug: "da-ideia-a-proxima-acao",
     title: "Da ideia à próxima ação: como o EXECUTA.AI estrutura projetos",
@@ -317,6 +318,8 @@ export const blogPosts: BlogPost[] = [
     ],
   },
 ];
+
+export const blogPosts: BlogPost[] = [...generatedBlogPosts, ...seedBlogPosts];
 
 export function findBlogPost(slug: string): BlogPost | undefined {
   return blogPosts.find((post) => post.slug === slug);

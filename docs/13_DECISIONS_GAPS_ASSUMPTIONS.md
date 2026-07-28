@@ -46,7 +46,7 @@
 | GAP-013 | Privacy policy and terms have not been legally validated | owner/legal review before G7 |
 | GAP-014 | Dependency audit reports high-severity findings in the web dependency tree | triage without automatic breaking upgrades; create a controlled remediation plan |
 | GAP-015 | Historical Netlify references may remain outside the files updated in G1 | search and mark remaining references as historical or migrate them |
-| GAP-016 | AMES skill package PR #4 belongs to the plugin/skill source of truth rather than the application runtime | migrate deliberately to the plugin suite before closing the draft PR |
+| GAP-016 | O pacote AMES do antigo PR #4 foi mesclado na `main`, mas os validadores internos não executam a skill e a fonte de verdade da suíte ainda precisa ser formalizada | separar especificação/skill do runtime e registrar integração real antes de alegar execução |
 
 ## Assumptions to validate
 

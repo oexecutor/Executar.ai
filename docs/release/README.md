@@ -5,10 +5,10 @@ Pacote de auditoria, roadmap e operação de lançamento do **EXECUTA.AI**.
 - Baseline inicial: **2026-07-24**, commit `28a689f`.
 - Homologação e fechamento do G1: **2026-07-25**.
 - Início do G2 — contrato e teste do ciclo central: **2026-07-25**.
-- Defeito editorial P0 `DEF-E2-001`: correção da PR #30 **APROVADA PARA
-  MERGE E PRODUÇÃO em 2026-07-28**, com smoke test pós-deploy obrigatório.
+- Defeito editorial histórico `DEF-E2-001`: PR #30 aprovado e mesclado, mas
+  reclassificado como gate interno da E1; a E2 oficial permanece **NO-GO**.
 - Ambiente canônico: **Vercel**, projeto `executar-ai`.
-- Fonte documental: branch `main` de `oexecutor/Executar.ai`.
+- Fonte documental: branch `main` de `oexecutor/P1.Executar.ai`.
 
 > **Desambiguação obrigatória**: os gates **G0–G10** deste pacote são sobre
 > **prontidão de lançamento público**. Eles não são os Gates 0–5 de
@@ -22,7 +22,7 @@ Pacote de auditoria, roadmap e operação de lançamento do **EXECUTA.AI**.
 ## Leitura recomendada
 
 1. [`12-HOMOLOGACAO-E2-2026-07-28.md`](./12-HOMOLOGACAO-E2-2026-07-28.md) —
-   evidências, aprovação humana, autorização de merge e verificação pós-deploy.
+   correção do alcance: evidência do PR #30, não homologação da E2 oficial.
 2. [`11-DEF-E2-001-NO-GO.md`](./11-DEF-E2-001-NO-GO.md) — registro histórico
    do defeito P0 e dos critérios que bloquearam o lançamento.
 3. [`10-G2-CONTRATO-CICLO-CENTRAL.md`](./10-G2-CONTRATO-CICLO-CENTRAL.md) —
@@ -52,7 +52,7 @@ Pacote de auditoria, roadmap e operação de lançamento do **EXECUTA.AI**.
 | `09-HOMOLOGACAO-G1-2026-07-25.md` | Evidência viva da retomada e fechamento do G1 |
 | `10-G2-CONTRATO-CICLO-CENTRAL.md` | Contrato, decisão PLANGEN, comparação de domínios e smoke test G2 |
 | `11-DEF-E2-001-NO-GO.md` | Defeito P0, decisão NO-GO e critérios de saída |
-| `12-HOMOLOGACAO-E2-2026-07-28.md` | Aprovação humana, GO da correção E2 e verificação pós-deploy |
+| `12-HOMOLOGACAO-E2-2026-07-28.md` | Registro histórico do PR #30 e correção de classificação |
 
 ## Estado resumido
 
@@ -64,12 +64,11 @@ Pacote de auditoria, roadmap e operação de lançamento do **EXECUTA.AI**.
   PLANGEN estão registrados; foi adicionada cobertura automatizada de criação,
   81 ações, 9 checkpoints, exportação, persistência e recuperação. Falta o smoke
   de escrita pelo fluxo real da interface.
-- **Blog Integration V2 — E2:** correção `DEF-E2-001` **APROVADA PARA MERGE E
-  PRODUÇÃO** após validação dos dois Vercel Previews e autorização humana. O
-  smoke test de produção continua obrigatório. O PR #29 permanece como
-  evidência do defeito e não deve ser mesclado como homologação.
-- **PR #4 — AMES:** permanece em draft, fora do runtime do app, aguardando
-  migração controlada para `HQ-EXECUTA-AI-PLUGIN-SUITE`.
+- **Blog Integration V2 — E2:** **NO-GO** até a automação branch → pacote →
+  PR → Vercel Preview do mesmo SHA funcionar ponta a ponta. O PR #29 permanece
+  evidência histórica, não homologação.
+- **AMES:** o pacote do antigo PR #4 passou a existir na `main`, mas os
+  validadores internos do aplicativo não executam essa skill.
 
 ## Regra de escrita externa
 

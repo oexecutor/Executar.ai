@@ -6,6 +6,12 @@ import type {
   EditorialPublication,
 } from "./types.js";
 
+/**
+ * Deterministic application-owned checks introduced by PR #30.
+ *
+ * The persisted keys are retained for compatibility, but these runners are
+ * not integrations with the Desk&Go, Frankwatching or AMES skills.
+ */
 export interface EditorialAdapterInput {
   publication: EditorialPublication;
   content_hash: string;
@@ -98,7 +104,7 @@ const deskgo: EditorialAdapterRunner = {
       findings.errors.push("O canal editorial deve ser EXECUTA_JOURNAL.");
     }
     if (publication.briefing.language !== "pt-BR") {
-      findings.errors.push("O perfil DeskGo desta versão exige conteúdo em pt-BR.");
+      findings.errors.push("A regra interna desta versão exige conteúdo em pt-BR.");
     }
     if (h1Count !== 1) {
       findings.errors.push("A hierarquia editorial exige exatamente um título H1.");
