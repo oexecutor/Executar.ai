@@ -35,4 +35,16 @@ describe("editorial E2 environment bootstrap", () => {
       EDITORIAL_VERCEL_TEAM_ID: "team_example",
     })).toBeInstanceOf(VercelEditorialPreviewResolver);
   });
+
+  it("accepts established server-side CI token aliases", () => {
+    expect(githubEditorialPublisherFromEnv({
+      GITHUB_TOKEN: "github-token",
+    })).toBeInstanceOf(GitHubEditorialPublisher);
+    expect(githubEditorialPublisherFromEnv({
+      GH_TOKEN: "github-token",
+    })).toBeInstanceOf(GitHubEditorialPublisher);
+    expect(vercelEditorialPreviewResolverFromEnv({
+      VERCEL_TOKEN: "vercel-token",
+    })).toBeInstanceOf(VercelEditorialPreviewResolver);
+  });
 });
