@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node ../scripts/generate-blog-content.mjs && tsc --noEmit && vite build",
+    "build": "node ../scripts/generate-blog-content.mjs && node ../scripts/generate-sitemap.mjs && tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:e2e": "playwright test",

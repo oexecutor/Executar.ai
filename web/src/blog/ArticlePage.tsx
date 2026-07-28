@@ -42,9 +42,66 @@ export function ArticlePage({ post }: ArticlePageProps) {
     const originalDescription = description?.content;
     document.title = `${post.title} — EXECUTA.AI`;
     if (description) description.content = post.excerpt;
+
+    const url = `${window.location.origin}/blog/${post.slug}`;
+    const cleanups: Array<() => void> = [];
+
+    function setMeta(selector: string, create: () => HTMLElement, content: string) {
+      let element = document.querySelector<HTMLMetaElement | HTMLLinkElement>(selector);
+      const isNew = !element;
+      if (!element) {
+        element = create() as HTMLMetaElement | HTMLLinkElement;
+        document.head.appendChild(element);
+      }
+      const attribute = element.tagName === "LINK" ? "href" : "content";
+      const original = element.getAttribute(attribute);
+      element.setAttribute(attribute, content);
+      cleanups.push(() => {
+        if (isNew) element?.remove();
+        else if (original !== null) element?.setAttribute(attribute, original);
+      });
+    }
+
+    setMeta('link[rel="canonical"]', () => {
+      const link = document.createElement("link");
+      link.rel = "canonical";
+      return link;
+    }, url);
+    setMeta('meta[property="og:title"]', () => {
+      const meta = document.createElement("meta");
+      meta.setAttribute("property", "og:title");
+      return meta;
+    }, post.title);
+    setMeta('meta[property="og:description"]', () => {
+      const meta = document.createElement("meta");
+      meta.setAttribute("property", "og:description");
+      return meta;
+    }, post.excerpt);
+    setMeta('meta[property="og:url"]', () => {
+      const meta = document.createElement("meta");
+      meta.setAttribute("property", "og:url");
+      return meta;
+    }, url);
+    setMeta('meta[property="og:type"]', () => {
+      const meta = document.createElement("meta");
+      meta.setAttribute("property", "og:type");
+      return meta;
+    }, "article");
+    setMeta('meta[name="twitter:title"]', () => {
+      const meta = document.createElement("meta");
+      meta.setAttribute("name", "twitter:title");
+      return meta;
+    }, post.title);
+    setMeta('meta[name="twitter:description"]', () => {
+      const meta = document.createElement("meta");
+      meta.setAttribute("name", "twitter:description");
+      return meta;
+    }, post.excerpt);
+
     return () => {
       document.title = originalTitle;
       if (description && originalDescription !== undefined) description.content = originalDescription;
+      for (const cleanup of cleanups) cleanup();
     };
   }, [post]);
 

@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Allow: /blog
+Disallow: /app
+Disallow: /entrar
+Disallow: /admin
+
+Sitemap: https://executar-ai.vercel.app/sitemap.xml
