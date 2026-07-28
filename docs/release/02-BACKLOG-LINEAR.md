@@ -11,7 +11,8 @@ conector do Linear está disponível nesta sessão (ver §Limitação abaixo).
 - **Project**: constante `EXECUTA.AI — LANÇAMENTO PÚBLICO`.
 - **Milestone**: um por gate, `G{n} — {nome do gate}`.
 - **Epic / Issue ID**: vocabulário fixo de área — `BE` (backend), `FE`
-  (frontend), `BLOG`, `QA`, `SEC`, `DATA`, `MCP`, `DOC`, `REL`, `OPS`, e três
+  (frontend), `BLOG`, `QA`, `SEC`, `DATA`, `MCP`, `DOC`, `REL`, `OPS`, `GTM`
+  (adicionado em 2026-07-28, ver `14-PLANO-GTM.md`), e três
   áreas para as skills revisadas nesta conversa: `PLANGEN`
   (`plano-operacional-rastreavel`), `DESKOS` (`desk-os-neurocompatible-projects`
   + handoff `executar-mcp-server`), `WORKBOOK` (`deskgo-business-workbook`).
@@ -28,21 +29,31 @@ conector do Linear está disponível nesta sessão (ver §Limitação abaixo).
 
 ## Totais (calculados diretamente do CSV, não estimados de cabeça)
 
+> Atualizado em **2026-07-28**: `EXA-G5-QA-001` foi marcado como
+> **resolvido** (ver `13-AUDITORIA-RIGOROSA-2026-07-28.md` §2 — mudança
+> arquitetural eliminou a corrida com `/icon.svg`, confirmada por execução
+> real desta sessão), e o epic `GTM` foi adicionado com 6 issues novas em
+> G4/G6/G7/G9 (ver `14-PLANO-GTM.md`).
+
 - **Milestones**: 11 (G0–G10).
-- **Issues**: 21.
-- **Esforço total estimado**: 72 horas — cobre auditoria, todas as decisões
-  necessárias, e o trabalho já claramente escopável. **Não** cobre a
-  implementação decorrente das decisões de G1/G2/G3/G7 ainda não tomadas
-  (ex.: reativar autenticação, migrar backend de persistência, redesenhar a
-  conexão do PLANGEN) — essas viram issues novas, com estimativa própria,
-  assim que cada decisão for registrada.
-- **Issues P0**: 7 — `EXA-G0-DOC-001`, `EXA-G1-BE-001`, `EXA-G2-BE-001`,
-  `EXA-G3-SEC-001`, `EXA-G3-DATA-001`, `EXA-G7-DOC-001`, `EXA-G9-OPS-001`.
+- **Issues**: 27 (21 originais + 6 do epic `GTM`).
+- **Esforço total estimado**: 86 horas (72h do baseline original + 14h do
+  epic `GTM`) — cobre auditoria, todas as decisões necessárias, e o
+  trabalho já claramente escopável. **Não** cobre a implementação
+  decorrente das decisões de G1/G2/G3/G7 ainda não tomadas (ex.: reativar
+  autenticação, migrar backend de persistência, redesenhar a conexão do
+  PLANGEN) — essas viram issues novas, com estimativa própria, assim que
+  cada decisão for registrada.
+- **Issues P0**: 8 — `EXA-G0-DOC-001`, `EXA-G1-BE-001`, `EXA-G2-BE-001`,
+  `EXA-G3-SEC-001`, `EXA-G3-DATA-001`, `EXA-G7-DOC-001`, `EXA-G9-OPS-001`,
+  `EXA-G7-GTM-001` (decisão de modelo de negócio).
 - **Capacidade semanal considerada**: 25 horas.
-- **Data proposta de lançamento**: 2026-08-14 (**PROPOSTA**, calculada por
-  caminho crítico — 72h de trabalho já escopável ÷ 25h/semana ≈ 3 semanas
-  corridas a partir de hoje, em ondas de ~72h corridas — não é um
-  compromisso aprovado; ver `01-ROADMAP-LANCAMENTO.md`).
+- **Data proposta de lançamento**: 2026-08-14 (**PROPOSTA, desatualizada** —
+  calculada a partir de 2026-07-24; hoje é 2026-07-28 e G2 segue em
+  execução. Ver `13-AUDITORIA-RIGOROSA-2026-07-28.md` §3.5: recomendado
+  rebaseline explícito no próximo fechamento de gate, não usar esta data
+  como compromisso. Não é um compromisso aprovado; ver
+  `01-ROADMAP-LANCAMENTO.md`).
 
 ## Caminho crítico (resumo)
 

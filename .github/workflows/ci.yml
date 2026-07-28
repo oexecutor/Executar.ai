@@ -21,6 +21,8 @@ jobs:
         run: npm test
       - name: Lint
         run: npm run lint
+      - name: Dependency vulnerability audit
+        run: npm audit --audit-level=high
 
   web:
     runs-on: ubuntu-latest
@@ -39,6 +41,8 @@ jobs:
         run: npm --prefix web run lint
       - name: Component tests
         run: npm --prefix web test
+      - name: Dependency vulnerability audit
+        run: npm --prefix web audit --audit-level=high
       - name: Install Playwright browser
         run: npx --prefix web playwright install --with-deps chromium
       - name: End-to-end tests (real browser + accessibility checks)
