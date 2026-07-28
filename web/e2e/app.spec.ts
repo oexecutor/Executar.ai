@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { checkA11y, injectAxe } from "axe-playwright";
 import type { EditorialPublication } from "../src/editorial/types";
+import { blogPosts } from "../src/blog/content";
 import { resetState, startMockServer } from "./mock-server";
 
 const PORT = 4173;
@@ -398,17 +399,23 @@ test.describe("EXECUTA Journal — blog", () => {
   test("carrossel navega por botão e por teclado", async ({ page }) => {
     await page.setViewportSize({ width: 700, height: 900 });
     await page.goto("/blog");
+    // O total de slides no carrossel é derivado da mesma fonte que o app usa
+    // (todos os posts exceto o featured, ver BlogIndex.tsx) em vez de um
+    // número fixo — evita quebrar sempre que um artigo é publicado ou
+    // removido.
+    const carouselTotal = blogPosts.filter((post) => !post.featured).length;
+    const totalLabel = carouselTotal.toString().padStart(2, "0");
     const status = page.locator(".blog-carousel-status span");
-    await expect(status).toHaveText("01 / 07");
+    await expect(status).toHaveText(`01 / ${totalLabel}`);
     await page.getByRole("button", { name: "Próximo artigo" }).click();
-    await expect(status).toHaveText("02 / 07");
+    await expect(status).toHaveText(`02 / ${totalLabel}`);
 
     const region = page.getByRole("region", { name: "Artigos em carrossel" });
     await region.focus();
     await page.keyboard.press("ArrowRight");
-    await expect(status).toHaveText("03 / 07");
+    await expect(status).toHaveText(`03 / ${totalLabel}`);
     await page.keyboard.press("ArrowLeft");
-    await expect(status).toHaveText("02 / 07");
+    await expect(status).toHaveText(`02 / ${totalLabel}`);
   });
 
   test("artigo abre por slug diretamente, refresh não gera 404, e volta ao índice", async ({ page }) => {
