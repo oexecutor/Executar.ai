@@ -11,7 +11,9 @@ import { normalizeEditorialPublication } from "./compatibility.js";
 import {
   UnavailableEditorialArtifactPublisher,
   UnavailableEditorialPreviewResolver,
+  type EditorialArtifactResult,
   type EditorialArtifactPublisher,
+  type EditorialPreviewResolution,
   type EditorialPreviewResolver,
 } from "./delivery.js";
 import {
@@ -532,20 +534,42 @@ export class EditorialService {
     actor: string,
   ): Promise<EditorialPublication> {
     const publication = await this.requirePublication(id);
-    if (publication.status !== "READY_FOR_PREVIEW") {
-      throw new DomainError(
-        "E2_NOT_READY",
-        `A E2 não pode ser iniciada em ${publication.status}.`,
-        "Conclua o pacote e o gate interno da E1 antes de criar branch, commit e PR.",
-        409,
-      );
-    }
-    assertReadyForPreviewEvidence(publication);
+    this.assertArtifactCanStart(publication);
     const contentHash = editorialContentHash(publication);
     const artifact = await this.artifactPublisher.publish({
       publication: structuredClone(publication),
       content_hash: contentHash,
     });
+    return this.recordArtifact(
+      publication,
+      artifact,
+      actor,
+      "E2 criou automaticamente",
+    );
+  }
+
+  async registerVerifiedArtifact(
+    id: string,
+    artifact: EditorialArtifactResult,
+    actor: string,
+  ): Promise<EditorialPublication> {
+    const publication = await this.requirePublication(id);
+    this.assertArtifactCanStart(publication);
+    return this.recordArtifact(
+      publication,
+      artifact,
+      actor,
+      "E2 verificou e registrou a execução do conector:",
+    );
+  }
+
+  private async recordArtifact(
+    publication: EditorialPublication,
+    artifact: EditorialArtifactResult,
+    actor: string,
+    provenance: string,
+  ): Promise<EditorialPublication> {
+    const contentHash = editorialContentHash(publication);
     const branch = artifact.branch.trim();
     const commitSha = artifact.commit_sha.trim();
     const pullRequestUrl = artifact.pull_request_url.trim();
@@ -586,7 +610,7 @@ export class EditorialService {
       publication,
       "PREVIEW_BUILDING",
       actor,
-      `E2 criou ${branch}, commit ${commitSha.slice(0, 8)} e PR #${artifact.pull_request_number}.`,
+      `${provenance} ${branch}, commit ${commitSha.slice(0, 8)} e PR #${artifact.pull_request_number}.`,
     );
     await this.store.savePublication(publication);
     return publication;
@@ -628,6 +652,43 @@ export class EditorialService {
       }
       return publication;
     }
+    return this.recordReadyPreview(
+      publication,
+      resolution,
+      actor,
+      "capturado automaticamente",
+    );
+  }
+
+  async registerVerifiedPreview(
+    id: string,
+    resolution: Extract<EditorialPreviewResolution, { state: "READY" }>,
+    actor: string,
+  ): Promise<EditorialPublication> {
+    const publication = await this.requirePublication(id);
+    if (!["PREVIEW_BUILDING", "PREVIEW_FAILED"].includes(publication.status)) {
+      throw new DomainError(
+        "INVALID_TRANSITION",
+        `O preview não pode ser registrado em ${publication.status}.`,
+        "Inicie a E2 e verifique o artefato GitHub primeiro.",
+        409,
+      );
+    }
+    assertGitHubArtifactEvidence(publication);
+    return this.recordReadyPreview(
+      publication,
+      resolution,
+      actor,
+      "verificado por evidência do deployment e registrado",
+    );
+  }
+
+  private async recordReadyPreview(
+    publication: EditorialPublication,
+    resolution: Extract<EditorialPreviewResolution, { state: "READY" }>,
+    actor: string,
+    provenance: string,
+  ): Promise<EditorialPublication> {
     if (
       resolution.commit_sha !== publication.github.commit_sha
       || !/^https:\/\//i.test(resolution.url)
@@ -649,7 +710,11 @@ export class EditorialService {
       created_at: resolution.created_at,
       commit_sha: resolution.commit_sha,
     };
-    publication.events.push(event("PREVIEW_ATTACHED", actor, `Preview Vercel capturado automaticamente em ${publication.preview.url}.`));
+    publication.events.push(event(
+      "PREVIEW_ATTACHED",
+      actor,
+      `Preview Vercel ${provenance} em ${publication.preview.url}.`,
+    ));
     this.changeStatus(publication, "PREVIEW_READY", actor, "E2 concluída: Preview disponível para revisão humana.");
     await this.store.savePublication(publication);
     return publication;
@@ -867,6 +932,18 @@ export class EditorialService {
     publication.status = target;
     publication.updated_at = new Date().toISOString();
     publication.events.push(event("STATUS_CHANGED", actor, detail, { from: previous, to: target }));
+  }
+
+  private assertArtifactCanStart(publication: EditorialPublication): void {
+    if (publication.status !== "READY_FOR_PREVIEW") {
+      throw new DomainError(
+        "E2_NOT_READY",
+        `A E2 não pode ser iniciada em ${publication.status}.`,
+        "Conclua o pacote e o gate interno da E1 antes de criar branch, commit e PR.",
+        409,
+      );
+    }
+    assertReadyForPreviewEvidence(publication);
   }
 
   private async requirePublication(id: string): Promise<EditorialPublication> {
