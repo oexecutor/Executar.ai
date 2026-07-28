@@ -229,7 +229,7 @@ test.describe("EXECUTA.AI — E1 e E2 editoriais", () => {
     await page.goto("/app/");
     await page.getByRole("button", { name: "Editorial" }).click();
     await expect(page.getByRole("heading", { name: current.briefing.title })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Executar" })).toHaveCount(3);
+    await expect(page.getByRole("button", { name: "Executar", exact: true })).toHaveCount(3);
     await expect(page.getByText(/não executam Desk&Go, Frankwatching nem AMES/i)).toBeVisible();
     await expect(page.getByRole("button", { name: /Executar gate interno da E1/ })).toHaveCount(0);
 
@@ -309,6 +309,10 @@ test.describe("responsividade", () => {
     await page.setViewportSize({ width: 375, height: 800 });
 
     await page.goto("/");
+    await expect(page.getByRole("heading", { name: "Contexto complexo. Próxima ação clara." })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+
+    await page.goto("/app/");
     await expect(page.getByRole("heading", { name: "Execução em foco." })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
 
