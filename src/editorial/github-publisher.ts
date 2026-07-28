@@ -7,6 +7,10 @@ import type {
 
 type Fetcher = typeof fetch;
 
+export const DEFAULT_EDITORIAL_GITHUB_REPOSITORY =
+  "oexecutor/P1.Executar.ai";
+export const DEFAULT_EDITORIAL_GITHUB_BASE_BRANCH = "main";
+
 export interface GitHubEditorialPublisherConfig {
   token: string;
   repository: string;
@@ -301,9 +305,11 @@ export function githubEditorialPublisherFromEnv(
   environment: NodeJS.ProcessEnv = process.env,
 ): GitHubEditorialPublisher | null {
   const token = environment.EDITORIAL_GITHUB_TOKEN?.trim();
-  const repository = environment.EDITORIAL_GITHUB_REPOSITORY?.trim();
-  const baseBranch = environment.EDITORIAL_GITHUB_BASE_BRANCH?.trim();
-  if (!token || !repository || !baseBranch) return null;
+  if (!token) return null;
+  const repository = environment.EDITORIAL_GITHUB_REPOSITORY?.trim()
+    || DEFAULT_EDITORIAL_GITHUB_REPOSITORY;
+  const baseBranch = environment.EDITORIAL_GITHUB_BASE_BRANCH?.trim()
+    || DEFAULT_EDITORIAL_GITHUB_BASE_BRANCH;
   return new GitHubEditorialPublisher({
     token,
     repository,
