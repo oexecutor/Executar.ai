@@ -125,7 +125,8 @@ export class VercelEditorialPreviewResolver implements EditorialPreviewResolver 
 export function vercelEditorialPreviewResolverFromEnv(
   environment: NodeJS.ProcessEnv = process.env,
 ): VercelEditorialPreviewResolver | null {
-  const token = environment.EDITORIAL_VERCEL_TOKEN?.trim();
+  const token = environment.EDITORIAL_VERCEL_TOKEN?.trim()
+    || environment.VERCEL_TOKEN?.trim();
   if (!token) return null;
   const projectId = environment.EDITORIAL_VERCEL_PROJECT_ID?.trim()
     || DEFAULT_EDITORIAL_VERCEL_PROJECT_ID;
