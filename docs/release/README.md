@@ -5,8 +5,8 @@ Pacote de auditoria, roadmap e operação de lançamento do **EXECUTA.AI**.
 - Baseline inicial: **2026-07-24**, commit `28a689f`.
 - Homologação e fechamento do G1: **2026-07-25**.
 - Início do G2 — contrato e teste do ciclo central: **2026-07-25**.
-- Defeito editorial P0 `DEF-E2-001`: **NO-GO em 2026-07-28** até validação
-  do novo gate E2 em Vercel Preview.
+- Defeito editorial P0 `DEF-E2-001`: correção da PR #30 **APROVADA PARA
+  MERGE E PRODUÇÃO em 2026-07-28**, com smoke test pós-deploy obrigatório.
 - Ambiente canônico: **Vercel**, projeto `executar-ai`.
 - Fonte documental: branch `main` de `oexecutor/Executar.ai`.
 
@@ -21,15 +21,17 @@ Pacote de auditoria, roadmap e operação de lançamento do **EXECUTA.AI**.
 
 ## Leitura recomendada
 
-1. [`11-DEF-E2-001-NO-GO.md`](./11-DEF-E2-001-NO-GO.md) — defeito P0,
-   correção E2 e critérios obrigatórios para remover o NO-GO.
-2. [`10-G2-CONTRATO-CICLO-CENTRAL.md`](./10-G2-CONTRATO-CICLO-CENTRAL.md) —
+1. [`12-HOMOLOGACAO-E2-2026-07-28.md`](./12-HOMOLOGACAO-E2-2026-07-28.md) —
+   evidências, aprovação humana, autorização de merge e verificação pós-deploy.
+2. [`11-DEF-E2-001-NO-GO.md`](./11-DEF-E2-001-NO-GO.md) — registro histórico
+   do defeito P0 e dos critérios que bloquearam o lançamento.
+3. [`10-G2-CONTRATO-CICLO-CENTRAL.md`](./10-G2-CONTRATO-CICLO-CENTRAL.md) —
    decisão canônica do ciclo 3–9–36, integração PLANGEN e lacunas de homologação.
-3. [`09-HOMOLOGACAO-G1-2026-07-25.md`](./09-HOMOLOGACAO-G1-2026-07-25.md) —
+4. [`09-HOMOLOGACAO-G1-2026-07-25.md`](./09-HOMOLOGACAO-G1-2026-07-25.md) —
    fechamento do G1, produção homologada, PRs resolvidos e decisões vigentes.
-4. [`01-ROADMAP-LANCAMENTO.md`](./01-ROADMAP-LANCAMENTO.md) — Gates G0–G10,
+5. [`01-ROADMAP-LANCAMENTO.md`](./01-ROADMAP-LANCAMENTO.md) — Gates G0–G10,
    fases, dependências e caminho crítico.
-5. [`04-RISCOS-DECISOES.md`](./04-RISCOS-DECISOES.md) — riscos atuais e
+6. [`04-RISCOS-DECISOES.md`](./04-RISCOS-DECISOES.md) — riscos atuais e
    decisões de autenticação, persistência e MCP.
 
 ## Pacote completo
@@ -50,6 +52,7 @@ Pacote de auditoria, roadmap e operação de lançamento do **EXECUTA.AI**.
 | `09-HOMOLOGACAO-G1-2026-07-25.md` | Evidência viva da retomada e fechamento do G1 |
 | `10-G2-CONTRATO-CICLO-CENTRAL.md` | Contrato, decisão PLANGEN, comparação de domínios e smoke test G2 |
 | `11-DEF-E2-001-NO-GO.md` | Defeito P0, decisão NO-GO e critérios de saída |
+| `12-HOMOLOGACAO-E2-2026-07-28.md` | Aprovação humana, GO da correção E2 e verificação pós-deploy |
 
 ## Estado resumido
 
@@ -61,9 +64,10 @@ Pacote de auditoria, roadmap e operação de lançamento do **EXECUTA.AI**.
   PLANGEN estão registrados; foi adicionada cobertura automatizada de criação,
   81 ações, 9 checkpoints, exportação, persistência e recuperação. Falta o smoke
   de escrita pelo fluxo real da interface.
-- **Blog Integration V2 — E2:** **NO-GO** até que a correção
-  `DEF-E2-001` passe no Vercel Preview; o PR #29 é evidência do defeito e não
-  homologação do fluxo final.
+- **Blog Integration V2 — E2:** correção `DEF-E2-001` **APROVADA PARA MERGE E
+  PRODUÇÃO** após validação dos dois Vercel Previews e autorização humana. O
+  smoke test de produção continua obrigatório. O PR #29 permanece como
+  evidência do defeito e não deve ser mesclado como homologação.
 - **PR #4 — AMES:** permanece em draft, fora do runtime do app, aguardando
   migração controlada para `HQ-EXECUTA-AI-PLUGIN-SUITE`.
 
