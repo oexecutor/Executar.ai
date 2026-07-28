@@ -22,7 +22,7 @@ prova.
 - [ ] Variáveis de ambiente de produção confirmadas por presença — Resp.: Product Owner — Evidência: export/screenshot do painel Vercel — Data: — — Gate: G3
 
 ## Segurança
-- [ ] Política de autenticação decidida e implementada — Resp.: Product Owner — Evidência: decisão + diff de código — Data: — — Gate: G3
+- [x] Política de autenticação decidida e implementada — Resp.: Product Owner — Evidência: `src/lib/request-auth.ts` (diff), `04-RISCOS-DECISOES.md` DEC-001 — Data: 2026-07-28 — Gate: G3
 - [ ] PR #9 fechado ou rebaseado conscientemente — Resp.: Product Owner — Evidência: link do PR — Data: — — Gate: G1
 
 ## Jurídico

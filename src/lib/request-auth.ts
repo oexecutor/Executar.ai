@@ -86,10 +86,14 @@ async function resolve(request: Request): Promise<AuthenticatedRequest | null> {
     };
   }
 
-  // Login was removed at the operator's explicit, repeated request: no
-  // request should ever be blocked waiting on a sign-in step. Every caller
-  // without a real session shares a single public workspace instead.
+  // Real authentication is now enforced by default (DEC-001, 2026-07-28):
+  // a request without a valid Supabase-backed session is unauthenticated.
+  // The public-workspace fallback that used to apply to every caller is
+  // opt-in only, via ALLOW_PUBLIC_WORKSPACE_FALLBACK, for owner-operated
+  // demos on a deployment with no private data -- never the default for a
+  // deployment serving real users.
   if (process.env.NODE_ENV === "test") return null;
+  if (process.env.ALLOW_PUBLIC_WORKSPACE_FALLBACK !== "true") return null;
   if (!supabaseConfigured()) {
     return { userId: "public", email: null, workspaceId: "public", workspaceName: "Workspace público", role: "OWNER" };
   }

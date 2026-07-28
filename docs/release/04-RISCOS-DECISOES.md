@@ -8,7 +8,7 @@
 
 | ID | Risco | Gravidade | Probabilidade | Impacto | Mitigação / decisão | Responsável | Prazo | Estado |
 |---|---|---|---|---|---|---|---|---|
-| RISK-001 | **Workspace público compartilhado** — qualquer pessoa com a URL entra como `OWNER` no workspace público | Alta | Certa no comportamento atual | Dados de usuários diferentes poderiam se misturar | Permitido somente durante desenvolvimento interno e demonstrações controladas; não armazenar dados privados; login e isolamento são obrigatórios antes do beta público | Dono do produto | Antes de G6 | Aceito temporariamente |
+| RISK-001 | **Workspace público compartilhado** — qualquer pessoa com a URL entrava como `OWNER` no workspace público | Alta | Eliminada por padrão em 2026-07-28 | Dados de usuários diferentes poderiam se misturar | **Resolvido**: autenticação real é o padrão (`src/lib/request-auth.ts`); fallback público só ocorre com `ALLOW_PUBLIC_WORKSPACE_FALLBACK=true` explícito | Dono do produto | — | Resolvido |
 | RISK-002 | Persistência distribuída entre Vercel Postgres/Neon e componentes Supabase | Média | Média | Drift entre ambientes ou fontes de dados | Manter o contrato atual até G3: Vault e OAuth canônicos em Vercel Postgres; Supabase somente onde já estiver configurado para workspace. Registrar ADR antes de qualquer migração | Produto + Engenharia | G3 | Mitigado / monitorado |
 | RISK-003 | Duplicação de servidor MCP | Média | Média | Duas fontes de verdade e manutenção duplicada | A rota nativa `oexecutor/Executar.ai` (`/mcp`) é a implementação canônica; o servidor standalone é legado e não deve ser conectado ao produto principal | Dono do produto | G1 | Resolvido |
 | RISK-004 | Teste e2e intermitente relacionado a `/icon.svg` | Média | Média | Ruído na CI e regressões mascaradas | Corrigir e estabilizar em `EXA-G5-QA-001` | Engenharia | G5 | Aberto |
@@ -21,19 +21,37 @@
 
 ## Decisões resolvidas
 
-### DEC-001 — Política de autenticação
+### DEC-001 — Política de autenticação (ATUALIZADA 2026-07-28)
 
-**Decisão:** manter temporariamente o acesso direto ao workspace público para o
-MVP interno, demonstrações e homologação, preservando a decisão explícita do
-dono do produto de retirar a tela de login.
+**Decisão anterior (2026-07-24):** manter temporariamente o acesso direto ao
+workspace público, preservando a decisão histórica do dono do produto de
+retirar a tela de login.
 
-**Limite obrigatório:** isso não é autorização para beta público com dados de
-terceiros. Antes do G6 devem existir autenticação e isolamento por workspace,
-ou o produto deve permanecer restrito a um único workspace demonstrativo sem
-dados privados.
+**Decisão atual, aprovada explicitamente pelo dono do produto em
+2026-07-28:** ativar autenticação real por padrão. `src/lib/request-auth.ts`
+não devolve mais o workspace público a requisições sem sessão válida —
+devolve `null` (401), a menos que `ALLOW_PUBLIC_WORKSPACE_FALLBACK=true` seja
+definido explicitamente no ambiente (reservado a demonstrações do próprio
+dono do produto, sem dados privados). O fluxo completo de login (e-mail/senha,
+Google, seleção de workspace) já existia implementado
+(`web/src/pages/Login.tsx`, `/api/auth/session`) e passa a ser o caminho
+padrão para todo usuário.
 
-**Evidência atual:** `GET /api/auth/me` responde `200` com usuário e workspace
-`public`, papel `OWNER`.
+**Por que isso não contradiz a decisão histórica**: a tela de login não foi
+reintroduzida como bloqueio universal por decisão unilateral — foi reativada
+porque o próprio dono do produto aprovou explicitamente a reversão nesta
+data, com plena ciência do racional documentado nesta auditoria.
+
+**Rollback**: `ALLOW_PUBLIC_WORKSPACE_FALLBACK=true` restaura o comportamento
+anterior sem reverter código, caso Supabase não esteja configurado em algum
+ambiente e a mudança bloqueie acesso indevidamente. Ver `SECURITY.md`.
+
+**Evidência**: `src/lib/request-auth.ts` (diff), `.env.example` (flag
+documentada), suíte local (`npm test`, `npm run build`, `npm run lint`)
+verde após a mudança. **LACUNA**: não foi possível confirmar ao vivo em
+produção nesta sessão (sem acesso de rede) se `SUPABASE_URL`/
+`SUPABASE_PUBLISHABLE_KEY` estão configuradas no ambiente de produção —
+confirmar via `/health` antes de considerar o rollout completo.
 
 ### DEC-002 — Persistência durante o ciclo G1–G3
 

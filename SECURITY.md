@@ -5,22 +5,25 @@
 The canonical deployment is the Vercel project `executar-ai` at
 `https://executar-ai.vercel.app`.
 
-The application currently operates in a deliberate **internal-MVP public
-workspace mode**:
+**Update (DEC-001, 2026-07-28): real authentication is enforced by
+default.** A request without a valid Supabase-backed session (bearer token
++ workspace membership, or the `executa_session` app cookie issued after
+sign-in) is unauthenticated and gets `401`, not a shared public identity.
+The full sign-in flow (email/password, Google OAuth, workspace picker) was
+already built (`web/src/pages/Login.tsx`, `/api/auth/session`) and is now
+the default path for every caller.
 
-- `/api/auth/me` returns the shared `public` workspace with role `OWNER` when
-  no user session exists;
-- the React workspace, Vault HTTP routes, `/view` and dashboards are reachable
-  without the former operator-password login;
-- `/mcp` remains a separate protected resource and requires an OAuth bearer
-  token;
-- this configuration is intended only for development, owner-operated use and
-  controlled demonstrations.
+The previous **internal-MVP public workspace mode** — every session-less
+request silently landing in a shared `public` workspace with role `OWNER` —
+is now opt-in only, via `ALLOW_PUBLIC_WORKSPACE_FALLBACK=true`
+(`src/lib/request-auth.ts`). Set it only for an owner-operated demo
+deployment holding no private data; never on a deployment serving real
+users. It doubles as the rollback switch if enforcing auth breaks a
+deployment that does not yet have Supabase configured — see "Rollback"
+below.
 
-This mode is **not safe for a public multi-user beta or private third-party
-data**. Authentication and workspace isolation must be implemented before G6
-(public beta), unless the deployment remains a single demonstrative workspace
-with no sensitive data.
+`/mcp` remains a separate protected resource and requires an OAuth bearer
+token, unaffected by this change.
 
 ## Canonical authentication surfaces
 
@@ -112,11 +115,22 @@ Without explicit owner approval, AI must not:
 - treat structured JSON state as the source of truth and HTML as derived
   output.
 
+## Rollback
+
+If enforcing authentication breaks a deployment (most likely cause: Supabase
+env vars not yet configured for that environment, so nobody can complete
+sign-in), set `ALLOW_PUBLIC_WORKSPACE_FALLBACK=true` on that deployment to
+immediately restore the previous shared-workspace behavior without a code
+revert, then fix the underlying Supabase configuration before unsetting it
+again. Check `/health` (`api/health.ts`) first — it reports whether Supabase
+and Postgres are configured (presence only, never values).
+
 ## Launch security gates
 
 Before public beta:
 
-1. replace the public fallback with real authentication;
+1. ~~replace the public fallback with real authentication~~ — **done**
+   (DEC-001, 2026-07-28), see "Current production boundary" above;
 2. isolate every workspace and entity by actor/tenant;
 3. validate authorization for all read and write routes;
 4. complete privacy/terms review;
