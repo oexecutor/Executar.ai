@@ -304,7 +304,9 @@ export class GitHubEditorialPublisher implements EditorialArtifactPublisher {
 export function githubEditorialPublisherFromEnv(
   environment: NodeJS.ProcessEnv = process.env,
 ): GitHubEditorialPublisher | null {
-  const token = environment.EDITORIAL_GITHUB_TOKEN?.trim();
+  const token = environment.EDITORIAL_GITHUB_TOKEN?.trim()
+    || environment.GITHUB_TOKEN?.trim()
+    || environment.GH_TOKEN?.trim();
   if (!token) return null;
   const repository = environment.EDITORIAL_GITHUB_REPOSITORY?.trim()
     || DEFAULT_EDITORIAL_GITHUB_REPOSITORY;
