@@ -26,6 +26,7 @@
     { "source": "/api/pm/:path*", "destination": "/api/pm" },
     { "source": "/api/executar/:path*", "destination": "/api/executar" },
     { "source": "/api/editorial/:path*", "destination": "/api/editorial" },
+    { "source": "/q/:token", "destination": "/api/qr?token=:token" },
     { "source": "/api/blog/newsletter", "destination": "/api/blog" },
     { "source": "/entrar", "destination": "/index.html" },
     { "source": "/app", "destination": "/app/index.html" },

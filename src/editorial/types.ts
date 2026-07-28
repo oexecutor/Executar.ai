@@ -132,11 +132,35 @@ export interface EditorialPublicationState {
   commit_sha: string | null;
 }
 
+export const EDITORIAL_QR_ACTIONS = [
+  "CREATE",
+  "PREVIEW",
+  "APPROVE",
+  "ANALYTICS",
+] as const;
+export type EditorialQrAction = typeof EDITORIAL_QR_ACTIONS[number];
+
+export type EditorialQrAccessPolicy =
+  | "PUBLIC_REDIRECT"
+  | "AUTHENTICATED_CONTEXT";
+
+export interface EditorialQrRoute {
+  action: EditorialQrAction;
+  token: string;
+  url: string;
+  status: "ACTIVE" | "REVOKED";
+  access_policy: EditorialQrAccessPolicy;
+  issued_at: string;
+  issued_by: string;
+}
+
 export interface EditorialQrState {
   create_url: string | null;
   preview_url: string | null;
   approve_url: string | null;
   analytics_url: string | null;
+  routes: Record<EditorialQrAction, EditorialQrRoute | null>;
+  issued_at: string | null;
 }
 
 export interface EditorialEvent {
@@ -151,7 +175,9 @@ export interface EditorialEvent {
     | "GATE_COMPLETED"
     | "PREVIEW_ATTACHED"
     | "REVIEW_RECORDED"
-    | "PUBLISHED";
+    | "PUBLISHED"
+    | "QR_ISSUED"
+    | "QR_ISSUE_FAILED";
   at: string;
   actor: string;
   detail: string;

@@ -28,6 +28,22 @@ export type EditorialAdapterStatus =
   | "STALE"
   | "SKIPPED";
 
+export type EditorialQrAction =
+  | "CREATE"
+  | "PREVIEW"
+  | "APPROVE"
+  | "ANALYTICS";
+
+export interface EditorialQrRoute {
+  action: EditorialQrAction;
+  token: string;
+  url: string;
+  status: "ACTIVE" | "REVOKED";
+  access_policy: "PUBLIC_REDIRECT" | "AUTHENTICATED_CONTEXT";
+  issued_at: string;
+  issued_by: string;
+}
+
 export interface EditorialAdapterEvidence {
   adapter: EditorialAdapterName;
   status: EditorialAdapterStatus;
@@ -118,6 +134,14 @@ export interface EditorialPublication {
     url: string | null;
     published_at: string | null;
     commit_sha: string | null;
+  };
+  qr: {
+    create_url: string | null;
+    preview_url: string | null;
+    approve_url: string | null;
+    analytics_url: string | null;
+    routes: Record<EditorialQrAction, EditorialQrRoute | null>;
+    issued_at: string | null;
   };
   events: Array<{
     id: string;

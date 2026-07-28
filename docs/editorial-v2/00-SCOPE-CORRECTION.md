@@ -151,7 +151,7 @@ QR_FAILED
 | E1 | intake e pacote editorial, incluindo gate interno | IMPLEMENTADO PARCIALMENTE |
 | E2 | branch, artigo/assets, PR e Vercel Preview | EM CORREÇÃO — NO-GO ATÉ TESTE PONTA A PONTA |
 | E3 | aprovação, merge e publicação | PARCIAL; BLOQUEADO PELA E2 |
-| E4 | QR Router semântico | NÃO INICIADO |
+| E4 | QR Router semântico | EM IMPLEMENTAÇÃO — P0 |
 | E5 | painel e impressão | NÃO INICIADO |
 | E6 | analytics e operação | NÃO INICIADO |
 

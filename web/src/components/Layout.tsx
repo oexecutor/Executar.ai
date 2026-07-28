@@ -58,6 +58,7 @@ export function Layout({
             <button
               type="button"
               key={id}
+              aria-label={label}
               aria-current={active === id ? "page" : undefined}
               onClick={() => onNavigate(id)}
             >
@@ -87,6 +88,7 @@ export function Layout({
             <div>
               <select
                 id="project-switch"
+                aria-label="Projeto ativo"
                 value={selectedProjectId ?? ""}
                 onChange={(event) => event.target.value && onSelectProject(event.target.value)}
                 disabled={!projects.length}

@@ -174,7 +174,7 @@ define a fase. O código introduzido pelo PR #30 pertence ao fechamento da E1.
 - atualiza estado para `PUBLISHED`;
 - registra rollback disponível.
 
-## Prioridade P1 — E4 QR Router
+## Prioridade P0 — E4 QR Router
 
 ### EDV2-040 — Contrato de token semântico
 

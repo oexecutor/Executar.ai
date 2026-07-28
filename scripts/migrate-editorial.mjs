@@ -65,7 +65,9 @@ const counts = await sql.query(
   `SELECT
      (SELECT count(*)::integer FROM public.editorial_legacy_backup) AS backup_rows,
      (SELECT count(*)::integer FROM public.editorial_publications) AS publication_rows,
-     (SELECT count(*)::integer FROM public.editorial_events) AS event_rows`,
+     (SELECT count(*)::integer FROM public.editorial_events) AS event_rows,
+     (SELECT count(*)::integer FROM public.editorial_qr_routes) AS qr_route_rows,
+     (SELECT count(*)::integer FROM public.editorial_qr_access_events) AS qr_access_rows`,
 );
 const evidence = counts[0] ?? {};
 console.log(JSON.stringify({
@@ -73,4 +75,6 @@ console.log(JSON.stringify({
   backup_rows: evidence.backup_rows ?? 0,
   publication_rows: evidence.publication_rows ?? 0,
   event_rows: evidence.event_rows ?? 0,
+  qr_route_rows: evidence.qr_route_rows ?? 0,
+  qr_access_rows: evidence.qr_access_rows ?? 0,
 }));
