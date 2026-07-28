@@ -11,14 +11,18 @@ PWA multiusuário para transformar contexto em execução verificável. O produt
 
 ## Estado
 
+> [!CAUTION]
+> **Gate editorial E2 — NO-GO para lançamento.** A publicação não pode avançar ao Preview enquanto DeskGo, Frankwatching e AMES estiverem pendentes ou sem evidência. Consulte o plano obrigatório [DEF-E2-001 — Enriquecimento e validação editorial antes do Preview](docs/editorial-v2/DEF-E2-001-ENRICHMENT-VALIDATION-GATE.md).
+
 A Fase 4 entrega a fundação funcional em uma branch de Preview. Ela não autoriza publicação em produção. A promoção só pode ocorrer depois de:
 
 1. aplicar e validar a migração Supabase;
 2. configurar os secrets do Preview;
 3. executar a suíte completa e a homologação humana;
-4. registrar a aprovação de lançamento.
+4. corrigir e aprovar o gate editorial E2;
+5. registrar a aprovação de lançamento.
 
-Consulte [docs/PHASE_4_IMPLEMENTATION.md](docs/PHASE_4_IMPLEMENTATION.md) e [docs/PARITY_MATRIX_PHASE_4.md](docs/PARITY_MATRIX_PHASE_4.md).
+Consulte [docs/PHASE_4_IMPLEMENTATION.md](docs/PHASE_4_IMPLEMENTATION.md), [docs/PARITY_MATRIX_PHASE_4.md](docs/PARITY_MATRIX_PHASE_4.md) e o [plano obrigatório do gate E2](docs/editorial-v2/DEF-E2-001-ENRICHMENT-VALIDATION-GATE.md).
 
 ## Arquitetura
 
@@ -136,8 +140,11 @@ As 11 ferramentas `executar_*` cobrem validação, criação, leitura, status, p
 O fluxo oficial é:
 
 ```text
-branch → pull request → Vercel Preview → migração/configuração Preview
+briefing → conteúdo estruturado → adapters DeskGo/Frankwatching/AMES
+→ gate editorial final → branch → pull request → Vercel Preview
 → testes → homologação → aprovação humana → produção
 ```
+
+O Preview deve ser bloqueado enquanto o gate E2 estiver incompleto, pendente, falho ou desatualizado em relação à versão e ao hash atuais do conteúdo.
 
 Rollback antes da produção consiste em fechar o PR e remover o Preview. Depois da promoção, reverta o commit de release e restaure o backup do banco conforme o runbook de lançamento.
