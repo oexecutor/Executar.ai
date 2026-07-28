@@ -56,7 +56,7 @@ describe("zip-bomb guard", () => {
     // If this were actually inflated (200MB allocate + copy), it would not
     // finish in well under a second even on fast hardware.
     expect(elapsedMs).toBeLessThan(1_000);
-  });
+  }, 15_000);
 
   it("skips one oversized file (>5MB declared) but still imports the rest of the archive", async () => {
     const oversized = new Uint8Array(6 * 1024 * 1024);

@@ -1,4 +1,11 @@
-import { EDITORIAL_STATUSES, type EditorialPublication, type EditorialValidationResult } from "./types.js";
+import { editorialContentHash, hasCurrentAppliedEvidence } from "./adapters.js";
+import {
+  EDITORIAL_ADAPTERS,
+  EDITORIAL_ADAPTER_STATUSES,
+  EDITORIAL_STATUSES,
+  type EditorialPublication,
+  type EditorialValidationResult,
+} from "./types.js";
 
 const statusSet = new Set<string>(EDITORIAL_STATUSES);
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -14,6 +21,14 @@ function hasText(value: unknown): value is string {
 
 function requiresPreview(status: string): boolean {
   return ["PREVIEW_READY", "IN_REVIEW", "CHANGES_REQUESTED", "APPROVED", "PUBLISHING", "PUBLISH_FAILED", "PUBLISHED", "QR_FAILED", "ARCHIVED"].includes(status);
+}
+
+function requiresGitHubArtifact(status: string): boolean {
+  return ["PREVIEW_BUILDING", "PREVIEW_FAILED", "PREVIEW_READY", "IN_REVIEW", "CHANGES_REQUESTED", "APPROVED", "PUBLISHING", "PUBLISH_FAILED", "PUBLISHED", "QR_FAILED", "ARCHIVED"].includes(status);
+}
+
+function requiresPassedGate(status: string): boolean {
+  return ["READY_FOR_PREVIEW", "PREVIEW_BUILDING", "PREVIEW_FAILED", "PREVIEW_READY", "IN_REVIEW", "CHANGES_REQUESTED", "APPROVED", "PUBLISHING", "PUBLISH_FAILED", "PUBLISHED", "QR_FAILED", "ARCHIVED"].includes(status);
 }
 
 function requiresApproval(status: string): boolean {
@@ -62,6 +77,7 @@ export function validateEditorialPublication(input: unknown): EditorialValidatio
     }
     if (!hasText(publication.content.excerpt)) errors.push("content.excerpt é obrigatório.");
     if (!hasText(publication.content.markdown)) warnings.push("content.markdown ainda não foi produzido.");
+    if (!hasText(publication.content.updated_at)) errors.push("content.updated_at é obrigatório.");
     if (!Number.isFinite(publication.content.reading_time_minutes) || publication.content.reading_time_minutes < 0) {
       errors.push("content.reading_time_minutes deve ser zero ou maior.");
     }
@@ -76,10 +92,90 @@ export function validateEditorialPublication(input: unknown): EditorialValidatio
     if (publication.quality.score !== null && (!Number.isFinite(publication.quality.score) || publication.quality.score < 0 || publication.quality.score > 100)) {
       errors.push("quality.score deve estar entre 0 e 100.");
     }
+    if (!["NOT_RUN", "PASSED", "FAILED"].includes(publication.quality.gate_result)) {
+      errors.push("quality.gate_result inválido.");
+    }
+    if (!isRecord(publication.quality.adapters)) {
+      errors.push("quality.adapters é obrigatório.");
+    } else {
+      for (const adapter of EDITORIAL_ADAPTERS) {
+        const evidence = publication.quality.adapters[adapter];
+        if (!isRecord(evidence)) {
+          errors.push(`quality.adapters.${adapter} é obrigatório.`);
+          continue;
+        }
+        if (evidence.adapter !== adapter) errors.push(`${adapter}.adapter não corresponde à chave.`);
+        if (!EDITORIAL_ADAPTER_STATUSES.includes(evidence.status)) errors.push(`${adapter}.status inválido.`);
+        if (!Number.isInteger(evidence.publication_version) || evidence.publication_version < 1) {
+          errors.push(`${adapter}.publication_version deve ser um inteiro positivo.`);
+        }
+        if (!isRecord(evidence.findings)
+          || !Array.isArray(evidence.findings.errors)
+          || !Array.isArray(evidence.findings.warnings)
+          || !Array.isArray(evidence.findings.recommendations)) {
+          errors.push(`${adapter}.findings deve conter errors, warnings e recommendations.`);
+        }
+        if (evidence.status === "APPLIED") {
+          if (
+            !hasText(evidence.adapter_version)
+            || !hasText(evidence.content_hash)
+            || !hasText(evidence.started_at)
+            || !hasText(evidence.completed_at)
+            || !hasText(evidence.output_reference)
+            || !hasText(evidence.actor)
+          ) {
+            errors.push(`${adapter}=APPLIED exige evidência completa de execução.`);
+          }
+        }
+        if (evidence.status === "RUNNING" && !hasText(evidence.started_at)) {
+          errors.push(`${adapter}=RUNNING exige started_at.`);
+        }
+        if (evidence.status === "SKIPPED" && !hasText(evidence.skip_reason)) {
+          errors.push(`${adapter}=SKIPPED exige justificativa explícita.`);
+        }
+      }
+    }
+  }
+
+  if (requiresPassedGate(publication.status)) {
+    const currentHash = editorialContentHash(publication);
+    if (!publication.quality.valid || publication.quality.gate_result !== "PASSED") {
+      errors.push(`${publication.status} exige gate técnico aprovado.`);
+    }
+    if (publication.quality.content_hash !== currentHash) {
+      errors.push(`${publication.status} exige quality.content_hash correspondente ao conteúdo atual.`);
+    }
+    if (
+      !hasText(publication.quality.checked_at)
+      || Date.parse(publication.quality.checked_at) <= Date.parse(publication.content.updated_at)
+    ) {
+      errors.push(`${publication.status} exige gate posterior à última alteração do conteúdo.`);
+    }
+    for (const adapter of EDITORIAL_ADAPTERS) {
+      if (!hasCurrentAppliedEvidence(publication.quality.adapters[adapter], publication, currentHash)) {
+        errors.push(`${publication.status} exige ${adapter}=APPLIED com evidência da versão atual.`);
+      }
+    }
+  }
+
+  if (requiresGitHubArtifact(publication.status)) {
+    if (!hasText(publication.github?.branch) || !hasText(publication.github?.commit_sha)) {
+      errors.push(`${publication.status} exige branch e github.commit_sha.`);
+    }
+    if (!/^[0-9a-f]{40}$/i.test(publication.github?.commit_sha ?? "")) {
+      errors.push(`${publication.status} exige github.commit_sha SHA-1 completo.`);
+    }
+    if (publication.github?.publication_version !== publication.version) {
+      errors.push(`${publication.status} exige github.publication_version atual.`);
+    }
+    if (publication.github?.content_hash !== publication.quality.content_hash) {
+      errors.push(`${publication.status} exige github.content_hash aprovado.`);
+    }
   }
 
   if (requiresPreview(publication.status)) {
     if (!hasText(publication.preview?.url)) errors.push(`${publication.status} exige preview.url.`);
+    if (!hasText(publication.preview?.deployment_id)) errors.push(`${publication.status} exige preview.deployment_id.`);
     if (!hasText(publication.github?.commit_sha)) errors.push(`${publication.status} exige github.commit_sha.`);
   }
 

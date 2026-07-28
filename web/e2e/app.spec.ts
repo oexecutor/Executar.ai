@@ -46,6 +46,77 @@ function trackFailures(page: Page): { errors: string[] } {
   return state;
 }
 
+function editorialAdapter(adapter: "deskgo" | "frankwatching" | "ames", applied = false) {
+  return {
+    adapter,
+    status: applied ? "APPLIED" : "NOT_RUN",
+    adapter_version: applied ? "1.0.0" : null,
+    publication_version: 1,
+    content_hash: applied ? "a".repeat(64) : null,
+    started_at: applied ? "2026-07-28T01:01:00.000Z" : null,
+    completed_at: applied ? "2026-07-28T01:01:01.000Z" : null,
+    findings: { errors: [], warnings: [], recommendations: [] },
+    output_reference: applied ? `editorial://e2e/${adapter}` : null,
+    actor: applied ? "Leonardo Batista" : null,
+    skip_reason: null,
+  };
+}
+
+function editorialPublication() {
+  return {
+    id: "PUB-20260728-e2e",
+    version: 1,
+    status: "DRAFT",
+    briefing: {
+      title: "Critérios editoriais antes do Preview",
+      summary: "Valida o novo gate E2.",
+      audience: "Equipe editorial",
+      objective: "Impedir Preview sem adapters.",
+      author: "Leonardo Batista",
+      source_text: "# Critérios editoriais antes do Preview\n\nEste conteúdo de homologação comprova que o fluxo exige enriquecimento editorial antes de registrar qualquer artefato externo.\n\n## Gate obrigatório\n\nA próxima ação é executar DeskGo, Frankwatching e AMES.",
+      keywords: ["E2"],
+      channel: "EXECUTA_JOURNAL",
+      language: "pt-BR",
+    },
+    content: {
+      slug: "criterios-editoriais-antes-do-preview",
+      excerpt: "Valida o novo gate E2.",
+      markdown: "# Critérios editoriais antes do Preview\n\nEste conteúdo de homologação comprova que o fluxo exige enriquecimento editorial antes de registrar qualquer artefato externo.\n\n## Gate obrigatório\n\nA próxima ação é executar DeskGo, Frankwatching e AMES.",
+      reading_time_minutes: 1,
+      generated_at: null,
+      updated_at: "2026-07-28T01:00:00.000Z",
+    },
+    quality: {
+      valid: false,
+      gate_result: "NOT_RUN",
+      score: null,
+      errors: [],
+      warnings: [],
+      checked_at: null,
+      content_hash: null,
+      adapters: {
+        deskgo: editorialAdapter("deskgo"),
+        frankwatching: editorialAdapter("frankwatching"),
+        ames: editorialAdapter("ames"),
+      },
+    },
+    github: {
+      branch: null,
+      pull_request_number: null,
+      pull_request_url: null,
+      commit_sha: null,
+      publication_version: null,
+      content_hash: null,
+    },
+    preview: { deployment_id: null, url: null, created_at: null },
+    approval: { decision: "PENDING", reviewer: null, note: null, decided_at: null, approved_commit_sha: null },
+    publication: { url: null, published_at: null, commit_sha: null },
+    events: [{ id: "evt-e2e", type: "CREATED", at: "2026-07-28T01:00:00.000Z", actor: "Leonardo Batista", detail: "Briefing editorial criado." }],
+    created_at: "2026-07-28T01:00:00.000Z",
+    updated_at: "2026-07-28T01:00:00.000Z",
+  };
+}
+
 test.describe("EXECUTA.AI — acesso sem login", () => {
   test("raiz entra direto no workspace, sem tela de login", async ({ page }) => {
     const failures = trackFailures(page);
@@ -89,6 +160,81 @@ test.describe("EXECUTA.AI — acesso sem login", () => {
     await page.reload();
     await expect(page.getByRole("heading", { name: "Execução em foco." })).toBeVisible();
     await expect(page.getByLabel("Senha")).toHaveCount(0);
+  });
+});
+
+test.describe("EXECUTA.AI — gate editorial E2", () => {
+  test("executa os três adapters antes de liberar GitHub e Preview", async ({ page }) => {
+    const failures = trackFailures(page);
+    let current = editorialPublication();
+
+    await page.route("**/api/editorial/publications**", async (route) => {
+      const request = route.request();
+      const pathname = new URL(request.url()).pathname;
+      if (request.method() === "GET" && pathname.endsWith("/publications")) {
+        await route.fulfill({
+          contentType: "application/json",
+          body: JSON.stringify({
+            ok: true,
+            data: [{
+              id: current.id,
+              title: current.briefing.title,
+              slug: current.content.slug,
+              status: current.status,
+              version: current.version,
+              preview_url: null,
+              publication_url: null,
+              updated_at: current.updated_at,
+            }],
+          }),
+        });
+        return;
+      }
+      if (request.method() === "POST" && pathname.endsWith("/adapters/run")) {
+        current = {
+          ...current,
+          status: "ADAPTERS_APPLIED",
+          quality: {
+            ...current.quality,
+            adapters: {
+              deskgo: editorialAdapter("deskgo", true),
+              frankwatching: editorialAdapter("frankwatching", true),
+              ames: editorialAdapter("ames", true),
+            },
+          },
+        };
+      } else if (request.method() === "POST" && pathname.endsWith("/validate")) {
+        current = {
+          ...current,
+          status: "READY_FOR_PREVIEW",
+          quality: {
+            ...current.quality,
+            valid: true,
+            gate_result: "PASSED",
+            score: 92,
+            checked_at: "2026-07-28T01:02:00.000Z",
+            content_hash: "a".repeat(64),
+          },
+        };
+      }
+      await route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify({ ok: true, data: current, warnings: [], request_id: "req_e2e" }),
+      });
+    });
+
+    await page.goto("/app/");
+    await page.getByRole("button", { name: "Editorial" }).click();
+    await expect(page.getByRole("heading", { name: current.briefing.title })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Executar" })).toHaveCount(3);
+    await expect(page.getByRole("button", { name: /Executar gate editorial final/ })).toHaveCount(0);
+
+    await page.getByRole("button", { name: "Aplicar todos os critérios editoriais" }).click();
+    await page.getByRole("button", { name: /Executar gate editorial final/ }).click();
+    await expect(page.getByRole("heading", { name: "Registrar artefato GitHub" })).toBeVisible();
+    await expect(page.getByText(/Gate aprovado — conteúdo liberado/)).toBeVisible();
+    expect(failures.errors).toEqual([]);
+    await assertNoSeriousAccessibilityViolations(page);
   });
 });
 

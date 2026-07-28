@@ -111,7 +111,21 @@ content/blog/<slug>.meta.json
 - slug sem colisão;
 - preview local do artigo.
 
-## Prioridade P0 — E2 GitHub e Vercel Preview
+## Prioridade P0 — E2 Enriquecimento e validação editorial
+
+### DEF-E2-001 — Executar adapters e proteger o Preview
+
+**Aceite**
+
+- DeskGo, Frankwatching e AMES são executados, não marcados pelo cliente;
+- cada resultado registra versão, hash, horários, achados, saída e ator;
+- alteração de conteúdo torna resultados anteriores `STALE`;
+- H1, H2, conteúdo mínimo e briefing completo são bloqueadores;
+- somente os três adapters `APPLIED` com evidência liberam o gate final;
+- `preview/start` revalida estado, gate, versão e hash server-side;
+- pontuação editorial não substitui o gate técnico.
+
+## Prioridade P0 — E3 GitHub e Vercel Preview
 
 ### EDV2-020 — Criar branch e PR
 
@@ -139,7 +153,7 @@ content/blog/<slug>.meta.json
 - botões `Solicitar alterações` e `Aprovar`;
 - nenhuma ação de merge no primeiro clique sem confirmação.
 
-## Prioridade P0 — E3 Aprovação e publicação
+## Prioridade P0 — E4 Aprovação e publicação
 
 ### EDV2-030 — Aprovação auditável
 
@@ -159,7 +173,7 @@ content/blog/<slug>.meta.json
 - atualiza estado para `PUBLISHED`;
 - registra rollback disponível.
 
-## Prioridade P1 — E4 QR Router
+## Prioridade P1 — E5 QR Router
 
 ### EDV2-040 — Contrato de token semântico
 
@@ -190,7 +204,7 @@ Token resolve:
 - leitura validada em celular real;
 - teste automatizado de resolução.
 
-## Prioridade P1 — E5 Impressão
+## Prioridade P1 — E6 Impressão
 
 ### EDV2-050 — Painel A4 editorial
 
@@ -210,7 +224,7 @@ Token resolve:
 - verificação de contraste, overflow e QR;
 - dados estruturados paralelos ao visual.
 
-## Prioridade P2 — E6 Analytics
+## Prioridade P2 — E7 Analytics
 
 ### EDV2-060 — Métricas por publicação
 
@@ -233,11 +247,12 @@ Token resolve:
 ```text
 Sprint editorial 01: EDV2-001 → 002 → 003
 Sprint editorial 02: EDV2-010 → 011 → 012
-Sprint editorial 03: EDV2-020 → 021 → 022
-Sprint editorial 04: EDV2-030 → 031
-Sprint editorial 05: EDV2-040 → 041
-Sprint editorial 06: EDV2-050 → 051
-Sprint editorial 07: EDV2-060 → 061
+Sprint editorial 03: DEF-E2-001
+Sprint editorial 04: EDV2-020 → 021 → 022
+Sprint editorial 05: EDV2-030 → 031
+Sprint editorial 06: EDV2-040 → 041
+Sprint editorial 07: EDV2-050 → 051
+Sprint editorial 08: EDV2-060 → 061
 ```
 
 ## Gate imediato

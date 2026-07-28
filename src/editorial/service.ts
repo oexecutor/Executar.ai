@@ -1,14 +1,25 @@
 import crypto from "node:crypto";
 import { DomainError } from "../domain/errors.js";
+import {
+  createInitialAdapterEvidence,
+  editorialAdapterRegistry,
+  editorialContentHash,
+  hasCurrentAppliedEvidence,
+  type EditorialAdapterRegistry,
+} from "./adapters.js";
+import { normalizeEditorialPublication } from "./compatibility.js";
 import { validateEditorialPublication } from "./schema.js";
-import { assertEditorialTransition } from "./state-machine.js";
+import { assertEditorialTransition, assertReadyForPreviewEvidence } from "./state-machine.js";
 import type { EditorialRepository } from "./store.js";
 import type {
+  EditorialAdapterEvidence,
+  EditorialAdapterName,
   EditorialEvent,
   EditorialPublication,
   EditorialPublicationSummary,
   EditorialStatus,
 } from "./types.js";
+import { EDITORIAL_ADAPTERS } from "./types.js";
 
 interface CreatePublicationInput {
   title?: string;
@@ -44,6 +55,55 @@ function readingTime(markdown: string): number {
   return words === 0 ? 0 : Math.max(1, Math.ceil(words / 200));
 }
 
+function timestampAfter(value: string): string {
+  return new Date(Math.max(Date.now(), Date.parse(value) + 1)).toISOString();
+}
+
+function minimumStructureErrors(publication: EditorialPublication): string[] {
+  const errors: string[] = [];
+  if (publication.content.markdown.trim().length < 120) {
+    errors.push("O artigo precisa ter ao menos 120 caracteres.");
+  }
+  if (!/^#\s+.+/m.test(publication.content.markdown)) {
+    errors.push("O conteúdo precisa de um título Markdown H1.");
+  }
+  if (!/^##\s+.+/m.test(publication.content.markdown)) {
+    errors.push("O conteúdo precisa de uma ou mais seções H2.");
+  }
+  if (
+    !publication.briefing.title.trim()
+    || !publication.briefing.summary.trim()
+    || !publication.briefing.audience.trim()
+    || !publication.briefing.objective.trim()
+    || !publication.briefing.author.trim()
+  ) {
+    errors.push("O briefing editorial obrigatório está incompleto.");
+  }
+  return errors;
+}
+
+function staleEvidence(
+  evidence: EditorialAdapterEvidence,
+  publicationVersion: number,
+): EditorialAdapterEvidence {
+  if (evidence.status === "NOT_RUN" && !evidence.content_hash) {
+    return createInitialAdapterEvidence(evidence.adapter, publicationVersion);
+  }
+  return {
+    ...evidence,
+    status: "STALE",
+    findings: {
+      ...evidence.findings,
+      warnings: [
+        ...new Set([
+          ...evidence.findings.warnings,
+          "O conteúdo mudou depois desta execução.",
+        ]),
+      ],
+    },
+  };
+}
+
 function event(
   type: EditorialEvent["type"],
   actor: string,
@@ -74,7 +134,10 @@ function summary(publication: EditorialPublication): EditorialPublicationSummary
 }
 
 export class EditorialService {
-  constructor(private readonly store: EditorialRepository) {}
+  constructor(
+    private readonly store: EditorialRepository,
+    private readonly adapterRegistry: EditorialAdapterRegistry = editorialAdapterRegistry,
+  ) {}
 
   validate(input: unknown) {
     return validateEditorialPublication(input);
@@ -128,16 +191,30 @@ export class EditorialService {
         markdown: sourceText,
         reading_time_minutes: readingTime(sourceText),
         generated_at: null,
+        updated_at: now,
       },
       quality: {
         valid: false,
+        gate_result: "NOT_RUN",
         score: null,
         errors: [],
-        warnings: ["Desk&Go, Frankwatching e AMES ainda não foram aplicados."],
+        warnings: ["DeskGo, Frankwatching e AMES ainda não foram executados."],
         checked_at: null,
-        adapters: { deskgo: "PENDING", frankwatching: "PENDING", ames: "PENDING" },
+        content_hash: null,
+        adapters: {
+          deskgo: createInitialAdapterEvidence("deskgo", 1),
+          frankwatching: createInitialAdapterEvidence("frankwatching", 1),
+          ames: createInitialAdapterEvidence("ames", 1),
+        },
       },
-      github: { branch: null, pull_request_number: null, pull_request_url: null, commit_sha: null },
+      github: {
+        branch: null,
+        pull_request_number: null,
+        pull_request_url: null,
+        commit_sha: null,
+        publication_version: null,
+        content_hash: null,
+      },
       preview: { deployment_id: null, url: null, created_at: null },
       approval: { decision: "PENDING", reviewer: null, note: null, decided_at: null, approved_commit_sha: null },
       publication: { url: null, published_at: null, commit_sha: null },
@@ -161,7 +238,14 @@ export class EditorialService {
 
   async updateContent(id: string, input: ContentUpdateInput): Promise<EditorialPublication> {
     const publication = await this.requirePublication(id);
-    if (!["DRAFT", "VALIDATION_FAILED", "CHANGES_REQUESTED"].includes(publication.status)) {
+    if (![
+      "DRAFT",
+      "CONTENT_READY",
+      "ADAPTERS_APPLIED",
+      "ADAPTER_FAILED",
+      "VALIDATION_FAILED",
+      "CHANGES_REQUESTED",
+    ].includes(publication.status)) {
       throw new DomainError(
         "CONTENT_LOCKED",
         `O conteúdo não pode ser alterado em ${publication.status}.`,
@@ -175,23 +259,38 @@ export class EditorialService {
     const previous = publication.status;
     publication.version += 1;
     publication.status = "DRAFT";
+    const contentUpdatedAt = timestampAfter(publication.content.updated_at);
     publication.content = {
       ...publication.content,
       markdown,
       excerpt,
       slug: slugify(input.slug?.trim() || publication.content.slug),
       reading_time_minutes: readingTime(markdown),
-      generated_at: new Date().toISOString(),
+      generated_at: contentUpdatedAt,
+      updated_at: contentUpdatedAt,
     };
     publication.quality = {
       valid: false,
+      gate_result: "NOT_RUN",
       score: null,
       errors: [],
-      warnings: ["Conteúdo alterado; execute novamente o gate editorial."],
+      warnings: ["Conteúdo alterado; execute novamente os adapters e o gate editorial."],
       checked_at: null,
-      adapters: { deskgo: "PENDING", frankwatching: "PENDING", ames: "PENDING" },
+      content_hash: null,
+      adapters: {
+        deskgo: staleEvidence(publication.quality.adapters.deskgo, publication.version),
+        frankwatching: staleEvidence(publication.quality.adapters.frankwatching, publication.version),
+        ames: staleEvidence(publication.quality.adapters.ames, publication.version),
+      },
     };
-    publication.github = { branch: null, pull_request_number: null, pull_request_url: null, commit_sha: null };
+    publication.github = {
+      branch: null,
+      pull_request_number: null,
+      pull_request_url: null,
+      commit_sha: null,
+      publication_version: null,
+      content_hash: null,
+    };
     publication.preview = { deployment_id: null, url: null, created_at: null };
     publication.approval = { decision: "PENDING", reviewer: null, note: null, decided_at: null, approved_commit_sha: null };
     publication.publication = { url: null, published_at: null, commit_sha: null };
@@ -206,61 +305,219 @@ export class EditorialService {
 
   async runQualityGate(id: string, actor: string): Promise<EditorialPublication> {
     const publication = await this.requirePublication(id);
-    if (!["DRAFT", "VALIDATION_FAILED", "CHANGES_REQUESTED"].includes(publication.status)) {
-      throw new DomainError("INVALID_TRANSITION", `Não é possível validar a publicação em ${publication.status}.`, "Edite ou retorne a publicação para rascunho.", 409);
+    if (publication.status !== "ADAPTERS_APPLIED") {
+      throw new DomainError(
+        "ADAPTERS_REQUIRED",
+        `Não é possível executar o gate final em ${publication.status}.`,
+        "Execute DeskGo, Frankwatching e AMES antes da validação final.",
+        409,
+      );
     }
 
     this.changeStatus(publication, "VALIDATING", actor, "Gate editorial iniciado.");
-    const errors: string[] = [];
+    const contentHash = editorialContentHash(publication);
+    const errors = minimumStructureErrors(publication);
     const warnings: string[] = [];
-    if (publication.content.markdown.trim().length < 120) errors.push("O artigo precisa ter ao menos 120 caracteres.");
-    if (!/^#\s+.+/m.test(publication.content.markdown)) warnings.push("O conteúdo ainda não possui um título Markdown H1.");
-    if (!/^##\s+.+/m.test(publication.content.markdown)) warnings.push("O conteúdo ainda não possui seções H2.");
-    for (const [adapter, status] of Object.entries(publication.quality.adapters)) {
-      if (status !== "APPLIED") warnings.push(`Adapter ${adapter} ainda está ${status}.`);
+    let recommendationCount = 0;
+    for (const adapter of EDITORIAL_ADAPTERS) {
+      const evidence = publication.quality.adapters[adapter];
+      if (!hasCurrentAppliedEvidence(evidence, publication, contentHash)) {
+        errors.push(`Adapter obrigatório ${adapter} não possui evidência APPLIED para esta versão.`);
+        continue;
+      }
+      errors.push(...evidence.findings.errors.map((message) => `${adapter}: ${message}`));
+      warnings.push(...evidence.findings.warnings.map((message) => `${adapter}: ${message}`));
+      recommendationCount += evidence.findings.recommendations.length;
     }
 
     const contract = validateEditorialPublication(publication);
     errors.push(...contract.errors);
     warnings.push(...contract.warnings);
+    const checkedAt = timestampAfter(publication.content.updated_at);
+    const uniqueErrors = [...new Set(errors)];
+    const uniqueWarnings = [...new Set(warnings)];
     publication.quality = {
       ...publication.quality,
-      valid: errors.length === 0,
-      score: Math.max(0, 100 - errors.length * 30 - warnings.length * 5),
-      errors: [...new Set(errors)],
-      warnings: [...new Set(warnings)],
-      checked_at: new Date().toISOString(),
+      valid: uniqueErrors.length === 0,
+      gate_result: uniqueErrors.length === 0 ? "PASSED" : "FAILED",
+      score: Math.max(0, 100 - uniqueWarnings.length * 5 - recommendationCount * 2),
+      errors: uniqueErrors,
+      warnings: uniqueWarnings,
+      checked_at: checkedAt,
+      content_hash: contentHash,
     };
 
     const target: EditorialStatus = publication.quality.valid ? "READY_FOR_PREVIEW" : "VALIDATION_FAILED";
+    publication.events.push(event(
+      "GATE_COMPLETED",
+      actor,
+      publication.quality.valid
+        ? `Gate técnico aprovado; pontuação editorial ${publication.quality.score}/100.`
+        : `Gate técnico reprovado; pontuação editorial ${publication.quality.score}/100.`,
+    ));
     this.changeStatus(publication, target, actor, publication.quality.valid ? "Gate editorial aprovado." : "Gate editorial reprovado.");
     await this.store.savePublication(publication);
     return publication;
   }
 
-  async recordAdapters(
+  async runAdapters(
     id: string,
-    adapters: Partial<EditorialPublication["quality"]["adapters"]>,
+    actor: string,
+  ): Promise<EditorialPublication> {
+    let publication = await this.requirePublication(id);
+    for (const adapter of EDITORIAL_ADAPTERS) {
+      publication = await this.runAdapter(id, adapter, actor);
+    }
+    return publication;
+  }
+
+  async runAdapter(
+    id: string,
+    adapter: EditorialAdapterName,
     actor: string,
   ): Promise<EditorialPublication> {
     const publication = await this.requirePublication(id);
-    if (!["DRAFT", "VALIDATION_FAILED", "CHANGES_REQUESTED"].includes(publication.status)) {
-      throw new DomainError("QUALITY_LOCKED", "Os adapters não podem ser alterados neste estado.", "Retorne para rascunho antes de reaplicar critérios editoriais.", 409);
+    if (!EDITORIAL_ADAPTERS.includes(adapter)) {
+      throw new DomainError("INVALID_ADAPTER", `Adapter editorial inválido: ${adapter}.`, "Use deskgo, frankwatching ou ames.", 422);
     }
-    publication.quality.adapters = { ...publication.quality.adapters, ...adapters };
-    publication.updated_at = new Date().toISOString();
-    publication.events.push(event("CONTENT_UPDATED", actor, "Estado dos adapters editoriais atualizado."));
+    if (![
+      "DRAFT",
+      "CONTENT_READY",
+      "ENRICHING",
+      "ADAPTERS_APPLIED",
+      "ADAPTER_FAILED",
+      "VALIDATION_FAILED",
+      "CHANGES_REQUESTED",
+    ].includes(publication.status)) {
+      throw new DomainError(
+        "QUALITY_LOCKED",
+        `Os adapters não podem ser executados em ${publication.status}.`,
+        "Edite ou devolva a publicação para rascunho antes de reaplicar critérios editoriais.",
+        409,
+      );
+    }
+
+    const structureErrors = minimumStructureErrors(publication);
+    if (structureErrors.length > 0) {
+      throw new DomainError(
+        "CONTENT_NOT_READY",
+        "A estrutura mínima precisa ser corrigida antes dos adapters.",
+        structureErrors.join(" "),
+        409,
+      );
+    }
+
+    if (["DRAFT", "VALIDATION_FAILED", "CHANGES_REQUESTED"].includes(publication.status)) {
+      this.changeStatus(publication, "CONTENT_READY", actor, "Estrutura mínima confirmada.");
+    }
+    if (publication.status !== "ENRICHING") {
+      this.changeStatus(publication, "ENRICHING", actor, `Execução do adapter ${adapter} iniciada.`);
+    }
+
+    const runner = this.adapterRegistry[adapter];
+    const contentHash = editorialContentHash(publication);
+    const startedAt = timestampAfter(publication.content.updated_at);
+    publication.quality.valid = false;
+    publication.quality.gate_result = "NOT_RUN";
+    publication.quality.checked_at = null;
+    publication.quality.content_hash = null;
+    publication.quality.adapters[adapter] = {
+      adapter,
+      status: "RUNNING",
+      adapter_version: runner.version,
+      publication_version: publication.version,
+      content_hash: contentHash,
+      started_at: startedAt,
+      completed_at: null,
+      findings: { errors: [], warnings: [], recommendations: [] },
+      output_reference: null,
+      actor,
+      skip_reason: null,
+    };
+    publication.updated_at = startedAt;
+    publication.events.push(event("ADAPTER_STARTED", actor, `${adapter} ${runner.version} iniciado.`));
+    await this.store.savePublication(publication);
+
+    try {
+      const findings = await runner.run({ publication: structuredClone(publication), content_hash: contentHash });
+      publication.quality.adapters[adapter] = {
+        ...publication.quality.adapters[adapter],
+        status: "APPLIED",
+        completed_at: timestampAfter(startedAt),
+        findings: {
+          errors: [...new Set(findings.errors)],
+          warnings: [...new Set(findings.warnings)],
+          recommendations: [...new Set(findings.recommendations)],
+        },
+        output_reference: `editorial://${publication.id}/v${publication.version}/adapters/${adapter}/${contentHash}`,
+      };
+      publication.events.push(event(
+        "ADAPTER_COMPLETED",
+        actor,
+        `${adapter} aplicado com ${findings.errors.length} erro(s), ${findings.warnings.length} aviso(s) e ${findings.recommendations.length} recomendação(ões).`,
+      ));
+    } catch (caught) {
+      const message = caught instanceof Error ? caught.message : "Falha desconhecida do adapter.";
+      publication.quality.adapters[adapter] = {
+        ...publication.quality.adapters[adapter],
+        status: "FAILED",
+        completed_at: timestampAfter(startedAt),
+        findings: { errors: [message], warnings: [], recommendations: [] },
+      };
+      publication.events.push(event("ADAPTER_FAILED", actor, `${adapter} falhou: ${message}`));
+    }
+
+    const allApplied = EDITORIAL_ADAPTERS.every((name) =>
+      hasCurrentAppliedEvidence(publication.quality.adapters[name], publication, contentHash)
+    );
+    const anyFailed = EDITORIAL_ADAPTERS.some((name) =>
+      publication.quality.adapters[name].status === "FAILED"
+    );
+    if (allApplied) {
+      this.changeStatus(publication, "ADAPTERS_APPLIED", actor, "Todos os adapters obrigatórios possuem evidência válida.");
+    } else if (anyFailed && publication.status === "ENRICHING") {
+      this.changeStatus(publication, "ADAPTER_FAILED", actor, "Um ou mais adapters falharam.");
+    }
+    publication.updated_at = timestampAfter(publication.updated_at);
     await this.store.savePublication(publication);
     return publication;
   }
 
-  async startPreview(id: string, input: { branch: string; commit_sha: string; pull_request_number?: number; pull_request_url?: string; actor: string }): Promise<EditorialPublication> {
+  async startPreview(id: string, input: {
+    branch: string;
+    commit_sha: string;
+    pull_request_number?: number;
+    pull_request_url?: string;
+    publication_version?: number;
+    content_hash?: string;
+    actor: string;
+  }): Promise<EditorialPublication> {
     const publication = await this.requirePublication(id);
+    assertReadyForPreviewEvidence(publication);
+    const branch = input.branch.trim();
+    const commitSha = input.commit_sha.trim();
+    const contentHash = editorialContentHash(publication);
+    if (!branch || !/^[0-9a-f]{40}$/i.test(commitSha)) {
+      throw new DomainError("INVALID_GITHUB_EVIDENCE", "Branch e commit SHA-1 completo são obrigatórios.", "Registre a branch e os 40 caracteres hexadecimais do commit.", 422);
+    }
+    if (
+      (input.publication_version !== undefined && input.publication_version !== publication.version)
+      || (input.content_hash !== undefined && input.content_hash !== contentHash)
+    ) {
+      throw new DomainError(
+        "GITHUB_CONTENT_MISMATCH",
+        "A versão ou o hash informado não corresponde ao conteúdo aprovado.",
+        "Gere novamente o artefato GitHub a partir da versão editorial atual.",
+        409,
+      );
+    }
     publication.github = {
-      branch: input.branch.trim(),
-      commit_sha: input.commit_sha.trim(),
+      branch,
+      commit_sha: commitSha,
       pull_request_number: input.pull_request_number ?? null,
       pull_request_url: input.pull_request_url?.trim() || null,
+      publication_version: publication.version,
+      content_hash: contentHash,
     };
     this.changeStatus(publication, "PREVIEW_BUILDING", input.actor, "Branch e commit do preview registrados.");
     await this.store.savePublication(publication);
@@ -273,7 +530,17 @@ export class EditorialService {
     if (publication.status !== "PREVIEW_BUILDING") {
       throw new DomainError("INVALID_TRANSITION", `O preview não pode ser anexado em ${publication.status}.`, "Inicie o build do preview primeiro.", 409);
     }
-    publication.preview = { url: input.url.trim(), deployment_id: input.deployment_id?.trim() || null, created_at: new Date().toISOString() };
+    const previewUrl = input.url.trim();
+    const deploymentId = input.deployment_id?.trim();
+    if (!/^https:\/\//i.test(previewUrl) || !deploymentId) {
+      throw new DomainError(
+        "INVALID_PREVIEW_EVIDENCE",
+        "URL HTTPS imutável e deployment_id são obrigatórios.",
+        "Registre a URL do Preview e o identificador dpl_… da Vercel.",
+        422,
+      );
+    }
+    publication.preview = { url: previewUrl, deployment_id: deploymentId, created_at: new Date().toISOString() };
     publication.events.push(event("PREVIEW_ATTACHED", input.actor, `Preview registrado em ${publication.preview.url}.`));
     this.changeStatus(publication, "PREVIEW_READY", input.actor, "Preview disponível para revisão.");
     await this.store.savePublication(publication);
@@ -345,6 +612,6 @@ export class EditorialService {
   private async requirePublication(id: string): Promise<EditorialPublication> {
     const publication = await this.store.getPublication(id);
     if (!publication) throw new DomainError("NOT_FOUND", `A publicação ${id} não existe.`, "Atualize a lista editorial.", 404);
-    return structuredClone(publication);
+    return normalizeEditorialPublication(structuredClone(publication));
   }
 }

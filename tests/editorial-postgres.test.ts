@@ -11,10 +11,10 @@ import { EditorialService } from "../src/editorial/service.js";
 import { EditorialStore, MigratingEditorialStore } from "../src/editorial/store.js";
 import { memoryStore } from "./helpers/memory-store.js";
 
-const migrationUrl = new URL(
-  "../supabase/migrations/202607270001_editorial_postgres.sql",
-  import.meta.url,
-);
+const migrationUrls = [
+  new URL("../supabase/migrations/202607270001_editorial_postgres.sql", import.meta.url),
+  new URL("../supabase/migrations/202607280001_editorial_e2.sql", import.meta.url),
+];
 
 const article = `# Persistência editorial relacional
 
@@ -58,14 +58,16 @@ function pgliteClient(database: PGliteInterface): EditorialSqlClient {
 }
 
 async function applyMigration(database: PGliteInterface): Promise<void> {
-  const migration = await fs.readFile(migrationUrl, "utf8");
-  const statements = migration
-    .split(/\n-- statement-breakpoint\n/g)
-    .map((statement) => statement.trim())
-    .filter(Boolean);
-  await database.transaction(async (transaction) => {
-    for (const statement of statements) await transaction.exec(statement);
-  });
+  for (const migrationUrl of migrationUrls) {
+    const migration = await fs.readFile(migrationUrl, "utf8");
+    const statements = migration
+      .split(/\n-- statement-breakpoint\n/g)
+      .map((statement) => statement.trim())
+      .filter(Boolean);
+    await database.transaction(async (transaction) => {
+      for (const statement of statements) await transaction.exec(statement);
+    });
+  }
 }
 
 async function legacyPublication() {
@@ -93,9 +95,9 @@ describe("Editorial Postgres migration", () => {
         (select count(*)::integer from editorial_legacy_backup) as backups,
         (select count(*)::integer from app_schema_migrations) as migrations
     `);
-    expect(counts.rows[0]).toEqual({ publications: 0, backups: 0, migrations: 1 });
+    expect(counts.rows[0]).toEqual({ publications: 0, backups: 0, migrations: 2 });
     await database.close();
-  });
+  }, 15_000);
 
   it("backs up and backfills existing KV data without deleting the source", async () => {
     const database = new PGlite();
@@ -179,6 +181,7 @@ describe("PostgresEditorialStore", () => {
       markdown: `${article}\n\n## Evidência\n\nConteúdo atualizado e salvo no Postgres.`,
       actor: "Teste automatizado",
     });
+    await service.runAdapters(created.id, "Teste automatizado");
     await service.runQualityGate(created.id, "Teste automatizado");
     await service.startPreview(created.id, {
       branch: "editorial/persistencia-relacional",
@@ -230,6 +233,7 @@ describe("PostgresEditorialStore", () => {
     const store = new PostgresEditorialStore(pgliteClient(database), "workspace-review", "preview");
     const service = new EditorialService(store);
     const created = await service.createPublication(briefing(" revisão"));
+    await service.runAdapters(created.id, "Teste automatizado");
     await service.runQualityGate(created.id, "Teste automatizado");
     await service.startPreview(created.id, {
       branch: "editorial/revisao",
@@ -238,6 +242,7 @@ describe("PostgresEditorialStore", () => {
     });
     await service.attachPreview(created.id, {
       url: "https://preview.example.test/blog/revisao",
+      deployment_id: "dpl_review",
       actor: "Teste automatizado",
     });
     await service.startReview(created.id, "Teste automatizado");

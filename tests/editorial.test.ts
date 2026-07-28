@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { editorialHandler, setEditorialServiceForTesting } from "../api/editorial.js";
+import { editorialAdapterRegistry } from "../src/editorial/adapters.js";
 import { EditorialService } from "../src/editorial/service.js";
 import { EditorialStore } from "../src/editorial/store.js";
 import { adminCookie, appCookie, signAdminSession, signAppSession } from "../src/lib/auth.js";
@@ -17,6 +18,11 @@ O artigo segue para branch, pull request e Vercel Preview. Depois da revisão, o
 
 function service() {
   return new EditorialService(new EditorialStore(memoryStore()));
+}
+
+async function enrichAndValidate(editorial: EditorialService, id: string) {
+  await editorial.runAdapters(id, "Leonardo");
+  return editorial.runQualityGate(id, "Leonardo");
 }
 
 function briefing() {
@@ -48,9 +54,12 @@ describe("EditorialPublication domain", () => {
     const created = await editorial.createPublication(briefing());
     const id = created.id;
 
+    const enriched = await editorial.runAdapters(id, "Leonardo");
+    expect(enriched.status).toBe("ADAPTERS_APPLIED");
     const validated = await editorial.runQualityGate(id, "Leonardo");
     expect(validated.status).toBe("READY_FOR_PREVIEW");
     expect(validated.quality.valid).toBe(true);
+    expect(validated.quality.gate_result).toBe("PASSED");
 
     await editorial.startPreview(id, {
       branch: `editorial/${created.content.slug}`,
@@ -90,6 +99,7 @@ describe("EditorialPublication domain", () => {
   it("invalidates approval and preview evidence when content changes", async () => {
     const editorial = service();
     const created = await editorial.createPublication(briefing());
+    await editorial.runAdapters(created.id, "Leonardo");
     const updated = await editorial.updateContent(created.id, {
       markdown: `${sourceText}\n\n## Evidência\n\nNova versão do conteúdo.`,
       actor: "Leonardo",
@@ -100,6 +110,108 @@ describe("EditorialPublication domain", () => {
     expect(updated.github.commit_sha).toBeNull();
     expect(updated.preview.url).toBeNull();
     expect(updated.approval.decision).toBe("PENDING");
+    expect(updated.quality.adapters.deskgo.status).toBe("STALE");
+    expect(updated.quality.adapters.frankwatching.status).toBe("STALE");
+    expect(updated.quality.adapters.ames.status).toBe("STALE");
+  });
+
+  it("blocks the final gate and Preview while any required adapter is not run", async () => {
+    const editorial = service();
+    const created = await editorial.createPublication(briefing());
+
+    await expect(editorial.runQualityGate(created.id, "Leonardo"))
+      .rejects.toMatchObject({ code: "ADAPTERS_REQUIRED" });
+    await expect(editorial.startPreview(created.id, {
+      branch: "editorial/blocked",
+      commit_sha: "a".repeat(40),
+      actor: "Teste",
+    })).rejects.toMatchObject({ code: "QUALITY_GATE_FAILED" });
+  });
+
+  it("keeps the workflow blocked when an adapter execution fails", async () => {
+    const failingService = new EditorialService(new EditorialStore(memoryStore()), {
+      ...editorialAdapterRegistry,
+      deskgo: {
+        ...editorialAdapterRegistry.deskgo,
+        async run() {
+          throw new Error("DeskGo indisponível");
+        },
+      },
+    });
+    const created = await failingService.createPublication(briefing());
+    const enriched = await failingService.runAdapters(created.id, "Leonardo");
+
+    expect(enriched.status).toBe("ADAPTER_FAILED");
+    expect(enriched.quality.adapters.deskgo.status).toBe("FAILED");
+    await expect(failingService.runQualityGate(created.id, "Leonardo"))
+      .rejects.toMatchObject({ code: "ADAPTERS_REQUIRED" });
+  });
+
+  it("keeps the technical gate failed even when the editorial score is high", async () => {
+    const editorial = new EditorialService(new EditorialStore(memoryStore()), {
+      ...editorialAdapterRegistry,
+      frankwatching: {
+        ...editorialAdapterRegistry.frankwatching,
+        async run() {
+          return {
+            errors: ["A conclusão obrigatória não atende ao contrato editorial."],
+            warnings: [],
+            recommendations: [],
+          };
+        },
+      },
+    });
+    const created = await editorial.createPublication(briefing());
+    await editorial.runAdapters(created.id, "Leonardo");
+    const validated = await editorial.runQualityGate(created.id, "Leonardo");
+
+    expect(validated.status).toBe("VALIDATION_FAILED");
+    expect(validated.quality.gate_result).toBe("FAILED");
+    expect(validated.quality.score).toBeGreaterThanOrEqual(90);
+    expect(validated.quality.valid).toBe(false);
+  });
+
+  it.each([
+    ["H1", sourceText.replace(/^# .+\n/m, "")],
+    ["H2", sourceText.replace(/^## .+\n/gm, "")],
+  ])("blocks E2 when %s is absent", async (_heading, markdown) => {
+    const editorial = service();
+    const created = await editorial.createPublication({ ...briefing(), source_text: markdown });
+
+    await expect(editorial.runAdapters(created.id, "Leonardo"))
+      .rejects.toMatchObject({ code: "CONTENT_NOT_READY" });
+    expect((await editorial.getPublication(created.id)).status).toBe("DRAFT");
+  });
+
+  it("binds adapter evidence, final gate and GitHub artifact to the same content hash", async () => {
+    const editorial = service();
+    const created = await editorial.createPublication(briefing());
+    const validated = await enrichAndValidate(editorial, created.id);
+
+    expect(validated.quality.content_hash).toMatch(/^[0-9a-f]{64}$/);
+    for (const evidence of Object.values(validated.quality.adapters)) {
+      expect(evidence.status).toBe("APPLIED");
+      expect(evidence.content_hash).toBe(validated.quality.content_hash);
+      expect(evidence.publication_version).toBe(validated.version);
+      expect(evidence.output_reference).toBeTruthy();
+    }
+    await expect(editorial.startPreview(created.id, {
+      branch: "editorial/hash-incorreto",
+      commit_sha: "c".repeat(40),
+      content_hash: "0".repeat(64),
+      publication_version: validated.version,
+      actor: "Teste",
+    })).rejects.toMatchObject({ code: "GITHUB_CONTENT_MISMATCH" });
+
+    const building = await editorial.startPreview(created.id, {
+      branch: "editorial/hash-correto",
+      commit_sha: "c".repeat(40),
+      content_hash: validated.quality.content_hash ?? undefined,
+      publication_version: validated.version,
+      actor: "Teste",
+    });
+    expect(building.github.content_hash).toBe(validated.quality.content_hash);
+    expect(building.github.publication_version).toBe(validated.version);
   });
 });
 
@@ -153,6 +265,10 @@ describe("/api/editorial", () => {
     expect(createdResponse.status).toBe(201);
     const created = await createdResponse.json() as { data: { id: string } };
 
+    const adaptersResponse = await call("POST", `/publications/${created.data.id}/adapters/run`, { actor: "Leonardo" });
+    expect(adaptersResponse.status).toBe(200);
+    expect(await adaptersResponse.json()).toMatchObject({ data: { status: "ADAPTERS_APPLIED" } });
+
     const validationResponse = await call("POST", `/publications/${created.data.id}/validate`, { actor: "Leonardo" });
     expect(validationResponse.status).toBe(200);
     expect(await validationResponse.json()).toMatchObject({ data: { status: "READY_FOR_PREVIEW" } });
@@ -162,5 +278,22 @@ describe("/api/editorial", () => {
 
     const exported = await (await call("GET", `/publications/${created.data.id}/export`)).json() as { data: { briefing: { title: string } } };
     expect(exported.data.briefing.title).toBe(briefing().title);
+  });
+
+  it("rejects manual APPLIED labels and direct Preview calls before E2", async () => {
+    const created = await (await call("POST", "/publications", briefing())).json() as { data: { id: string } };
+
+    const manual = await call("POST", `/publications/${created.data.id}/adapters`, {
+      adapters: { deskgo: "APPLIED", frankwatching: "APPLIED", ames: "APPLIED" },
+    });
+    expect(manual.status).toBe(409);
+    expect(await manual.json()).toMatchObject({ error: { code: "MANUAL_ADAPTER_STATE_FORBIDDEN" } });
+
+    const preview = await call("POST", `/publications/${created.data.id}/preview/start`, {
+      branch: "editorial/direct-call",
+      commit_sha: "d".repeat(40),
+    });
+    expect(preview.status).toBe(409);
+    expect(await preview.json()).toMatchObject({ error: { code: "QUALITY_GATE_FAILED" } });
   });
 });
