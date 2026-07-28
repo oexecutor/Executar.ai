@@ -1,0 +1,21 @@
+run_id: run-2026-07-22-001
+project_id: relatorio-executivo-demo
+skill_version: "1.0.0"
+contract_version: "1.0"
+gate: G5
+status: completed
+decision: AVANÇAR
+facts:
+  - { statement: "metrics.csv contém 6 métricas com fonte e período", refs: [content/metrics.csv], confidence: HIGH }
+inferences:
+  - { statement: "A4 comporta as 6 métricas no orçamento comfortable", refs: [content-budgets.yaml], confidence: MEDIUM }
+gaps:
+  - { id: LAC-009, description: "widget sem amostra real validada", blocks_gate: false }
+transformations:
+  - { block_id: MET-revenue-growth, from_format: a4, to_format: widget, behavior: [SUBSTITUTE], justification: "container estreito", impact: "gráfico vira KPI+tendência" }
+artifacts:
+  - { path: out/report-a4.html, type: visual, status: generated, checksum: null, parallel_structured_data: out/report.json }
+  - { path: out/report.json, type: structured-data, status: generated, checksum: null, parallel_structured_data: null }
+quality_metrics: { budget_ok: true, p0p1_visible: true }
+limitations: ["P-1 apenas; não é arquivo de gráfica (PR-003)"]
+next_action: "Solicitar aprovação para avançar a G6 (auditoria)."

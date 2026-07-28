@@ -1,0 +1,272 @@
+meta:
+  contract_id: CT-FORMATS
+  title: Perfis de Formato — AMES
+  version: "1.0"
+  status: PROVISIONAL
+  canonical_source: SRC-01 (pipeline), SRC-06 (wireframe DESK-OS)
+  note: >
+    Cada formato é um OBJETO DE CONFIGURAÇÃO, não uma classe CSS (ADR-003).
+    Todos os formatos são P0 nesta versão. Perfis sem amostra real (bmc, card,
+    dashboard/slide) permanecem PROVISIONAL até validação com conteúdo (LAC-009).
+    Dimensões em mm são físicas; px são de referência digital. Tokens de grid,
+    margem e safe-area referenciam TOK-DESKGO-SWISS-001 por ID quando disponíveis.
+
+defaults:
+  minimum_font_size_print_pt: 9.5      # EDR-006 / SRC-03 print.body
+  minimum_note_font_size_print_pt: 8.0
+  minimum_font_size_screen_px: 14
+  maximum_hierarchy_levels: 4          # EDS-011
+  safe_area_min_mm: 5                  # ref grid.a4.safe_margin_min (TOK-DESKGO-SWISS-001)
+  min_whitespace_ratio: 0.25           # SRC-01 parâmetro ergonômico
+
+profiles:
+  - id: a4
+    medium: print
+    width: 210mm
+    height: 297mm
+    orientation: portrait
+    columns: 12                        # ref TOK-DESKGO-SWISS-001.grid.a4.columns
+    gutters: 4mm
+    margins: 12mm
+    safe_area: 5mm
+    density: comfortable
+    minimum_font_size: 9.5pt
+    maximum_hierarchy_levels: 4
+    maximum_metrics: 12
+    maximum_charts: 4
+    maximum_series: 5
+    maximum_words: 1200
+    break_policy: { break_inside: avoid, orphans: 3, widows: 3 }
+    preferred_transformations: [REFLOW, PAGINATE]
+    forbidden_transformations: []
+    print_class: P-1
+
+  - id: book-150x230
+    medium: print
+    width: 150mm
+    height: 230mm
+    orientation: portrait
+    columns: 6
+    gutters: 4mm
+    margins: 18mm
+    safe_area: 5mm
+    density: comfortable
+    minimum_font_size: 9.5pt
+    maximum_hierarchy_levels: 4
+    maximum_metrics: 6
+    maximum_charts: 2
+    maximum_series: 4
+    maximum_words: 550
+    break_policy: { break_inside: avoid, orphans: 2, widows: 2, running_headers: true }
+    preferred_transformations: [REFLOW, PAGINATE, REPRIORITIZE]
+    forbidden_transformations: []
+    print_class: P-1
+
+  - id: pamphlet-99x210
+    medium: print
+    width: 99mm
+    height: 210mm
+    orientation: portrait
+    columns: 1
+    gutters: 0mm
+    margins: 7mm
+    safe_area: 5mm
+    density: spacious
+    minimum_font_size: 9.5pt
+    maximum_hierarchy_levels: 3
+    maximum_metrics: 3
+    maximum_charts: 1
+    maximum_series: 3
+    maximum_words: 280
+    max_primary_messages: 1
+    max_benefits: 3
+    break_policy: { break_inside: avoid }
+    preferred_transformations: [REPRIORITIZE, SUBSTITUTE]
+    forbidden_transformations: [SCALE]     # SRC-01: A4 reduzido não vira panfleto
+    print_class: P-1
+
+  - id: widget
+    medium: digital
+    width: variable
+    height: variable
+    orientation: any
+    columns: 1
+    gutters: 8px
+    margins: 12px
+    safe_area: 0
+    density: spacious
+    minimum_font_size: 14px
+    maximum_hierarchy_levels: 2
+    maximum_metrics: 1
+    maximum_charts: 1
+    maximum_series: 2
+    maximum_words: 35
+    responsive_strategy: container-queries
+    break_policy: { break_inside: avoid }
+    preferred_transformations: [SUBSTITUTE, REPRIORITIZE]
+    forbidden_transformations: []
+    print_class: none
+
+  - id: business-model-canvas
+    medium: hybrid
+    width: 210mm
+    height: 297mm
+    orientation: landscape-or-portrait
+    columns: 5                          # 9 blocos em grade bidimensional
+    gutters: 3mm
+    margins: 10mm
+    safe_area: 5mm
+    density: comfortable
+    minimum_font_size: 9.5pt
+    maximum_hierarchy_levels: 3
+    maximum_metrics: 9
+    maximum_charts: 0
+    maximum_words: 900
+    requires_linear_alternative: true   # ACC-005 (SRC-01)
+    break_policy: { break_inside: avoid }
+    preferred_transformations: [SUBSTITUTE, REFLOW]
+    forbidden_transformations: [SCALE]  # miniatura ilegível proibida
+    print_class: P-1
+    status: PROVISIONAL                 # LAC-009
+
+  - id: card-85.60x53.98
+    medium: print
+    width: 85.60mm
+    height: 53.98mm
+    orientation: landscape
+    columns: 1
+    gutters: 0mm
+    margins: 3mm
+    safe_area: 3mm
+    bleed_recommended_mm: 3
+    density: compact
+    minimum_font_size: 6.5pt            # exceção de cartão; nota SRC-01
+    maximum_hierarchy_levels: 2
+    maximum_metrics: 2
+    maximum_charts: 0
+    maximum_words: 30
+    break_policy: { break_inside: avoid }
+    preferred_transformations: [REPRIORITIZE, SUBSTITUTE]
+    forbidden_transformations: [PAGINATE]
+    print_class: P-2                    # cartão físico exige pipeline profissional
+    status: PROVISIONAL                 # LAC-009
+
+  - id: mobile
+    medium: digital
+    width: 320-430px
+    height: variable
+    orientation: portrait
+    columns: 4                          # ref TOK-DESKGO-SWISS-001.grid.mobile
+    gutters: 8px
+    margins: 16px
+    safe_area: 0
+    density: comfortable
+    minimum_font_size: 16px            # ACC / SRC-03 §11
+    maximum_hierarchy_levels: 3
+    maximum_metrics: 4
+    maximum_charts: 2
+    maximum_series: 3
+    maximum_words: 400
+    reflow_min_css_px: 320             # ACC-003
+    break_policy: { n_a: true }
+    preferred_transformations: [REFLOW, SUBSTITUTE, REPRIORITIZE]
+    forbidden_transformations: []
+    print_class: none
+
+  - id: desktop
+    medium: digital
+    width: 1024-1440px
+    height: variable
+    orientation: landscape
+    columns: 12                         # ref TOK-DESKGO-SWISS-001.grid.desktop
+    gutters: 16-24px
+    margins: 24-48px
+    safe_area: 0
+    density: comfortable
+    minimum_font_size: 16px
+    maximum_hierarchy_levels: 4
+    maximum_metrics: 12
+    maximum_charts: 6
+    maximum_series: 5
+    maximum_words: 1600
+    break_policy: { n_a: true }
+    preferred_transformations: [REFLOW]
+    forbidden_transformations: []
+    print_class: none
+
+  - id: slide
+    medium: digital
+    width: 1280px
+    height: 720px
+    orientation: landscape
+    aspect_ratio: "16:9"
+    columns: 12
+    gutters: 24px
+    margins: 48px
+    safe_area: 24px
+    density: spacious
+    minimum_font_size: 20px
+    maximum_hierarchy_levels: 3
+    maximum_metrics: 4
+    maximum_charts: 1
+    maximum_series: 4
+    maximum_words: 60
+    break_policy: { one_idea_per_slide: true }
+    preferred_transformations: [REPRIORITIZE, SUBSTITUTE, PAGINATE]
+    forbidden_transformations: []
+    print_class: none
+    status: PROVISIONAL                 # LAC-009
+
+  - id: image-1x1
+    medium: digital
+    width: 1080px
+    height: 1080px
+    orientation: square
+    aspect_ratio: "1:1"
+    density: spacious
+    minimum_font_size: 22px
+    maximum_hierarchy_levels: 2
+    maximum_metrics: 1
+    maximum_charts: 1
+    maximum_words: 40
+    focal_point_crop: true             # regras de imagem SRC-01
+    export_min_dpi_print: 300
+    preferred_transformations: [REPRIORITIZE, SUBSTITUTE]
+    forbidden_transformations: [PAGINATE]
+    print_class: none
+
+  - id: image-4x3
+    medium: digital
+    width: 1200px
+    height: 900px
+    orientation: landscape
+    aspect_ratio: "4:3"
+    density: comfortable
+    minimum_font_size: 20px
+    maximum_hierarchy_levels: 2
+    maximum_metrics: 2
+    maximum_charts: 1
+    maximum_words: 60
+    focal_point_crop: true
+    export_min_dpi_print: 300
+    preferred_transformations: [REPRIORITIZE, SUBSTITUTE, REFLOW]
+    forbidden_transformations: [PAGINATE]
+    print_class: none
+
+  - id: image-16x9
+    medium: digital
+    width: 1920px
+    height: 1080px
+    orientation: landscape
+    aspect_ratio: "16:9"
+    density: comfortable
+    minimum_font_size: 20px
+    maximum_hierarchy_levels: 2
+    maximum_metrics: 3
+    maximum_charts: 1
+    maximum_words: 70
+    focal_point_crop: true
+    export_min_dpi_print: 300
+    preferred_transformations: [REPRIORITIZE, SUBSTITUTE, REFLOW]
+    forbidden_transformations: [PAGINATE]
+    print_class: none

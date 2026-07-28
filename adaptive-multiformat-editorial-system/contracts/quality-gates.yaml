@@ -1,0 +1,68 @@
+meta:
+  contract_id: CT-QGATES
+  title: Gates de Qualidade — AMES
+  version: "1.0"
+  status: APPROVED_FOR_SKILL_DRAFT
+  decision_refs: [ADR-008]
+  rule: NUNCA avançar automaticamente. Cada gate termina em uma decisão + uma próxima ação.
+
+gates:
+  G0:
+    name: Intake e escopo
+    inputs: [objetivo, content_sources, target_formats, constraints]
+    outputs: [objetivo, inventário_de_fontes, formatos, restrições, usuários, lacunas, riscos, decisão_de_viabilidade]
+    exit_criteria: [input valida contra CT-INPUT, viabilidade decidida]
+  G1:
+    name: Normalização semântica
+    inputs: [conteúdo bruto]
+    outputs: [modelo_de_conteúdo, ids, prioridades, evidências, relações, tipos_de_bloco, representações]
+    exit_criteria: [todo bloco tem priority e representations (CT-001, CT-002), relações normalizadas (AI-002)]
+  G2:
+    name: Requisitos
+    inputs: [modelo semântico]
+    outputs: [PRD, SRS, FR, NFR, requisitos_editoriais, ACC, PRINT, critérios_de_sucesso]
+    exit_criteria: [requisitos com IDs, P0/P1 com acceptance]
+  G3:
+    name: Arquitetura e decisões
+    inputs: [requisitos]
+    outputs: [arquitetura_lógica, ADR, EDR, ADER_INDEX, riscos, alternativas, consequências]
+    exit_criteria: [decisões significativas registradas (ADR/EDR)]
+  G4:
+    name: Contratos editoriais
+    inputs: [decisões]
+    outputs: [perfis_de_formato, contratos_de_componente, regras_de_transformação, design_tokens, orçamento, perfil_visual, critérios_de_aceitação]
+    exit_criteria: [9+ formatos perfilados, componentes com variantes, tokens estruturados, ACR definidos]
+  G5:
+    name: Geração ou adaptação
+    inputs: [contratos + conteúdo]
+    outputs: [plano_de_composição, artefato, dados_estruturados_paralelos, manifest, registro_de_transformações]
+    exit_criteria: [par visual+estruturado (FR-005, AI-001), transformações registradas (TR-001), sem overflow silencioso]
+  G6:
+    name: Auditoria e validação
+    inputs: [artefato]
+    outputs: [achados, severidades, evidências, impacto, correção, critério, decisão]
+    exit_criteria: [achados tipados com severity+certainty, P-1/P-2 corretos, Swiss audit_criteria avaliados]
+  G7:
+    name: Handoff e empacotamento
+    inputs: [artefatos validados]
+    outputs: [pacote_final, índice, manifest, checksums, instruções, limitações, relatório_de_qualidade]
+    exit_criteria: [MANIFEST com checksums, limitações registradas]
+
+skill_ready_criteria:   # espelha Full_especification.md §41 e acceptance-criteria.yaml
+  - todos os arquivos obrigatórios existem
+  - schemas válidos
+  - exemplos validam contra schemas
+  - gates possuem entradas e saídas
+  - requisitos possuem IDs
+  - P0 e P1 rastreados (contrato+decisão+teste+ACR)
+  - 5 comportamentos especificados e testáveis
+  - todos os formatos P0 cobertos por perfil e orçamento
+  - componentes possuem variantes
+  - tokens estruturados e referenciados por ID
+  - Swiss clássico possui contrato próprio com critério objetivo
+  - impressão P-1 e P-2 separadas
+  - auditoria possui certeza e severidade
+  - saída visual possui representação estruturada
+  - decisões significativas possuem ADR ou EDR
+  - nenhuma lacuna preenchida por invenção
+  - saída final possui uma única decisão

@@ -1,0 +1,3 @@
+{ "run_id": "ex-widget-01", "format": "widget", "container_width_px": 260,
+  "representation": "minimal", "kpi": { "label": "NPS", "value": 62, "trend": "up" },
+  "source": "CX, Jul 2026" }

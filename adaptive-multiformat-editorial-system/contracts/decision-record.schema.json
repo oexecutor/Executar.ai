@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ames.local/contracts/decision-record.schema.json",
+  "title": "AMES Decision Record (ADR/EDR)",
+  "description": "CT-DECISION. Estrutura comum de ADR e EDR. ADER é apenas o índice unificado.",
+  "type": "object",
+  "required": ["id", "title", "type", "status", "date", "context", "problem", "decision"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string", "pattern": "^(ADR|EDR)-[0-9]{3}$" },
+    "title": { "type": "string" },
+    "type": { "type": "string", "enum": ["architecture", "editorial"] },
+    "status": { "type": "string", "enum": ["PROPOSED", "ACCEPTED", "REJECTED", "DEPRECATED", "SUPERSEDED"] },
+    "date": { "type": "string", "format": "date" },
+    "context": { "type": "string" },
+    "problem": { "type": "string" },
+    "decision_drivers": { "type": "array", "items": { "type": "string" } },
+    "options_considered": { "type": "array", "items": { "type": "string" } },
+    "decision": { "type": "string" },
+    "positive_consequences": { "type": "array", "items": { "type": "string" } },
+    "negative_consequences": { "type": "array", "items": { "type": "string" } },
+    "risks": { "type": "array", "items": { "type": "string" } },
+    "validation": { "type": "string" },
+    "supersedes": { "type": ["string", "null"] },
+    "superseded_by": { "type": ["string", "null"] },
+    "requirement_refs": { "type": "array", "items": { "type": "string" } },
+    "test_refs": { "type": "array", "items": { "type": "string" } }
+  }
+}

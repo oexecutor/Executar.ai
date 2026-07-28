@@ -1,0 +1,74 @@
+meta:
+  contract_id: CT-TRANSFORM
+  title: Regras de Transformação — AMES
+  version: "1.0"
+  status: APPROVED_FOR_SKILL_DRAFT
+  canonical_source: SRC-01
+  decision_refs: [ADR-004, EDR-006]
+
+behaviors:
+  SCALE:
+    definition: Redimensionar sem alterar estrutura.
+    allowed_when:
+      - legibilidade preservada
+      - proporção válida (logotipos, ícones, ilustrações, gráficos SVG simples)
+    forbidden_when:
+      - usado para compensar excesso de conteúdo (TR-002)
+      - reduz fonte abaixo de profile.minimum_font_size (EDR-006)
+      - aplicado a texto, tabela, relatório, BMC completo, grid denso, panfleto, formulário
+    guard: assert(rendered_font_size >= profile.minimum_font_size)
+
+  REFLOW:
+    definition: Redistribuir blocos, linhas, colunas ou ordem.
+    allowed_when: [espaço disponível muda, mudança de nº de colunas]
+    techniques: [css-grid, flexbox, media-queries, container-queries, fluid-units]
+
+  REPRIORITIZE:
+    definition: Preservar somente conteúdo prioritário ou alterar sua ordem.
+    rules:
+      - P0 e P1 MUST permanecer visíveis
+      - P2 MAY ser resumido
+      - P3 MAY ir para detalhe/expansão/página secundária
+      - P4 SHOULD ir para apêndice, QR, modal ou doc técnica
+    guard: assert(no P0|P1 hidden)
+
+  SUBSTITUTE:
+    definition: Trocar componente por representação semanticamente equivalente.
+    examples:
+      - bar-chart -> kpi + trend-arrow
+      - table(12col) -> stacked-cards
+      - gauge -> percent + linear-bar
+      - business-model-canvas -> navigable-block-list
+    rules:
+      - informação preservada; só a forma muda
+      - source/fonte NUNCA removida na substituição (CP fonte)
+
+  PAGINATE:
+    definition: Dividir conteúdo entre páginas, painéis, etapas ou superfícies.
+    controls: [break-inside, break-before, break-after, orphans, widows, running-headers, page-numbers]
+    rules:
+      - legibilidade tem prioridade sobre contagem de páginas (EDS-041)
+      - elementos indivisíveis usam break-inside: avoid
+
+overflow_resolution_order:
+  description: Quando o conteúdo excede o orçamento do formato, aplicar nesta ordem. NUNCA reduzir fonte.
+  steps:
+    - REPRIORITIZE (resumir P2, mover P3/P4)
+    - SUBSTITUTE (componente mais compacto e equivalente)
+    - PAGINATE (nova página/painel/etapa)
+    - SIGNAL_OVERFLOW (OV-001) e solicitar edição humana
+  forbidden:
+    - SCALE de texto para caber (TR-002)
+    - ocultar P0/P1
+    - remover fonte/evidência/conclusão
+
+selection_matrix:
+  description: Comportamento principal recomendado por produto (SRC-01, ajustável).
+  business-model-canvas: SUBSTITUTE
+  executive-report: [REFLOW, PAGINATE]
+  business-widget: SUBSTITUTE
+  pamphlet: REPRIORITIZE
+
+record_requirements:
+  description: Toda transformação registra (TR-001, skill-output.transformations).
+  fields: [block_id, from_format, to_format, behavior, justification, impact]

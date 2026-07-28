@@ -1,0 +1,108 @@
+manifest_version: "1.0"
+package: adaptive-multiformat-editorial-system
+skill_version: "1.0.0"
+contract_version: "1.0"
+generated_at: "2026-07-22T22:29:50+00:00"
+file_count: 87
+entry_point: SKILL.md
+distribution: claude.ai Agent Skill (diretório .zip; SKILL.md na raiz)
+formats_covered: [a4, book-150x230, pamphlet-99x210, widget, business-model-canvas, card-85.60x53.98, mobile, desktop, slide, image-1x1, image-4x3, image-16x9]
+modes: [SPECIFY, AUDIT, ADAPT, GENERATE, PACKAGE]
+gates: [G0, G1, G2, G3, G4, G5, G6, G7]
+token_source: { contract_id: TOK-DESKGO-SWISS-001, package: DESKGO-SWISS-DESIGN-CONTRACT-SKILL-v1.0, ref: SRC-04 }
+limitations:
+  - Entrega de contratos e specs; sem código de aplicação (SRC-05 §25).
+  - Perfis BMC, cartão e slide PROVISIONAL até validação com conteúdo real (LAC-009).
+  - Tokens herdados de SRC-04 permanecem PROVISIONAL (LAC-COLOR, LAC-FONT, SEC-003).
+  - P-2 (PDF/X, CMYK, ICC, preflight) exige pipeline externo nao incluido (ADR-006).
+  - Identificacao forense de fonte tipografica fora de escopo (LAC-FONT).
+  - Schemas validados com jsonschema Draft 2020-12; fixtures e exemplos passam.
+run_instructions: "Upload do diretório (zip) como Skill no claude.ai; ou ler SKILL.md, preencher templates/START_CYCLE_INPUT.yaml, validar contra contracts/skill-input.schema.json, executar um gate por ciclo (G0..G7); cada saída termina em uma decisão e uma próxima ação."
+files:
+  - { path: 00-HANDOFF-OVERVIEW.md, checksum_sha256: c8db9102c4873c372ce601bfef94cf830065978cbe64e755fae9fe43e576ed56, bytes: 1850 }
+  - { path: 01-GOVERNANCE/GLOSSARY.md, checksum_sha256: ac9bdb57be1afd7382df9442ae6084538f5e25ae188309aa545d0a986e1c0993, bytes: 3178 }
+  - { path: 01-GOVERNANCE/SOURCE-OF-TRUTH.md, checksum_sha256: d94b2243ae9f3e3e640d34397a28dc0837f33cad28f5efe5851d8c31faef83de, bytes: 4486 }
+  - { path: README.md, checksum_sha256: 80ca17cf798b12401e4086d383ead35b832f78855e867139d7f238cc5c6f909e, bytes: 2797 }
+  - { path: SKILL.md, checksum_sha256: 89a61030dfd472016e38e52b009694ff6719a8336d997b9f26c41f52058f5a3f, bytes: 7534 }
+  - { path: contracts/acceptance-criteria.yaml, checksum_sha256: e3595586143b2714771164d37fea483317fb86241d4dd20ef25f18ff08a3f6ca, bytes: 3234 }
+  - { path: contracts/audit-finding.schema.json, checksum_sha256: 121d6db246b7ed1960deeeaf67fc75745c01e63e8628e58d4d6de2a75e570e9b, bytes: 1746 }
+  - { path: contracts/component-contracts.yaml, checksum_sha256: 5fc95045c1de07135043d3c99cd3560a6dbc16da4f074ae936958828d2a8a474, bytes: 9814 }
+  - { path: contracts/content-budgets.yaml, checksum_sha256: 6aed5120204f1b4d029b1445b72daf23b78e13a4d3ed37e0086072e538681957, bytes: 2539 }
+  - { path: contracts/content-model.schema.json, checksum_sha256: 2ba058200d35515a355f47de3a868069b11a82953c8e7ea2eff213157dc4e934, bytes: 4643 }
+  - { path: contracts/decision-record.schema.json, checksum_sha256: 40984e1f3825b57022ac1c3194194a3953ad5f6b6dbddf42842ab2cb2e7443dd, bytes: 1561 }
+  - { path: contracts/design-tokens-contract.yaml, checksum_sha256: cb01734279218260c5d4bda3886987f79a963d487e7cdecaee11ccbecd349dc4, bytes: 4064 }
+  - { path: contracts/error-taxonomy.yaml, checksum_sha256: e28a7c4378fb413044bdc7b201bfe9c85b5c6e9c9d7d33258b9d01bdba44e456, bytes: 4530 }
+  - { path: contracts/evidence-governance.yaml, checksum_sha256: e1dd60b97e0860039493915b17f1f86cbc33517a64dc8e91625ef9324407610f, bytes: 1502 }
+  - { path: contracts/format-profiles.yaml, checksum_sha256: 388628c2fa956158bd1b94dc0ee051a0c0569318ce263bd227f5d4d88d8dc58c, bytes: 7820 }
+  - { path: contracts/quality-gates.yaml, checksum_sha256: 06d5c3fb2c5109e2724482255f0d0669208edee991a4e26488313d736c9b84b1, bytes: 3277 }
+  - { path: contracts/skill-input.schema.json, checksum_sha256: 47749a92f819fd1145e72bb347228bc110191bba044aca2e8de7f91a7101e4cd, bytes: 2791 }
+  - { path: contracts/skill-output.schema.json, checksum_sha256: ba9ceb0d48176b44f6539803eb2924cfbf62d85d504369080b4fd1768a077af2, bytes: 3718 }
+  - { path: contracts/style-profiles.yaml, checksum_sha256: d968dfb59119721a1103c2ef350695f9738d9856e04e7ff77fd5590f5b7c3de4, bytes: 2628 }
+  - { path: contracts/transformation-rules.yaml, checksum_sha256: 33141024706006ee42b37d6c9cdbaee0ddcf935f4091ef364b83bb58d85ecfb8, bytes: 2909 }
+  - { path: decisions/ADER_INDEX.md, checksum_sha256: 675e444b6038f3c1d5f614379cc80b1323b841292d5b28da59f75397451ff592, bytes: 2040 }
+  - { path: decisions/adr/ADR-001.md, checksum_sha256: 67d9113ac7977c441f171dc99331bcf540c115542aedbf79a23fca3434a0200b, bytes: 1119 }
+  - { path: decisions/adr/ADR-002.md, checksum_sha256: b1afd149975837d459ab2a9f853545eea6870430930533350d308cdba2b2c29e, bytes: 1181 }
+  - { path: decisions/adr/ADR-003.md, checksum_sha256: 4791300c07c1a69f57332c6e6e7923cbf031a3a570ee7fba593a79f1c522b372, bytes: 856 }
+  - { path: decisions/adr/ADR-004.md, checksum_sha256: 5bb62705b109e85537277d396fac5cef49ad228ee261486ac301c482c8afe8b4, bytes: 795 }
+  - { path: decisions/adr/ADR-005.md, checksum_sha256: 78c6d1b0f0dd421df1f58e2ed79c7b9962f95de6634a3f117b92a5b6735cdecb, bytes: 713 }
+  - { path: decisions/adr/ADR-006.md, checksum_sha256: 451682eaa1aefed9400d158faffbf82f229e88fd7d365c5ee9662671a7da9cef, bytes: 797 }
+  - { path: decisions/adr/ADR-007.md, checksum_sha256: a1dad3aa55a90063b39765dedb581a06d7d6f87f0b5309c460318a7723a35960, bytes: 610 }
+  - { path: decisions/adr/ADR-008.md, checksum_sha256: a97aa21b8eaaa3269412693f52b7ba1d16345b1ee594fc9907c9b93f5465f197, bytes: 639 }
+  - { path: decisions/adr/ADR-009.md, checksum_sha256: 80977e3294317813f2d85b2c8999fa50f3b3409020fc87c7d5442a184eea358a, bytes: 700 }
+  - { path: decisions/edr/EDR-001.md, checksum_sha256: 6823088b7fc416f634aec7e52f34b566b31247ed7b8a18d4043164550c891b25, bytes: 832 }
+  - { path: decisions/edr/EDR-002.md, checksum_sha256: f6a188959a7516640f53e0e1934f55611aa6ee8717f4d5132b608450c6592763, bytes: 785 }
+  - { path: decisions/edr/EDR-003.md, checksum_sha256: a936a05dc1e694d482179d30182b36859e936c8861cd9df73ce9724d0eb1dfe6, bytes: 790 }
+  - { path: decisions/edr/EDR-004.md, checksum_sha256: 44d4843e82bf199ab0650f915fb57e654d716edbed95be4ef216c02df90144c7, bytes: 797 }
+  - { path: decisions/edr/EDR-005.md, checksum_sha256: 6cc93f127e338a1e4364ca1d3f4aabb70f7dce9a94c69df11bb52863fca02d6e, bytes: 708 }
+  - { path: decisions/edr/EDR-006.md, checksum_sha256: 9bd6bd06bddd4daf3e589c813e7f9f629dd8425132aecda059962402de36681e, bytes: 757 }
+  - { path: examples/business-model-canvas/README.md, checksum_sha256: f347c026b32a2cd566af60dbf6d52304d6ac9c954952e391274e14fcface1cad, bytes: 529 }
+  - { path: examples/business-model-canvas/adaptation.md, checksum_sha256: 28a3e2038999dc6e5ace83f263fdac136c5d2912e374755f9c0dded0703b59d0, bytes: 675 }
+  - { path: examples/business-model-canvas/content.json, checksum_sha256: a65263732165705b8627bc8b0590048293d4e83839e1543f9b239a771bc29fad, bytes: 939 }
+  - { path: examples/business-model-canvas/output.structured.json, checksum_sha256: 0301b2719ef761549b8254a0a15a06e3c37a9b40f7b76585cf025e785aa3d350, bytes: 200 }
+  - { path: examples/business-widget/README.md, checksum_sha256: 79bbf4c72605ed7346ed772a1f971a2b31f124f17750415a3fcf3e5479b01a7e, bytes: 523 }
+  - { path: examples/business-widget/adaptation.md, checksum_sha256: 5ac56428a39543f598b00135e7d417c0aeb55ad49478a27a5c37f8faf9a1b45d, bytes: 527 }
+  - { path: examples/business-widget/content.json, checksum_sha256: 5943f8753c6ee599e848792beff8052158ea3ce8ea2f3bbd195b37aa83ceb673, bytes: 661 }
+  - { path: examples/business-widget/output.structured.json, checksum_sha256: fd1405bf0623c1f3e7269cdb80d9d36a8fea2ebd2db5c9eabc9f6b02de3fad75, bytes: 190 }
+  - { path: examples/executive-report/README.md, checksum_sha256: f1c74ce1dde9d62f1f7a41f420a3afbd4e8d7459497b6d3346404b52748c4051, bytes: 524 }
+  - { path: examples/executive-report/adaptation.md, checksum_sha256: c280143c3849be1538431d7a5ada7d4ca4a66f040ef9262a57aadfcb54ab45bf, bytes: 906 }
+  - { path: examples/executive-report/content.json, checksum_sha256: 4e5bba12b4e14abf1ee7d1b92464f90a1997ea749bfa7491e6f5848449a96f93, bytes: 2148 }
+  - { path: examples/executive-report/output.structured.json, checksum_sha256: 4024890eeceab2ff0b3826cccc556d492715aa6df1bba9cccd51d967d8f13b47, bytes: 391 }
+  - { path: examples/pamphlet/README.md, checksum_sha256: 272842e5e42cb7c51e1339e22dd4c750df82d01bb9157dad480cd913f4d311ad, bytes: 516 }
+  - { path: examples/pamphlet/adaptation.md, checksum_sha256: e4316061ea56032d4137e8407ff72c62e9fca5297954befa2621fcf2e0c695c3, bytes: 683 }
+  - { path: examples/pamphlet/content.json, checksum_sha256: 0a7556adfadfd289344d1bf5c38f3cf58b3f94e27a21634316e57b47790c8784, bytes: 1163 }
+  - { path: examples/pamphlet/output.structured.json, checksum_sha256: a40be67119c665dc587c7fb37df9231f953995c3fd1e14d71088a63cee155e00, bytes: 360 }
+  - { path: product/JTBD.md, checksum_sha256: 8d7ef166ca07178d45a21fd20f70ed3c47a0911b0452f719d92129e9502287fd, bytes: 1447 }
+  - { path: product/PRD.md, checksum_sha256: b07bd59a75b4ab9fb55fc81811a20f1babd38364e3b53b863ab18d762f8f40e2, bytes: 6597 }
+  - { path: product/SRS.md, checksum_sha256: d67e754dd2542ca7fe1624c7a40b81aba1b7f305be07fb1632d4e823cc9aafab, bytes: 12641 }
+  - { path: prompts/ADAPT_PROMPT.md, checksum_sha256: 66b3722214f3a3813b856b8433460969b67f250b5feb02e75f2cde4cd64d3c66, bytes: 852 }
+  - { path: prompts/AUDIT_PROMPT.md, checksum_sha256: 5f0bb89ede717cb0800b9764568d26f328d5b3f4294901dd1959288967deb35e, bytes: 1088 }
+  - { path: prompts/GENERATION_PROMPT.md, checksum_sha256: 4c9d0bcef0199d509338281a4a414d2066ab0363937d8c8f277441e6b4748262, bytes: 805 }
+  - { path: prompts/MASTER_PROMPT.md, checksum_sha256: c01826143624adacb2105c7860f6e64d79f933592df4c421b380a1eaff76f24d, bytes: 1603 }
+  - { path: references/SKILL-STANDALONE.md, checksum_sha256: 785a150bc4b94117cc471020f259cb8917b9f583c9be80d70d3455daa842986e, bytes: 11213 }
+  - { path: references/SOURCES.md, checksum_sha256: 797e743849cbf43350c1f13b7b7481c3edc05930a8fd73665e6241da0e3183bd, bytes: 2044 }
+  - { path: specs/ACCESSIBILITY_SPEC.md, checksum_sha256: bdc05ace62fc07376f02c5c7b48785bbe819e5c1d54f7406522b925f0e259812, bytes: 949 }
+  - { path: specs/AI_AGENT_SPEC.md, checksum_sha256: 500a6a7dbba3fad246ade0be2942b618d08553975231a5eac7158c186b7e1c76, bytes: 939 }
+  - { path: specs/DESIGN_SYSTEM_SPEC.md, checksum_sha256: b891786ff46ebb17fca4479e504217998ec9605a767ab04c47775f7a176d092c, bytes: 941 }
+  - { path: specs/EDITORIAL_SPEC.md, checksum_sha256: 7f45135a3ebf78037505b2685d9ed19dade118ef5a549ceb17609e9ec1a24879, bytes: 2205 }
+  - { path: specs/FUNCTIONAL_SPEC.md, checksum_sha256: f4eaa302c3b82374475c4b786d7334b051dd6f241467c07baf8606b92d89c3a5, bytes: 1087 }
+  - { path: specs/IMPLEMENTATION_PLAN.md, checksum_sha256: 088ff86cc7e7e7a41ef5f863d12d60b4381c963d3e57cd3ce78f679f75c6d5d0, bytes: 1094 }
+  - { path: specs/PRINT_EXPORT_SPEC.md, checksum_sha256: 8b6eefbc5d6561905f19c99c2a77acb4beb23b6690e346a37843e989aa0694f1, bytes: 962 }
+  - { path: specs/TECHNICAL_SPEC.md, checksum_sha256: b8896fa231e328d5262db6f6888057a462efb69031705fd6bddb4da4895eb409, bytes: 1123 }
+  - { path: templates/ADR_TEMPLATE.md, checksum_sha256: 681db38333774678371c4522d7858b1ea9fd78fadc3c32b5010a153cc7e2e82a, bytes: 449 }
+  - { path: templates/AUDIT_FINDING.yaml, checksum_sha256: 9f3094f8f878c979440c47a48769da7540b9381b5148df38ccc3578694716323, bytes: 596 }
+  - { path: templates/EDR_TEMPLATE.md, checksum_sha256: 6c43e6f185c216e45d6d6e2777eab0e2f6979e926e5a96376184936a17969ec4, bytes: 385 }
+  - { path: templates/GATE_OUTPUT.yaml, checksum_sha256: d456a1a1a4d903064ed2fd6c64337ee6f4b2087573a578a7b6593115e148cf1e, bytes: 536 }
+  - { path: templates/MANIFEST_TEMPLATE.yaml, checksum_sha256: e6b8652d8153842fd45e1f9cf7c36fdf15359ccc4868df2da219ef175bdead16, bytes: 311 }
+  - { path: templates/OUTPUT_REPORT.md, checksum_sha256: e4773ac490b853cc1c128da293e6e04ee3459f9cc01a1d02556aecfc83281212, bytes: 606 }
+  - { path: templates/START_CYCLE_INPUT.yaml, checksum_sha256: 58f83c9bc4d49196056776a4acfc75c1b65ae863eee9a423aa66eee2fb66842e, bytes: 1070 }
+  - { path: tests/ACCEPTANCE_TESTS.md, checksum_sha256: 42dead1b110bd5229db562c877cc19a5d8e3a648d1026d9842c6670b77bfc8dc, bytes: 1994 }
+  - { path: tests/TEST_PLAN.md, checksum_sha256: 3f5202a96a2d2c3d19c2f08133e6f92337b8be1dd662aaa89e4685091edc7a5c, bytes: 3796 }
+  - { path: tests/acceptance.feature, checksum_sha256: 75ddfe73f738b9891f017447943a0a4fd2e7cd3b43f9146c34b07b87a549c9a1, bytes: 3314 }
+  - { path: tests/fixtures/README.md, checksum_sha256: 0d986526f92bd5350bbf2e8b49683ac201370aa64e0b76896cae172143ae7cc0, bytes: 538 }
+  - { path: tests/fixtures/content-block.invalid.json, checksum_sha256: 0b8f7a28034f14f9d183b757f89e7578c248f344c1f1d4e764787ae3c5135abd, bytes: 175 }
+  - { path: tests/fixtures/content-block.valid.json, checksum_sha256: 2f7b84c67984a78b8cd0bab85e7049a005e75c2aa2081aad3c196840f37cd3cf, bytes: 1319 }
+  - { path: tests/fixtures/skill-input.invalid.yaml, checksum_sha256: 403ea50d04f38e97209047216d7f4dd96817d17f1d5744f5a66f1e0c2dab138f, bytes: 58 }
+  - { path: tests/fixtures/skill-input.valid.yaml, checksum_sha256: 6deeda9844b8e0a5cd601cd25ad6eec22ec93b212eeac219e8688a3d8d233348, bytes: 621 }
+  - { path: tests/fixtures/skill-output.valid.yaml, checksum_sha256: d48cfb900b5dd62157c96fe323076ee7d0357b67e4d91dce968015169bc8cc46, bytes: 1155 }
+  - { path: traceability/REQUIREMENTS_TRACEABILITY_MATRIX.csv, checksum_sha256: ffd24a89684f725bbe977a46cb3cff42ee757d9b43fad8843282b5f0280d7cea, bytes: 4441 }
+  - { path: traceability/REQUIREMENTS_TRACEABILITY_MATRIX.md, checksum_sha256: 179dbcadb117950700c2d5bc31a4977a7c0b3992704f5aca717703dea32918a2, bytes: 1787 }

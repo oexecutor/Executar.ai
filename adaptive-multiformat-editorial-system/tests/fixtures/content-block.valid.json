@@ -1,0 +1,29 @@
+{
+  "id": "MET-revenue-growth",
+  "type": "metric",
+  "title": "Crescimento da receita",
+  "content": { "value": 18, "unit": "%", "trend": "up" },
+  "priority": "P1",
+  "source": { "name": "Financeiro", "source_uri": "content/metrics.csv", "version": "2026-07-20", "modified_at": "2026-07-20T00:00:00-03:00", "checksum": null },
+  "evidence_refs": ["EV-fin-q2"],
+  "epistemic_class": "FACT",
+  "period": "Q2 2026",
+  "unit": "%",
+  "relationships": [
+    { "type": "EVIDENCED_BY", "target": "EV-fin-q2", "justification": "fechamento trimestral", "confidence": "HIGH" }
+  ],
+  "representations": {
+    "full": { "component": "chart", "variant": "full" },
+    "compact": { "component": "metric", "variant": "compact" },
+    "minimal": { "component": "metric", "variant": "minimal" },
+    "print": { "component": "metric", "variant": "print" },
+    "text_fallback": "Crescimento da receita: 18% (Q2 2026), tendência de alta."
+  },
+  "constraints": { "max_chars": 40, "emphasis": "high" },
+  "format_behaviors": {
+    "a4": { "representation": "full", "behaviors": ["REFLOW"], "visible": true },
+    "widget": { "representation": "minimal", "behaviors": ["SUBSTITUTE"], "visible": true },
+    "pamphlet-99x210": { "representation": "compact", "behaviors": ["REPRIORITIZE"], "visible": true }
+  },
+  "status": "APPROVED"
+}

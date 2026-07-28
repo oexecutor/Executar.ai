@@ -1,0 +1,9 @@
+manifest_version: "1.0"
+package: adaptive-multiformat-editorial-system
+skill_version: "1.0.0"
+contract_version: "1.0"
+generated_at: ""          # ISO-8601
+files: []                 # [{ path, checksum_sha256, bytes }]
+formats_covered: []       # ids de format-profiles.yaml
+limitations: []
+run_instructions: ""

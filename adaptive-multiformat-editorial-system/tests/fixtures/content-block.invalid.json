@@ -1,0 +1,7 @@
+{
+  "id": "MET-bad",
+  "type": "metric",
+  "content": { "value": 42 },
+  "representations": { "full": { "component": "metric", "variant": "full" } },
+  "status": "PROPOSED"
+}

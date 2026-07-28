@@ -1,0 +1,20 @@
+project_id: relatorio-executivo-demo
+current_gate: G5
+mode: GENERATE
+objective: Gerar relatório executivo em A4 e widget a partir de metrics.csv
+target_outputs: [visual, structured-data, manifest]
+target_formats: [a4, widget]
+style_profile: classic-swiss-editorial
+content_sources:
+  - uri: content/metrics.csv
+    kind: csv
+    version: "2026-07-20"
+tokens_location:
+  contract_id: TOK-DESKGO-SWISS-001
+  uri: DESKGO-SWISS-DESIGN-CONTRACT-SKILL-v1.0/04-DESIGN-SYSTEM/design-tokens.yaml
+  version: "1.0"
+constraints:
+  print_class: P-1
+  language: pt-BR
+approval_policy: require-approval-each-gate
+known_gaps: [LAC-009]

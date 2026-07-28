@@ -1,0 +1,30 @@
+meta:
+  contract_id: CT-ACCEPT
+  title: Critérios de Aceitação — AMES
+  version: "1.0"
+  status: APPROVED_FOR_SKILL_DRAFT
+  decision_refs: [ADR-009]
+  namespace: ACR-      # dedicado; NÃO confundir com AC- (erro de acessibilidade)
+  canonical_source: SRC-02 (critérios finais §7), SRC-05 (§41)
+
+criteria:
+  ACR-001: { text: corpo impresso legível a 100% sem zoom nem redução de escala, verifies: [EDR-006, PRINT-002], test_refs: [TEST-PRINT-01] }
+  ACR-002: { text: nenhum conteúdo toca ou atravessa o rodapé/área de corte, verifies: [PRINT-003, PR-001], test_refs: [TEST-PRINT-03] }
+  ACR-003: { text: a superfície executiva apresenta somente P0/P1, verifies: [EDR-001, EDR-002], test_refs: [TEST-EDIT-02] }
+  ACR-004: { text: estados de acesso usam vocabulário textual normalizado (não símbolo/cor), verifies: [ACC-002, AC-002], test_refs: [TEST-A11Y-05] }
+  ACR-005: { text: ranking/ordenação é reproduzível por score e evidência, verifies: [NFR-003], test_refs: [TEST-AI-04] }
+  ACR-006: { text: toda relação entre objetos é estruturada (não em prosa), verifies: [AI-002], test_refs: [TEST-CONTENT-04] }
+  ACR-007: { text: cada recomendação possui decisão, ação, owner e status possíveis, verifies: [FR-006], test_refs: [TEST-CONTENT-05] }
+  ACR-008: { text: o visual permanece compreensível em escala de cinza, verifies: [SWISS-004, ACC-002], test_refs: [TEST-SWISS-06] }
+  ACR-009: { text: nenhum estado depende de emoji para significado, verifies: [ACC-002], test_refs: [TEST-A11Y-06] }
+  ACR-010: { text: existe fonte JSON/CSV canônica paralela ao visual, verifies: [FR-005, AI-001], test_refs: [TEST-AI-01] }
+  ACR-011: { text: existe schema validável e input/output validam, verifies: [FR-001, DR-003], test_refs: [TEST-SCHEMA-01, TEST-SCHEMA-02] }
+  ACR-012: { text: existe saída perfilada p/ A4, livro, panfleto e widget (mínimo) e demais formatos P0, verifies: [FR-002], test_refs: [TEST-FMT-01, TEST-FMT-02, TEST-FMT-03, TEST-FMT-04] }
+  ACR-013: { text: cada saída aplica reflow/repriorização/substituição/paginação quando necessário, verifies: [FR-002, FR-007], test_refs: [TEST-TR-03, TEST-TR-04, TEST-TR-05, TEST-TR-06] }
+  ACR-014: { text: impressão e interface são separadas (controles ocultos em @media print), verifies: [PRINT-006, EDS-042], test_refs: [TEST-PRINT-05] }
+  ACR-015: { text: resultado testado em 320px, desktop e impressão, verifies: [ACC-003], test_refs: [TEST-A11Y-03] }
+  ACR-016: { text: fatos, inferências, lacunas e recomendações permanecem separados na saída, verifies: [SEC-003], test_refs: [TEST-EV-01] }
+  ACR-017: { text: SCALE nunca usado para caber conteúdo; overflow resolvido por reprioritização/substituição/paginação, verifies: [EDR-006, TR-002], test_refs: [TEST-TR-02] }
+  ACR-018: { text: gauge apenas para meta/capacidade/limite; comparação de categorias não usa gauge, verifies: [EDR-005], test_refs: [TEST-CP-02] }
+  ACR-019: { text: exportação P-2 exige PDF/X, CMYK, ICC, sangria, fontes incorporadas e preflight, verifies: [PRINT-005, PR-003], test_refs: [TEST-PRINT-06] }
+  ACR-020: { text: saída final possui exatamente uma decisão e uma próxima ação, verifies: [FR-003], test_refs: [TEST-OUT-01] }

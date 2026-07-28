@@ -1,0 +1,17 @@
+# Template de achado — valida contra contracts/audit-finding.schema.json
+id: FIND-XXX-000
+title: ""
+severity: MEDIUM          # CRITICAL | HIGH | MEDIUM | LOW | INFO | NOT_VERIFIABLE
+certainty: CONFIRMED      # CONFIRMED | INFERRED | NOT_VERIFIABLE
+status: OPEN              # OPEN | IN_PROGRESS | RESOLVED | WONT_FIX | DEFERRED
+affected_objects: []
+evidence: ""
+principle_violated: ""    # ex.: EDR-006
+error_code: null          # ex.: TR-002 (error-taxonomy.yaml)
+requirement_refs: []
+decision_refs: []
+impact: ""
+correction: ""
+acceptance: ""            # ACR-...
+owner: null
+due_date: null

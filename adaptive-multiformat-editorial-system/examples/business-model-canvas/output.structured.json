@@ -1,0 +1,2 @@
+{ "run_id": "ex-bmc-01", "format": "mobile", "linear_order": ["CB-value","CB-segments","CB-revenue"],
+  "navigation": "accordion", "note": "alternativa linear para tecnologias assistivas (ACC-005)" }

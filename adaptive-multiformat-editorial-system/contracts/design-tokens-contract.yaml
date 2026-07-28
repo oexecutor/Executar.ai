@@ -1,0 +1,86 @@
+meta:
+  contract_id: CT-TOKENS
+  title: Contrato de Design Tokens — AMES
+  version: "1.0"
+  status: PROVISIONAL
+  decision_refs: [ADR-002]
+  canonical_token_source:
+    package: DESKGO-SWISS-DESIGN-CONTRACT-SKILL-v1.0
+    contract_id: TOK-DESKGO-SWISS-001
+    reference: SRC-04
+    rule: >
+      A skill REFERENCIA tokens por ID e NUNCA copia valores (TK-002, ADR-002).
+      Valores herdados permanecem PROVISIONAL até validação na origem (SEC-003, LAC-COLOR, LAC-FONT).
+  note: >
+    A fonte canônica é ESTRUTURADA (YAML/JSON). tokens.css é SAÍDA GERADA (SHOULD),
+    nunca a única fonte. Nenhum valor visual importante fica hard-coded em componente (NFR-004, TK-001).
+
+layers:
+  primitives:
+    description: valores brutos — referenciados de TOK-DESKGO-SWISS-001.color/typography/spacing
+    refs:
+      color: TOK-DESKGO-SWISS-001.color
+      typography_family: TOK-DESKGO-SWISS-001.typography.family
+      spacing_unit: TOK-DESKGO-SWISS-001.spacing.unit   # 4px
+  semantic:
+    description: papéis semânticos derivados dos primitivos
+    tokens:
+      text-primary:    { ref: TOK-DESKGO-SWISS-001.color.light.text_primary }
+      text-secondary:  { ref: TOK-DESKGO-SWISS-001.color.light.text_secondary }
+      surface-page:    { ref: TOK-DESKGO-SWISS-001.color.light.surface }
+      border-subtle:   { ref: TOK-DESKGO-SWISS-001.color.light.rule }
+      accent:          { ref: TOK-DESKGO-SWISS-001.color.brand.signal, max_area: "5%" }
+      status-positive: { role: state, not_color_only: true }
+      status-negative: { role: state, not_color_only: true }
+    severity_scale: [CRITICAL, HIGH, MEDIUM, LOW, INFO]   # tokens distintos de accent/category/status (EDS-047)
+    data_series: { max: 5, ref: derive-from-primitives, distinct_from_accent: true }
+  component:
+    description: tokens específicos de componente (ref semantic)
+    examples:
+      metric-card-padding:  { ref: spacing.4 }
+      report-heading-size:  { ref: TOK-DESKGO-SWISS-001.typography.print.h1 }
+      chart-label-color:    { ref: semantic.text-secondary }
+      callout-border:       { ref: semantic.border-subtle }
+  format:
+    description: tokens por formato (dimensões, margens, colunas, safe-area, break)
+    a4:                    { page: 210x297mm, margin: 12mm, columns: 12, ref: TOK-DESKGO-SWISS-001.grid.a4 }
+    book-150x230:          { page: 150x230mm, margin: 18mm, columns: 6 }
+    pamphlet-99x210:       { page: 99x210mm, margin: 7mm, columns: 1 }
+    card-85.60x53.98:      { page: 85.60x53.98mm, margin: 3mm, bleed: 3mm }
+    mobile:                { ref: TOK-DESKGO-SWISS-001.grid.mobile }
+    desktop:               { ref: TOK-DESKGO-SWISS-001.grid.desktop }
+    widget:                { density: spacious, responsive: container-queries }
+    slide:                 { page: 1280x720px, safe_area: 24px }
+    business-model-canvas: { columns: 5, blocks: 9 }
+    image-1x1:             { size: 1080x1080px }
+    image-4x3:             { size: 1200x900px }
+    image-16x9:            { size: 1920x1080px }
+  theme:
+    description: paridade Light/Dark/Print/High-contrast (SRC-03 §8 paridade)
+    light: { ref: TOK-DESKGO-SWISS-001.color.light }
+    dark:  { ref: TOK-DESKGO-SWISS-001.color.dark }
+    print: { grayscale_safe: true, background: none }
+    high-contrast: { min_ratio: 7.0 }
+  print:
+    description: tokens de impressão
+    scale: "100%"
+    safe_area_min: 5mm
+    break: { break-inside: avoid, orphans: 3, widows: 3 }
+    body_min_pt: 9.5
+  data-visualization:
+    description: tokens de série/eixo/rótulo
+    series_palette: { max: 5, source: semantic.data_series }
+    highlight_colors_max: 1
+    decimals_max: 2
+
+generated_outputs:
+  description: artefatos SHOULD gerados a partir da fonte estruturada (não fonte canônica)
+  artifacts:
+    - tokens.css
+    - tokens-print.css
+    - tokens-svg.json
+
+guardrails:
+  - TK-001 token ausente é erro (não hard-code silencioso)
+  - TK-002 valor hard-coded é erro; usar ref por ID
+  - MUST NOT introduzir cor decorativa fora de accent/category/severity/status (SWISS-006, SRC-03)
