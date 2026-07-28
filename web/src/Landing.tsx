@@ -138,6 +138,7 @@ export function Landing() {
         <Brand />
         <span>Projetos claros. Execução verificável.</span>
         <a href="/blog">Blog</a>
+        <a href="/terms.html">Termos</a>
         <a href="/privacy.html">Privacidade</a>
       </footer>
     </main>

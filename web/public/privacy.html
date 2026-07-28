@@ -4,21 +4,82 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Privacidade · EXECUTA.AI</title>
+    <meta name="robots" content="noindex" />
     <style>
       :root{font-family:Arial,Helvetica,sans-serif;color:#171715;background:#efefeb}
       *{box-sizing:border-box}body{margin:0}.wrap{width:min(100%,860px);margin:auto;padding:32px 20px 80px}
       .brand{display:flex;align-items:center;gap:10px;color:#0c0c0c;font:800 12px/1 ui-monospace,monospace;letter-spacing:.1em;text-decoration:none}
       .brand i{width:12px;height:12px;background:#ff5a00}main{margin-top:72px;padding:clamp(28px,7vw,68px);border:1px solid #0c0c0c;background:#f8f8f5}
-      h1{font-size:clamp(48px,9vw,88px);line-height:.9;letter-spacing:-.06em}h2{margin-top:40px}p,li{color:#62625d;line-height:1.65}a{color:inherit}
+      h1{font-size:clamp(40px,8vw,72px);line-height:.9;letter-spacing:-.06em}h2{margin-top:40px}p,li{color:#62625d;line-height:1.65}a{color:inherit}
+      .fill{background:#fff3d6;color:#7a5900;padding:2px 6px;border-radius:3px;font-family:ui-monospace,monospace;font-size:.9em}
+      .updated{color:#62625d;font-size:.9em}
+      table{width:100%;border-collapse:collapse;margin-top:12px}
+      th,td{text-align:left;padding:8px 10px;border-bottom:1px solid #d8d8d2;font-size:.92em;color:#62625d}
+      th{color:#171715}
     </style>
   </head>
   <body><div class="wrap"><a class="brand" href="/"><i></i>EXECUTA.AI</a><main>
-    <p>PRIVACIDADE</p><h1>Seus dados pertencem ao seu workspace.</h1>
-    <h2>Isolamento</h2><p>Contas, memberships e dados operacionais usam Supabase Auth e políticas de Row Level Security. Cada requisição é vinculada a um workspace ativo.</p>
-    <h2>Uso dos dados</h2><p>Projetos, progresso, documentos e evidências são usados apenas para fornecer as funções do aplicativo e do conector MCP autorizado pelo usuário.</p>
-    <h2>EXECUTA Journal</h2><p>Quando você assina o journal, registramos o e-mail informado, a origem do formulário, o momento do consentimento e eventos necessários para comprovar sua escolha. Esses dados são usados somente para comunicações editoriais do EXECUTA.AI e não são vendidos.</p>
-    <h2>Segurança</h2><p>Chaves privadas não são enviadas ao navegador. Sessões de aplicação são curtas, HttpOnly e não substituem as políticas do banco.</p>
-    <h2>Contato e exclusão</h2><p>Solicitações relacionadas ao workspace devem ser encaminhadas ao administrador da conta. O canal de cancelamento e exclusão da newsletter deverá estar publicado antes do primeiro envio editorial.</p>
-    <p><a href="/">Voltar ao início</a></p>
+    <p>PRIVACIDADE</p>
+    <h1>Seus dados pertencem ao seu workspace.</h1>
+    <p class="updated">Última atualização: 28 de julho de 2026. Esta política segue a Lei Geral de Proteção de Dados (LGPD, Lei 13.709/2018).</p>
+
+    <h2>1. Controlador dos dados</h2>
+    <p>O controlador dos dados tratados pelo EXECUTA.AI é <span class="fill">[razão social ou nome completo do responsável legal, CNPJ ou CPF]</span>. Contato do encarregado (DPO) / solicitações de titular: <span class="fill">[e-mail de suporte a definir]</span>.</p>
+
+    <h2>2. Quais dados coletamos</h2>
+    <table>
+      <thead><tr><th>Categoria</th><th>Exemplos</th><th>Origem</th></tr></thead>
+      <tbody>
+        <tr><td>Conta</td><td>E-mail, nome, senha (com hash), autenticação via Google quando escolhida</td><td>Fornecido por você via Supabase Auth</td></tr>
+        <tr><td>Workspace</td><td>Projetos, tarefas, checkpoints, evidências, documentos, notas</td><td>Criado por você no uso do produto</td></tr>
+        <tr><td>Integração MCP</td><td>Tokens de acesso OAuth, escopos autorizados, identificador do cliente conectado</td><td>Gerado quando você autoriza um cliente MCP</td></tr>
+        <tr><td>Newsletter</td><td>E-mail informado, origem do formulário, data/hora do consentimento</td><td>Fornecido por você ao assinar o EXECUTA Journal</td></tr>
+        <tr><td>Uso técnico</td><td>Logs de erro de servidor, endereço IP, user-agent — nunca conteúdo do workspace ou segredos</td><td>Gerado automaticamente pela infraestrutura (Vercel)</td></tr>
+      </tbody>
+    </table>
+
+    <h2>3. Base legal e finalidade (LGPD art. 7º)</h2>
+    <ul>
+      <li><strong>Execução de contrato</strong> — dados de conta e workspace, para fornecer o Serviço que você contratou ao criar a conta;</li>
+      <li><strong>Consentimento</strong> — e-mail e preferências da newsletter, revogável a qualquer momento pelo link de descadastro;</li>
+      <li><strong>Legítimo interesse</strong> — logs técnicos de erro, para manter o Serviço funcionando e detectar abuso, na medida em que não conflitem com seus direitos fundamentais;</li>
+      <li><strong>Cumprimento de obrigação legal</strong> — quando aplicável, retenção mínima exigida por lei fiscal ou regulatória.</li>
+    </ul>
+
+    <h2>4. Isolamento entre workspaces</h2>
+    <p>Contas, memberships e dados operacionais usam Supabase Auth e políticas de Row Level Security (RLS) no banco de dados. Cada requisição autenticada é vinculada a um workspace ativo — seu conteúdo não é acessível por outro workspace por padrão.</p>
+
+    <h2>5. Com quem compartilhamos dados</h2>
+    <p>Não vendemos seus dados. Compartilhamos o mínimo necessário com processadores que operam a infraestrutura do Serviço:</p>
+    <ul>
+      <li><strong>Supabase</strong> — autenticação, banco de dados e Row Level Security;</li>
+      <li><strong>Vercel</strong> — hospedagem da aplicação, funções serverless e logs técnicos de execução;</li>
+      <li><strong>GitHub</strong> — apenas para o fluxo editorial de publicação de conteúdo do blog, não para dados de workspace de usuários;</li>
+      <li><strong>Stripe</strong> — apenas se e quando planos pagos forem introduzidos; dados de pagamento (cartão) são processados diretamente pelo Stripe e nunca trafegam por servidores próprios do EXECUTA.AI.</li>
+    </ul>
+    <p>Esses processadores podem estar sediados fora do Brasil. Quando isso ocorrer, a transferência internacional segue as salvaguardas do art. 33 da LGPD (cláusulas contratuais do processador, adequação ou consentimento, conforme o caso).</p>
+
+    <h2>6. Retenção</h2>
+    <p>Dados de workspace são mantidos enquanto sua conta estiver ativa. Ao excluir a conta, o conteúdo do workspace é removido ou anonimizado dentro de um prazo razoável, exceto o que a lei exigir manter (por exemplo, registros fiscais). Logs técnicos têm retenção curta, limitada ao necessário para diagnóstico e segurança.</p>
+
+    <h2>7. Seus direitos como titular (LGPD art. 18)</h2>
+    <p>Você pode solicitar, a qualquer momento, pelo contato da seção 1: confirmação da existência de tratamento; acesso aos dados; correção de dados incompletos ou desatualizados; anonimização, bloqueio ou eliminação de dados desnecessários; portabilidade; eliminação dos dados tratados com seu consentimento; informação sobre compartilhamento; revogação do consentimento. Responderemos em prazo razoável, observados os limites técnicos e legais.</p>
+
+    <h2>8. Segurança</h2>
+    <p>Chaves privadas e segredos de servidor não são enviados ao navegador. Sessões de aplicação são de curta duração, protegidas por cookie <code>HttpOnly</code>, e não substituem as políticas de acesso do banco de dados (RLS). Autenticação real é exigida por padrão para acessar um workspace.</p>
+
+    <h2>9. Cookies</h2>
+    <p>Usamos apenas cookies estritamente necessários ao funcionamento do Serviço — a sessão de aplicação (<code>executa_session</code>) — sem cookies de rastreamento publicitário de terceiros. Se uma ferramenta de analytics for adotada no futuro, esta política será atualizada antes da coleta começar.</p>
+
+    <h2>10. EXECUTA Journal (newsletter)</h2>
+    <p>Ao assinar o journal, registramos o e-mail informado, a origem do formulário e o momento do consentimento. Esses dados são usados somente para comunicações editoriais do EXECUTA.AI e nunca vendidos. Todo e-mail enviado inclui um link de cancelamento.</p>
+
+    <h2>11. Menores de idade</h2>
+    <p>O Serviço não é direcionado a menores de 18 anos e não coletamos intencionalmente dados de crianças ou adolescentes.</p>
+
+    <h2>12. Alterações desta política</h2>
+    <p>Mudanças materiais serão comunicadas com antecedência razoável pelos canais disponíveis. A data no topo desta página sempre reflete a versão vigente.</p>
+
+    <p><a href="/">Voltar ao início</a> · <a href="/terms.html">Termos de Uso</a></p>
   </main></div></body>
 </html>
