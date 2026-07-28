@@ -10,8 +10,8 @@
   },
   "totals": {
     "milestones": 11,
-    "issues": 27,
-    "estimatedHours": 86,
+    "issues": 28,
+    "estimatedHours": 94,
     "p0Issues": 8
   },
   "proposedLaunchDate": "2026-08-14",
@@ -358,10 +358,10 @@
           "issues": [
             {
               "issueId": "EXA-G3-DATA-001",
-              "title": "Decidir backend único de persistência (Neon vs Supabase)",
-              "description": "src/lib/stores.ts:14-27: vault bifurca por supabaseConfigured(), OAuth é sempre Neon independente da configuração. Contradiz a suposição de baseline de que Supabase estaria desligado. Decidir fonte de verdade única de produção.",
+              "title": "[RESOLVIDO 2026-07-28] Backend único de persistência decidido (Supabase)",
+              "description": "Decisão registrada em ADR-002: Supabase é canônico. Vault já resolvido sem migração (consequência de DEC-001, autenticação real). Ver EXA-G3-DATA-002 para a fase 2 (OAuth).",
               "priority": "P0",
-              "status": "Blocked",
+              "status": "Done",
               "labels": [
                 "area:data",
                 "gate:G3",
@@ -372,16 +372,46 @@
               ],
               "estimateHours": 1,
               "startDate": "2026-08-03",
-              "dueDate": "2026-08-03",
+              "dueDate": "2026-07-28",
               "dependencies": [],
-              "blockedBy": "Decisão do dono do produto",
+              "blockedBy": null,
               "acceptanceCriteria": "Decisão registrada; bifurcação removida se aplicável",
-              "evidenceRequired": "Documento de decisão + diff de código",
-              "risk": "Alto",
+              "evidenceRequired": "docs/ADR-002_SUPABASE_CANONICAL_PERSISTENCE.md",
+              "risk": "Baixo",
               "sourceFile": [
                 "src/lib/stores.ts"
               ],
-              "sourceCommit": "28a689f"
+              "sourceCommit": "bac9429"
+            },
+            {
+              "issueId": "EXA-G3-DATA-002",
+              "title": "Migrar registro OAuth (clientes/tokens do /mcp) para Supabase",
+              "description": "Fase 2 do ADR-002: desenhar schema com RLS restrita a service role, implementar SupabaseOAuthStore compatível com KvStore, escrever migração de dados testada (Neon -> Supabase) com verificação de paridade, plano de rollback explícito, só então trocar oauthStore(). Requer acesso de rede a produção para execução segura — não escopável às cegas.",
+              "priority": "P1",
+              "status": "Backlog",
+              "labels": [
+                "area:data",
+                "gate:G3"
+              ],
+              "owner": [
+                "Product Owner",
+                "Execução assistida (Claude Code)"
+              ],
+              "estimateHours": 8,
+              "startDate": "2026-08-03",
+              "dueDate": "2026-08-05",
+              "dependencies": [
+                "EXA-G3-DATA-001"
+              ],
+              "blockedBy": "Acesso de rede a produção para migração segura",
+              "acceptanceCriteria": "Paridade de dados verificada linha a linha; rollback testado antes do corte",
+              "evidenceRequired": "Script de migração + relatório de paridade + evidência de rollback testado",
+              "risk": "Alto",
+              "sourceFile": [
+                "src/lib/stores.ts",
+                "docs/ADR-002_SUPABASE_CANONICAL_PERSISTENCE.md"
+              ],
+              "sourceCommit": "—"
             }
           ]
         }

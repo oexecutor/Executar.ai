@@ -32,21 +32,22 @@ conector do Linear está disponível nesta sessão (ver §Limitação abaixo).
 > Atualizado em **2026-07-28**: `EXA-G5-QA-001` foi marcado como
 > **resolvido** (ver `13-AUDITORIA-RIGOROSA-2026-07-28.md` §2 — mudança
 > arquitetural eliminou a corrida com `/icon.svg`, confirmada por execução
-> real desta sessão), e o epic `GTM` foi adicionado com 6 issues novas em
-> G4/G6/G7/G9 (ver `14-PLANO-GTM.md`).
+> real desta sessão), o epic `GTM` foi adicionado com 6 issues novas em
+> G4/G6/G7/G9 (ver `14-PLANO-GTM.md`), e `EXA-G3-SEC-001`/`EXA-G3-DATA-001`
+> foram resolvidos (autenticação real habilitada, Supabase confirmado como
+> persistência canônica) com `EXA-G3-DATA-002` aberto como a migração de
+> dados real do registro OAuth (fase 2, ver `ADR-002`).
 
 - **Milestones**: 11 (G0–G10).
-- **Issues**: 27 (21 originais + 6 do epic `GTM`).
-- **Esforço total estimado**: 86 horas (72h do baseline original + 14h do
-  epic `GTM`) — cobre auditoria, todas as decisões necessárias, e o
-  trabalho já claramente escopável. **Não** cobre a implementação
-  decorrente das decisões de G1/G2/G3/G7 ainda não tomadas (ex.: reativar
-  autenticação, migrar backend de persistência, redesenhar a conexão do
-  PLANGEN) — essas viram issues novas, com estimativa própria, assim que
-  cada decisão for registrada.
+- **Issues**: 28 (21 originais + 6 do epic `GTM` + 1 nova em G3-DATA).
+- **Esforço total estimado**: 94 horas — cobre auditoria, decisões já
+  tomadas, e o trabalho já claramente escopável, incluindo a migração de
+  dados OAuth ainda pendente (`EXA-G3-DATA-002`, 8h, requer acesso de rede
+  a produção).
 - **Issues P0**: 8 — `EXA-G0-DOC-001`, `EXA-G1-BE-001`, `EXA-G2-BE-001`,
-  `EXA-G3-SEC-001`, `EXA-G3-DATA-001`, `EXA-G7-DOC-001`, `EXA-G9-OPS-001`,
-  `EXA-G7-GTM-001` (decisão de modelo de negócio).
+  `EXA-G3-SEC-001` (resolvido), `EXA-G3-DATA-001` (resolvido),
+  `EXA-G7-DOC-001`, `EXA-G9-OPS-001`, `EXA-G7-GTM-001` (decisão de modelo
+  de negócio).
 - **Capacidade semanal considerada**: 25 horas.
 - **Data proposta de lançamento**: 2026-08-14 (**PROPOSTA, desatualizada** —
   calculada a partir de 2026-07-24; hoje é 2026-07-28 e G2 segue em

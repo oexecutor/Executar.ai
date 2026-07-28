@@ -9,7 +9,7 @@
 | ID | Risco | Gravidade | Probabilidade | Impacto | Mitigação / decisão | Responsável | Prazo | Estado |
 |---|---|---|---|---|---|---|---|---|
 | RISK-001 | **Workspace público compartilhado** — qualquer pessoa com a URL entrava como `OWNER` no workspace público | Alta | Eliminada por padrão em 2026-07-28 | Dados de usuários diferentes poderiam se misturar | **Resolvido**: autenticação real é o padrão (`src/lib/request-auth.ts`); fallback público só ocorre com `ALLOW_PUBLIC_WORKSPACE_FALLBACK=true` explícito | Dono do produto | — | Resolvido |
-| RISK-002 | Persistência distribuída entre Vercel Postgres/Neon e componentes Supabase | Média | Média | Drift entre ambientes ou fontes de dados | Manter o contrato atual até G3: Vault e OAuth canônicos em Vercel Postgres; Supabase somente onde já estiver configurado para workspace. Registrar ADR antes de qualquer migração | Produto + Engenharia | G3 | Mitigado / monitorado |
+| RISK-002 | Persistência distribuída entre Vercel Postgres/Neon e componentes Supabase | Média | Baixa para Vault (resolvido); média para OAuth (fase 2 pendente) | Drift entre ambientes ou fontes de dados | ADR-002 registrado: Supabase é canônico. Vault já resolvido sem migração (consequência de DEC-001); OAuth aguarda migração testada com schema, rollback e verificação em produção (EXA-G3-DATA-002) | Produto + Engenharia | Vault: resolvido; OAuth: G3+ | Parcialmente resolvido |
 | RISK-003 | Duplicação de servidor MCP | Média | Média | Duas fontes de verdade e manutenção duplicada | A rota nativa `oexecutor/Executar.ai` (`/mcp`) é a implementação canônica; o servidor standalone é legado e não deve ser conectado ao produto principal | Dono do produto | G1 | Resolvido |
 | RISK-004 | Teste e2e intermitente relacionado a `/icon.svg` | Média | Média | Ruído na CI e regressões mascaradas | Corrigir e estabilizar em `EXA-G5-QA-001` | Engenharia | G5 | Aberto |
 | RISK-005 | Produção não homologada ao vivo | Alta | — | Código poderia estar verde sem funcionar na Vercel | Homologação realizada: produção READY; APIs principais responderam sem 500; erros de runtime do Vault não encontrados nas últimas 24 horas | Engenharia | G1 | Resolvido |
@@ -53,19 +53,32 @@ produção nesta sessão (sem acesso de rede) se `SUPABASE_URL`/
 `SUPABASE_PUBLISHABLE_KEY` estão configuradas no ambiente de produção —
 confirmar via `/health` antes de considerar o rollout completo.
 
-### DEC-002 — Persistência durante o ciclo G1–G3
+### DEC-002 — Backend único de persistência (ATUALIZADA 2026-07-28)
 
-**Decisão:** não executar uma migração de dados durante o hotfix. Manter e
-documentar o contrato real em produção:
+**Decisão anterior (2026-07-25):** não migrar dados durante o hotfix; manter
+Vault e OAuth em Vercel Postgres/Neon, Supabase só quando configurado.
 
-- Vault e OAuth: **Vercel Postgres/Neon**;
-- workspace Supabase: utilizado somente quando as variáveis correspondentes
-  estiverem configuradas;
-- qualquer unificação futura exige ADR, migração testada e rollback.
+**Decisão atual, aprovada explicitamente pelo dono do produto em
+2026-07-28:** Supabase é o backend de persistência canônico. Registrada
+formalmente em `docs/ADR-002_SUPABASE_CANONICAL_PERSISTENCE.md`, em duas
+fases:
 
-**Evidência atual:** `GET /api/vault/status` informa armazenamento
-`Vercel Postgres`; `src/lib/stores.ts` mantém fallback explícito para
-`PostgresKvStore` e usa `SupabaseKvStore` apenas quando configurado.
+- **Vault** — já resolvido, sem migração de dados necessária: com
+  autenticação real habilitada (DEC-001), toda chamada autenticada carrega
+  `workspaceId`, então `vaultStore()` já usa `SupabaseKvStore` como caminho
+  principal quando Supabase está configurado. O fallback para
+  `PostgresKvStore` em `src/lib/stores.ts` vira rede de segurança, não mais
+  ambiguidade de fonte de verdade.
+- **OAuth** (`oauthStore()`, registro de clientes/tokens do `/mcp`) —
+  **permanece em Vercel Postgres/Neon por decisão explícita**, não por
+  descuido. Migrar dados reais de OAuth sem acesso de rede à produção nesta
+  sessão seria arriscar quebrar a própria autenticação MCP sem capacidade de
+  detectar ou reverter o problema. Fica como Fase 2 registrada no ADR-002 e
+  no backlog (`EXA-G3-DATA-002`), com schema, migração testada e rollback
+  próprios antes de qualquer troca.
+
+**Evidência:** `src/lib/stores.ts` (leitura direta, sem mudança de código
+necessária para a Fase 1); `docs/ADR-002_SUPABASE_CANONICAL_PERSISTENCE.md`.
 
 ### DEC-003 — Fonte única do MCP
 
