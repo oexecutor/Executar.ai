@@ -91,10 +91,10 @@
             },
             {
               "issueId": "EXA-G1-BE-002",
-              "title": "Decidir destino do PR #9 (gate de senha de operador obsoleto)",
-              "description": "PR #9 tem base aeb1249 (muito atrás de main) e seu objetivo já foi alcançado por src/lib/admin-guard.ts sobre request-auth.ts. Fechar sem merge ou rebasear conscientemente.",
+              "title": "[RESOLVIDO 2026-07-28] Decidir destino do PR #9 (gate de senha de operador obsoleto)",
+              "description": "PR #9 tem base aeb1249 (muito atrás de main) e seu objetivo já foi alcançado por src/lib/admin-guard.ts sobre request-auth.ts. Fechar sem merge ou rebasear conscientemente. [SINCRONIZADO 2026-07-28] PR #9 encerrado sem merge em 2026-07-25 (RISK-007).",
               "priority": "P1",
-              "status": "Blocked",
+              "status": "Done",
               "labels": [
                 "area:be",
                 "gate:G1",
@@ -123,10 +123,10 @@
           "issues": [
             {
               "issueId": "EXA-G1-MCP-001",
-              "title": "Decidir destino do handoff executar-mcp-server",
-              "description": "api/mcp.ts -> src/mcp-server.ts já é uma implementação MCP nativa e mais madura (persistida via Neon/Supabase) que o handoff standalone. Decidir: absorver artefato deskos-project-executar-pm.json, descartar o servidor duplicado, ou manter paralelo com justificativa. Inclui decommission do projeto Vercel isolado executar-mcp-server-vercel-ready.",
+              "title": "[RESOLVIDO 2026-07-28] Decidir destino do handoff executar-mcp-server",
+              "description": "api/mcp.ts -> src/mcp-server.ts já é uma implementação MCP nativa e mais madura (persistida via Neon/Supabase) que o handoff standalone. Decidir: absorver artefato deskos-project-executar-pm.json, descartar o servidor duplicado, ou manter paralelo com justificativa. Inclui decommission do projeto Vercel isolado executar-mcp-server-vercel-ready. [SINCRONIZADO 2026-07-28] MCP nativo confirmado como fonte unica (DEC-003).",
               "priority": "P1",
-              "status": "Blocked",
+              "status": "Done",
               "labels": [
                 "area:mcp",
                 "gate:G1",
@@ -157,10 +157,10 @@
           "issues": [
             {
               "issueId": "EXA-G1-DOC-001",
-              "title": "Atualizar documentação estrutural obsoleta (Netlify → Vercel)",
-              "description": "AGENTS.md, SECURITY.md, docs/09_SECURITY_AND_GOVERNANCE.md, docs/13_DECISIONS_GAPS_ASSUMPTIONS.md, docs/DEPLOYMENT_STATUS.md e package.json (nome/versão) ainda descrevem o modelo operacional Netlify/senha de operador pré-migração.",
+              "title": "[RESOLVIDO 2026-07-28] Atualizar documentação estrutural obsoleta (Netlify → Vercel)",
+              "description": "AGENTS.md, SECURITY.md, docs/09_SECURITY_AND_GOVERNANCE.md, docs/13_DECISIONS_GAPS_ASSUMPTIONS.md, docs/DEPLOYMENT_STATUS.md e package.json (nome/versão) ainda descrevem o modelo operacional Netlify/senha de operador pré-migração. [SINCRONIZADO 2026-07-28] Docs estruturais migrados para Vercel; mencoes a Netlify restam so como nota historica.",
               "priority": "P2",
-              "status": "Backlog",
+              "status": "Done",
               "labels": [
                 "area:doc",
                 "gate:G1"
@@ -297,10 +297,10 @@
           "issues": [
             {
               "issueId": "EXA-G3-SEC-001",
-              "title": "Decidir política de autenticação (login obrigatório vs. workspace público)",
-              "description": "src/lib/request-auth.ts:89-107 remove o bloqueio de login a pedido do operador; qualquer requisição sem sessão cai no workspace público com papel OWNER. Decidir se isso é definitivo ou se login será reativado antes do lançamento.",
+              "title": "[RESOLVIDO 2026-07-28] Decidir política de autenticação (login obrigatório vs. workspace público)",
+              "description": "src/lib/request-auth.ts:89-107 remove o bloqueio de login a pedido do operador; qualquer requisição sem sessão cai no workspace público com papel OWNER. Decidir se isso é definitivo ou se login será reativado antes do lançamento. [SINCRONIZADO 2026-07-28] Autenticacao real habilitada por padrao (DEC-001, 2026-07-28).",
               "priority": "P0",
-              "status": "Blocked",
+              "status": "Done",
               "labels": [
                 "area:sec",
                 "gate:G3",
@@ -731,10 +731,10 @@
           "issues": [
             {
               "issueId": "EXA-G7-REL-002",
-              "title": "Definir plano de suporte",
-              "description": "Canal de suporte, SLA informal (operação solo-founder), triagem de incidentes.",
+              "title": "[RESOLVIDO 2026-07-28] Definir plano de suporte",
+              "description": "Canal de suporte, SLA informal (operação solo-founder), triagem de incidentes. [SINCRONIZADO 2026-07-28] Plano de suporte real documentado em 08-OPERACAO-POS-LANCAMENTO.md (2026-07-28).",
               "priority": "P1",
-              "status": "Backlog",
+              "status": "Done",
               "labels": [
                 "area:rel",
                 "gate:G7"
@@ -945,10 +945,10 @@
           "issues": [
             {
               "issueId": "EXA-G10-OPS-001",
-              "title": "Definir cadência de revisão pós-lançamento",
-              "description": "Revisões em 24h/7d/30d; métricas de ativação e retenção.",
+              "title": "[RESOLVIDO 2026-07-28] Definir cadência de revisão pós-lançamento",
+              "description": "Revisões em 24h/7d/30d; métricas de ativação e retenção. [SINCRONIZADO 2026-07-28] Cadencia 24h/7d/30d definida em 08-OPERACAO-POS-LANCAMENTO.md (2026-07-28).",
               "priority": "P2",
-              "status": "Backlog",
+              "status": "Done",
               "labels": [
                 "area:ops",
                 "gate:G10"
