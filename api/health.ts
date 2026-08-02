@@ -14,9 +14,9 @@ function serviceRoleConfigured(): boolean {
 async function healthHandler(): Promise<Response> {
   const supabaseClient = supabaseConfigured();
   const supabaseServer = serviceRoleConfigured();
-  const supabaseState = supabaseClient && supabaseServer
+  const supabaseState = supabaseClient
     ? "configured"
-    : supabaseClient || supabaseServer
+    : supabaseServer
       ? "partial"
       : "not_configured";
 
@@ -25,12 +25,13 @@ async function healthHandler(): Promise<Response> {
     status: "ok",
     transport: "streamable-http",
     authentication: "oauth-2.1-pkce",
-    app_authentication: "supabase-auth+workspace-session",
+    app_authentication: "supabase-auth+jwt+workspace-rls",
     dependencies: {
       supabase: supabaseState,
       supabase_checks: {
         public_client: supabaseClient ? "configured" : "not_configured",
         service_role: supabaseServer ? "configured" : "not_configured",
+        service_role_required_for_login: false,
       },
       postgres: postgresConfigured() ? "configured" : "not_configured",
     },
