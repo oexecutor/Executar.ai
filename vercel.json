@@ -8,6 +8,14 @@
   "outputDirectory": "public",
   "redirects": [
     {
+      "source": "/:path*/",
+      "has": [
+        { "type": "host", "value": "executa-journal-preview.vercel.app" }
+      ],
+      "destination": "https://executar-ai.vercel.app/:path*/",
+      "permanent": true
+    },
+    {
       "source": "/:path*",
       "has": [
         { "type": "host", "value": "executa-journal-preview.vercel.app" }
@@ -16,11 +24,27 @@
       "permanent": true
     },
     {
+      "source": "/:path*/",
+      "has": [
+        { "type": "host", "value": "executa-journal-preview-oexecutor-9118s-projects.vercel.app" }
+      ],
+      "destination": "https://executar-ai.vercel.app/:path*/",
+      "permanent": true
+    },
+    {
       "source": "/:path*",
       "has": [
         { "type": "host", "value": "executa-journal-preview-oexecutor-9118s-projects.vercel.app" }
       ],
       "destination": "https://executar-ai.vercel.app/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*/",
+      "has": [
+        { "type": "host", "value": "executa-journal-preview-git-main-oexecutor-9118s-projects.vercel.app" }
+      ],
+      "destination": "https://executar-ai.vercel.app/:path*/",
       "permanent": true
     },
     {
