@@ -5,6 +5,7 @@
     "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_4svkVkEo8h_EX6popNxD0Q_TZzgDl9i"
   },
   "buildCommand": "node scripts/check-mcp-secret.mjs && node scripts/migrate-editorial.mjs && npm run install:web && npm run build:web && npm run build",
+  "ignoreCommand": "node scripts/vercel-ignore-duplicate.mjs",
   "outputDirectory": "public",
   "redirects": [
     {
