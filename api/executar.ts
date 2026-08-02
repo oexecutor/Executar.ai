@@ -7,6 +7,7 @@ import { absoluteUrl, json } from "../src/lib/http.js";
 import { getAuthenticatedRequest, type AuthenticatedRequest } from "../src/lib/request-auth.js";
 import { vaultStore } from "../src/lib/stores.js";
 import { createVercelNodeHandler } from "../src/lib/vercel-node-adapter.js";
+import { mobileHandler } from "../src/mobile/http-handler.js";
 
 function response(data: unknown, requestId: string, status = 200): Response {
   return json(
@@ -38,13 +39,19 @@ function canWrite(auth: AuthenticatedRequest): boolean {
 }
 
 async function executarHandler(request: Request): Promise<Response> {
+  const url = absoluteUrl(request);
+  const mobilePath = url.searchParams.get("mobilePath");
+  if (mobilePath !== null) {
+    const normalizedMobilePath = `/${mobilePath.replace(/^\/+/, "")}`;
+    return mobileHandler(request, normalizedMobilePath === "/" ? "/" : normalizedMobilePath);
+  }
+
   const denied = await requireAdminJson(request);
   if (denied) return denied;
   const auth = await getAuthenticatedRequest(request);
   if (!auth) return json({ ok: false, error: { code: "UNAUTHORIZED", message: "Sessão inválida." } }, { status: 401 });
 
   const requestId = `req_${crypto.randomUUID()}`;
-  const url = absoluteUrl(request);
   const path = url.pathname.replace(/^\/api\/executar/, "") || "/";
   const service = serviceFactory(auth);
 
