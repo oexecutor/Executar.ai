@@ -8,7 +8,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   version: '0.2.0',
   orientation: 'portrait',
   userInterfaceStyle: 'light',
-  newArchEnabled: true,
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'ai.executa.app'
