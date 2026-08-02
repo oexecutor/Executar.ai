@@ -6,10 +6,27 @@ afterEach(() => {
 });
 
 describe("runtime authentication configuration", () => {
-  it("reports public workspace mode with HTTP 200 when Supabase is absent", async () => {
+  it("fails closed when Supabase is absent", async () => {
     vi.stubEnv("SUPABASE_URL", undefined);
     vi.stubEnv("SUPABASE_PUBLISHABLE_KEY", undefined);
     vi.stubEnv("SUPABASE_ANON_KEY", undefined);
+    vi.stubEnv("ALLOW_PUBLIC_WORKSPACE_FALLBACK", undefined);
+
+    const response = await adminHandler(new Request("https://example.test/api/auth/config"));
+    expect(response.status).toBe(503);
+    await expect(response.json()).resolves.toMatchObject({
+      ok: false,
+      error: {
+        code: "SUPABASE_NOT_CONFIGURED",
+      },
+    });
+  });
+
+  it("reports public workspace mode only with explicit demo fallback", async () => {
+    vi.stubEnv("SUPABASE_URL", undefined);
+    vi.stubEnv("SUPABASE_PUBLISHABLE_KEY", undefined);
+    vi.stubEnv("SUPABASE_ANON_KEY", undefined);
+    vi.stubEnv("ALLOW_PUBLIC_WORKSPACE_FALLBACK", "true");
 
     const response = await adminHandler(new Request("https://example.test/api/auth/config"));
     expect(response.status).toBe(200);
