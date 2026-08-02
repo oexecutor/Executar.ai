@@ -1,6 +1,6 @@
 begin;
 
-select plan(10);
+select plan(15);
 
 select has_table('public', 'workspaces', 'workspaces exists');
 select has_table('public', 'workspace_memberships', 'memberships exists');
@@ -17,43 +17,116 @@ select policies_are(
   ],
   'kv_store has explicit member/editor policies'
 );
+select ok(
+  to_regprocedure('app.ensure_personal_workspace(uuid,text,jsonb)') is not null,
+  'idempotent personal workspace provisioning exists'
+);
+select ok(
+  exists (
+    select 1
+    from pg_trigger
+    where tgname = 'on_auth_user_created_create_workspace'
+      and not tgisinternal
+  ),
+  'new auth users are connected to the provisioning trigger'
+);
 
-alter table auth.users disable trigger on_auth_user_created_create_workspace;
-
-insert into auth.users (id, email)
+-- Use the same path as a real signup: inserting auth.users must invoke the
+-- trigger and create one personal workspace plus one active OWNER membership.
+insert into auth.users (id, email, raw_user_meta_data)
 values
-  ('10000000-0000-0000-0000-000000000001', 'owner-a@example.test'),
-  ('10000000-0000-0000-0000-000000000002', 'owner-b@example.test');
+  (
+    '10000000-0000-0000-0000-000000000001',
+    'owner-a@example.test',
+    '{"full_name":"Owner A"}'::jsonb
+  ),
+  (
+    '10000000-0000-0000-0000-000000000002',
+    'owner-b@example.test',
+    '{"full_name":"Owner B"}'::jsonb
+  ),
+  (
+    '10000000-0000-0000-0000-000000000003',
+    'owner-c@example.test',
+    '{"full_name":"Owner C"}'::jsonb
+  );
 
-alter table auth.users enable trigger on_auth_user_created_create_workspace;
+-- A replay must recover the same membership rather than create a duplicate.
+do $$
+begin
+  perform app.ensure_personal_workspace(
+    '10000000-0000-0000-0000-000000000003',
+    'owner-c@example.test',
+    '{"full_name":"Owner C"}'::jsonb
+  );
+  perform set_config(
+    'test.workspace_a',
+    (
+      select workspace_id::text
+      from public.workspace_memberships
+      where user_id = '10000000-0000-0000-0000-000000000001'
+        and status = 'ACTIVE'
+      limit 1
+    ),
+    true
+  );
+  perform set_config(
+    'test.workspace_b',
+    (
+      select workspace_id::text
+      from public.workspace_memberships
+      where user_id = '10000000-0000-0000-0000-000000000002'
+        and status = 'ACTIVE'
+      limit 1
+    ),
+    true
+  );
+end;
+$$;
 
-insert into public.workspaces (id, name, slug)
-values
-  ('20000000-0000-0000-0000-000000000001', 'Workspace A', 'workspace-a-test'),
-  ('20000000-0000-0000-0000-000000000002', 'Workspace B', 'workspace-b-test');
-
-insert into public.workspace_memberships (workspace_id, user_id, role, status)
-values
-  ('20000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', 'OWNER', 'ACTIVE'),
-  ('20000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000002', 'OWNER', 'ACTIVE');
+select is(
+  (
+    select count(*)
+    from public.workspace_memberships
+    where user_id = '10000000-0000-0000-0000-000000000003'
+      and status = 'ACTIVE'
+  ),
+  1::bigint,
+  'a new auth user receives exactly one active workspace membership'
+);
+select is(
+  (
+    select role
+    from public.workspace_memberships
+    where user_id = '10000000-0000-0000-0000-000000000003'
+      and status = 'ACTIVE'
+  ),
+  'OWNER'::text,
+  'the personal workspace membership grants OWNER role'
+);
 
 insert into public.kv_store (workspace_id, namespace, key, value)
 values
-  ('20000000-0000-0000-0000-000000000001', 'test', 'project/a', '{"workspace":"A"}'),
-  ('20000000-0000-0000-0000-000000000002', 'test', 'project/b', '{"workspace":"B"}');
+  (current_setting('test.workspace_a')::uuid, 'test', 'project/a', '{"workspace":"A"}'),
+  (current_setting('test.workspace_b')::uuid, 'test', 'project/b', '{"workspace":"B"}');
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
 
 select results_eq(
-  $$ select id from public.workspaces order by id $$,
-  $$ values ('20000000-0000-0000-0000-000000000001'::uuid) $$,
+  $$ select slug from public.workspaces order by slug $$,
+  $$ values ('owner-a-10000000'::text) $$,
   'a member sees only their workspace'
 );
 
 select results_eq(
-  $$ select workspace_id from public.workspace_memberships order by workspace_id $$,
-  $$ values ('20000000-0000-0000-0000-000000000001'::uuid) $$,
+  $$
+    select workspace.slug
+    from public.workspace_memberships as membership
+    join public.workspaces as workspace on workspace.id = membership.workspace_id
+    order by workspace.slug
+  $$,
+  $$ values ('owner-a-10000000'::text) $$,
   'a member cannot enumerate memberships from another workspace'
 );
 
@@ -64,17 +137,38 @@ select results_eq(
 );
 
 select lives_ok(
-  $$ insert into public.kv_store (workspace_id, namespace, key, value)
-     values ('20000000-0000-0000-0000-000000000001', 'test', 'project/a2', '{}') $$,
+  format(
+    'insert into public.kv_store (workspace_id, namespace, key, value) values (%L::uuid, %L, %L, %L::jsonb)',
+    current_setting('test.workspace_a'),
+    'test',
+    'project/a2',
+    '{}'
+  ),
   'an owner can write inside their workspace'
 );
 
 select throws_ok(
-  $$ insert into public.kv_store (workspace_id, namespace, key, value)
-     values ('20000000-0000-0000-0000-000000000002', 'test', 'project/intrusion', '{}') $$,
+  format(
+    'insert into public.kv_store (workspace_id, namespace, key, value) values (%L::uuid, %L, %L, %L::jsonb)',
+    current_setting('test.workspace_b'),
+    'test',
+    'project/intrusion',
+    '{}'
+  ),
   '42501',
   'new row violates row-level security policy for table "kv_store"',
   'RLS rejects a write into another workspace'
+);
+
+select throws_ok(
+  format(
+    'delete from public.workspace_memberships where workspace_id = %L::uuid and user_id = %L::uuid',
+    current_setting('test.workspace_a'),
+    '10000000-0000-0000-0000-000000000001'
+  ),
+  'P0001',
+  'a workspace must retain at least one active OWNER',
+  'the final active owner cannot be removed'
 );
 
 select * from finish();

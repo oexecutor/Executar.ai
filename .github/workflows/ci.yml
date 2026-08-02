@@ -48,6 +48,20 @@ jobs:
       - name: End-to-end tests (real browser + accessibility checks)
         run: npm --prefix web run test:e2e
 
+  database:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@v2
+        with:
+          version: 2.84.2
+          github-token: ${{ github.token }}
+      - name: Start clean local database and apply every migration
+        run: supabase db start
+      - name: Test schema, provisioning and workspace isolation
+        run: supabase test db
+
   production-smoke:
     if: >-
       (github.event_name == 'push' && github.ref == 'refs/heads/smoke/g2-production-playwright') ||
