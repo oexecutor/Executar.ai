@@ -1,0 +1,50 @@
+name: Mobile foundation
+
+on:
+  pull_request:
+    paths:
+      - 'apps/mobile/**'
+      - 'packages/api-client/**'
+      - 'packages/design-tokens/**'
+      - 'packages/domain/**'
+      - 'packages/qr-core/**'
+      - '.github/workflows/mobile-foundation.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/mobile/**'
+      - 'packages/api-client/**'
+      - 'packages/design-tokens/**'
+      - 'packages/domain/**'
+      - 'packages/qr-core/**'
+
+permissions:
+  contents: read
+
+jobs:
+  expo:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/mobile/package.json
+      - name: Instalar dependências móveis
+        run: npm install --no-audit --no-fund
+      - name: Validar versões Expo
+        run: npx expo install --check
+      - name: Verificar tipos
+        run: npm run typecheck
+      - name: Executar testes
+        run: npm test
+      - name: Exportar bundle web do Expo
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: https://qynpcucdaeupwtdxnhih.supabase.co
+          EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_4svkVkEo8h_EX6popNxD0Q_TZzgDl9i
+          EXPO_PUBLIC_API_URL: https://executar-ai.vercel.app
+        run: npm run build
