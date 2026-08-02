@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { DomainError } from "../src/domain/errors.js";
+import { generateProjectWithAi } from "../src/executar/ai-generator.js";
 import { ExecutarService } from "../src/executar/service.js";
 import { ExecutarStore } from "../src/executar/store.js";
 import { requireAdminJson } from "../src/lib/admin-guard.js";
@@ -58,6 +59,15 @@ async function executarHandler(request: Request): Promise<Response> {
     }
     if (request.method === "POST" && path === "/validate") {
       return response(service.validate(body.project ?? body), requestId);
+    }
+    if (request.method === "POST" && path === "/generate") {
+      if (!canWrite(auth)) throw new DomainError("FORBIDDEN", "Seu perfil é somente leitura.", "Solicite a função EDITOR ou superior.", 403);
+      const project = await generateProjectWithAi({
+        brief: typeof body.brief === "string" ? body.brief : "",
+        name: typeof body.name === "string" ? body.name : undefined,
+        owner: typeof body.owner === "string" ? body.owner : undefined,
+      });
+      return response(await service.createProject({ project }), requestId, 201);
     }
     if (request.method === "POST" && path === "/projects") {
       if (!canWrite(auth)) throw new DomainError("FORBIDDEN", "Seu perfil é somente leitura.", "Solicite a função EDITOR ou superior.", 403);
