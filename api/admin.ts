@@ -27,14 +27,24 @@ async function runtimeConfig(request: Request): Promise<Response> {
   if (request.method !== "GET") return methodNotAllowed(["GET"]);
   const config = getSupabasePublicConfig();
   if (!config) {
+    if (process.env.ALLOW_PUBLIC_WORKSPACE_FALLBACK === "true") {
+      return privateJson({
+        ok: true,
+        data: {
+          mode: "public",
+          workspaceId: "public",
+          workspaceName: "Workspace público",
+        },
+      });
+    }
     return privateJson({
-      ok: true,
-      data: {
-        mode: "public",
-        workspaceId: "public",
-        workspaceName: "Workspace público",
+      ok: false,
+      error: {
+        code: "SUPABASE_NOT_CONFIGURED",
+        message: "O login multiusuário ainda não está configurado neste ambiente.",
+        suggestion: "Configure SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY e SUPABASE_SERVICE_ROLE_KEY e gere um novo deploy.",
       },
-    });
+    }, { status: 503 });
   }
   return privateJson({ ok: true, data: { mode: "supabase", ...config } });
 }
