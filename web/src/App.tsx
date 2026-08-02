@@ -1,27 +1,23 @@
 import { useCallback, useEffect, useState } from "react";
 import { getJson } from "./api";
-import {
-  getBrowserSession,
-  restoreWorkspaceFromAppSession,
-  selectedWorkspace,
-  signOut,
-} from "./auth";
+import { ensureWorkspaceSession, selectedWorkspace } from "./auth";
 import { Layout, type AppView } from "./components/Layout";
 
 import { Board } from "./pages/Board";
 import { Documents } from "./pages/Documents";
 import { Editorial } from "./pages/Editorial";
-import { Login } from "./pages/Login";
 import { Overview } from "./pages/Overview";
 import { Portfolio } from "./pages/Portfolio";
 import { ProjectWorkspace } from "./pages/ProjectWorkspace";
 import { Today } from "./pages/Today";
 import type { ProjectSummary } from "./types";
 
-type Session = "checking" | "authenticated" | "anonymous";
+type Session = "checking" | "ready" | "error";
 
 function initialView(): AppView {
-  const tab = new URLSearchParams(window.location.search).get("tab");
+  const params = new URLSearchParams(window.location.search);
+  const tab = params.get("tab");
+  if (params.get("start") === "ai" || params.get("start") === "import") return "portfolio";
   if (tab === "notes" || tab === "documents") return "documents";
   if (tab === "editorial") return "editorial";
   return "overview";
@@ -29,6 +25,7 @@ function initialView(): AppView {
 
 export function App() {
   const [session, setSession] = useState<Session>("checking");
+  const [sessionError, setSessionError] = useState<string | null>(null);
   const [view, setView] = useState<AppView>(initialView);
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
@@ -47,38 +44,26 @@ export function App() {
     });
   }, []);
 
-  const checkSession = useCallback(async () => {
-    const appWorkspace = await restoreWorkspaceFromAppSession();
-    if (!appWorkspace) {
-      const browserSession = await getBrowserSession();
-      if (!browserSession || !selectedWorkspace()) {
-        setSession("anonymous");
-        return;
-      }
-    }
-
+  const openWorkspace = useCallback(async () => {
+    setSession("checking");
+    setSessionError(null);
     try {
+      await ensureWorkspaceSession();
       await loadProjects();
-      setSession("authenticated");
-    } catch {
-      setSession("anonymous");
+      setSession("ready");
+    } catch (caught) {
+      setSessionError(caught instanceof Error ? caught.message : "Não foi possível abrir o workspace.");
+      setSession("error");
     }
   }, [loadProjects]);
 
   useEffect(() => {
-    void checkSession();
-  }, [checkSession]);
+    void openWorkspace();
+  }, [openWorkspace]);
 
   function chooseProject(projectId: string) {
     localStorage.setItem("executa.project", projectId);
     setSelectedProjectId(projectId);
-  }
-
-  async function handleLogout() {
-    await signOut();
-    setProjects([]);
-    setSelectedProjectId(null);
-    setSession("anonymous");
   }
 
   if (session === "checking") {
@@ -86,13 +71,26 @@ export function App() {
       <main className="boot-screen">
         <span className="brand-mark"><i />EXECUTA.AI</span>
         <div className="boot-line"><i /></div>
-        <p>Preparando seu workspace…</p>
+        <p>Criando seu workspace gratuito…</p>
       </main>
     );
   }
 
-  if (session === "anonymous") {
-    return <Login onSuccess={() => void checkSession()} />;
+  if (session === "error") {
+    return (
+      <main className="entry-session-error">
+        <span className="brand-mark"><i />EXECUTA.AI</span>
+        <p className="eyebrow">Não foi possível iniciar</p>
+        <h1>Seu workspace não abriu.</h1>
+        <p>{sessionError}</p>
+        <div>
+          <button className="button button-orange" type="button" onClick={() => void openWorkspace()}>
+            Tentar novamente
+          </button>
+          <a className="button button-quiet" href="/">Voltar ao início</a>
+        </div>
+      </main>
+    );
   }
 
   const selectedProject = projects.find((project) => project.id === selectedProjectId) ?? null;
@@ -102,7 +100,6 @@ export function App() {
     <Layout
       active={view}
       onNavigate={setView}
-      onLogout={() => void handleLogout()}
       projects={projects}
       selectedProjectId={selectedProjectId}
       onSelectProject={chooseProject}

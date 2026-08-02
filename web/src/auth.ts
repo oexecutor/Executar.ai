@@ -34,6 +34,7 @@ interface AuthEnvelope<T> {
 }
 
 const WORKSPACE_KEY = "executa.workspace";
+let runtimeConfigPromise: Promise<RuntimeConfig> | null = null;
 let clientPromise: Promise<SupabaseClient> | null = null;
 
 async function request<T>(path: string, body?: unknown): Promise<T> {
@@ -49,20 +50,24 @@ async function request<T>(path: string, body?: unknown): Promise<T> {
   return payload.data;
 }
 
+function getRuntimeConfig(): Promise<RuntimeConfig> {
+  runtimeConfigPromise ??= request<RuntimeConfig>("/api/auth/config");
+  return runtimeConfigPromise;
+}
+
 export function getSupabaseClient(): Promise<SupabaseClient> {
-  clientPromise ??= request<RuntimeConfig>("/api/auth/config")
-    .then((config) => {
-      if (config.mode !== "supabase") {
-        throw new Error("Autenticação Supabase desativada no modo de workspace público.");
-      }
-      return createClient(config.url, config.publishableKey, {
-        auth: {
-          persistSession: true,
-          autoRefreshToken: true,
-          detectSessionInUrl: true,
-        },
-      });
+  clientPromise ??= getRuntimeConfig().then((config) => {
+    if (config.mode !== "supabase") {
+      throw new Error("Autenticação Supabase desativada no modo de workspace público.");
+    }
+    return createClient(config.url, config.publishableKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
     });
+  });
   return clientPromise;
 }
 
@@ -146,6 +151,69 @@ export async function restoreWorkspaceFromAppSession(): Promise<WorkspaceMembers
   } catch {
     return null;
   }
+}
+
+function wait(milliseconds: number): Promise<void> {
+  return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
+}
+
+async function loadProvisionedMemberships(accessToken: string): Promise<WorkspaceMembership[]> {
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    const memberships = await loadMemberships(accessToken);
+    if (memberships.length) return memberships;
+    await wait(250 * (attempt + 1));
+  }
+  return [];
+}
+
+/**
+ * Opens the product without exposing a login screen. A Supabase anonymous
+ * account is still created behind the scenes so every visitor receives an
+ * isolated workspace protected by the existing JWT + RLS rules.
+ */
+export async function ensureWorkspaceSession(): Promise<WorkspaceMembership> {
+  const appWorkspace = await restoreWorkspaceFromAppSession();
+  if (appWorkspace) return appWorkspace;
+
+  const config = await getRuntimeConfig();
+  if (config.mode === "public") {
+    const membership: WorkspaceMembership = {
+      workspaceId: config.workspaceId,
+      workspaceName: config.workspaceName,
+      workspaceSlug: "public",
+      role: "OWNER",
+    };
+    localStorage.setItem(WORKSPACE_KEY, JSON.stringify(membership));
+    return membership;
+  }
+
+  const client = await getSupabaseClient();
+  let { data: { session } } = await client.auth.getSession();
+
+  if (!session) {
+    const { data, error } = await client.auth.signInAnonymously({
+      options: { data: { full_name: "Meu workspace EXECUTA" } },
+    });
+    if (error) {
+      throw new Error("Não foi possível criar sua sessão gratuita. Tente novamente.");
+    }
+    session = data.session;
+  }
+
+  if (!session?.access_token) {
+    throw new Error("A sessão gratuita não foi iniciada corretamente.");
+  }
+
+  const memberships = await loadProvisionedMemberships(session.access_token);
+  if (!memberships.length) {
+    throw new Error("Seu workspace ainda não ficou pronto. Tente novamente em alguns segundos.");
+  }
+
+  const previous = selectedWorkspace();
+  const membership = memberships.find((candidate) => candidate.workspaceId === previous?.workspaceId)
+    ?? memberships[0];
+  await selectWorkspace(session.access_token, membership);
+  return membership;
 }
 
 export async function apiAuthHeaders(): Promise<Record<string, string>> {
