@@ -56,7 +56,8 @@ Isso cobre publicações, eventos, rotas QR, tokens, workspaces, projetos, taref
 - `/health` responde `200` no domínio canônico.
 - Não foram encontrados erros recentes de runtime no projeto canônico.
 - O projeto legado não possui domínio personalizado; possui apenas aliases `vercel.app` gerados pela Vercel.
-- Nos últimos sete dias, o único evento de runtime observado no projeto legado foi uma chamada a `/health`.
+- Nos últimos sete dias, o único acesso atual observado no projeto legado foi uma chamada a `/health`.
+- O histórico do legado contém 11 falhas em `/api/executar`, `/api/vault` e `/api/editorial` por ausência de conexão Postgres. Isso confirma que ele não era a instância persistente válida.
 - Novos builds do legado são interrompidos pelo `Ignored Build Step`.
 
 ### Referências públicas
@@ -94,25 +95,55 @@ scripts/vercel-ignore-duplicate.mjs
 
 Eles não contêm dados, conteúdo editorial ou configuração necessária ao projeto canônico.
 
+## Duas checagens de painel antes de excluir
+
+Os conectores utilizados nesta auditoria não expõem a leitura de segredos Vercel nem a configuração administrativa de URLs do Supabase Auth. Portanto, confirme visualmente apenas estes dois pontos:
+
+### 1. Vercel — variáveis do projeto legado
+
+Em `executa-journal-preview → Settings → Environment Variables`:
+
+- confirme que não existe uma variável exclusiva que precise ser preservada;
+- não copie valores secretos para mensagens ou documentação;
+- o projeto canônico já está operacional com Supabase e Postgres, portanto qualquer variável existente no legado é, por padrão, redundante ou incompleta;
+- o histórico comprova que o legado não possuía conexão Postgres válida.
+
+### 2. Supabase — URL principal de autenticação
+
+Em `Authentication → URL Configuration`:
+
+```text
+Site URL:
+https://executar-ai.vercel.app
+
+Redirect URLs necessárias:
+https://executar-ai.vercel.app/**
+https://*-oexecutor-9118s-projects.vercel.app/**
+http://localhost:3000/**
+```
+
+Remova uma URL exata do Journal caso ela exista. O wildcard de previews pode permanecer, porque também atende branches legítimas do projeto canônico.
+
 ## Procedimento manual de exclusão
 
 Na Vercel:
 
 1. Abra o projeto `executa-journal-preview`.
 2. Confirme que o ID é `prj_SMaYVWIDqomDGV4hYYjtwQGMAabv`.
-3. Abra **Settings → General**.
-4. Vá até **Delete Project**.
-5. Exclua somente `executa-journal-preview`.
-6. Não exclua `executar-ai`.
+3. Execute as duas checagens de painel descritas acima.
+4. Abra **Settings → General**.
+5. Vá até **Delete Project**.
+6. Exclua somente `executa-journal-preview`.
+7. Não exclua `executar-ai`.
 
 ## Validação imediatamente após excluir
 
 O projeto canônico deve continuar apresentando:
 
 ```text
-https://executar-ai.vercel.app/health                         → 200
-https://executar-ai.vercel.app/blog                           → 200
-https://executar-ai.vercel.app/app                            → 200
+https://executar-ai.vercel.app/health                          → 200
+https://executar-ai.vercel.app/blog                            → 200
+https://executar-ai.vercel.app/app                             → 200
 https://executar-ai.vercel.app/print/qr/PUB-20260728-b4fbb3cc/ → 200
 ```
 
