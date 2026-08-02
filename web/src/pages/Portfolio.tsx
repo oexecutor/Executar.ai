@@ -48,20 +48,25 @@ export function Portfolio({ projects, onOpenProject, onChanged }: PortfolioProps
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const usingAi = startMode === "ai" && !importedProject;
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setPending(true);
     setError(null);
     const data = new FormData(event.currentTarget);
+    const name = String(data.get("name") ?? "");
+    const description = String(data.get("description") ?? "");
+    const owner = String(data.get("owner") ?? "");
     try {
-      const result = await postJson<ProjectBundle>("/api/executar/projects", importedProject
-        ? { project: importedProject }
-        : {
-            name: String(data.get("name") ?? ""),
-            description: String(data.get("description") ?? ""),
-            owner: String(data.get("owner") ?? ""),
-          });
+      const result = await postJson<ProjectBundle>(
+        usingAi ? "/api/executar/generate" : "/api/executar/projects",
+        importedProject
+          ? { project: importedProject }
+          : usingAi
+            ? { brief: description, name, owner }
+            : { name, description, owner },
+      );
       setCreating(false);
       setImportedProject(null);
       clearEntryHandoff();
@@ -142,7 +147,7 @@ export function Portfolio({ projects, onOpenProject, onChanged }: PortfolioProps
           <form className="modal exec-modal" onSubmit={submit} onMouseDown={(event) => event.stopPropagation()}>
             <div className="modal-head">
               <div>
-                <p className="eyebrow">{startMode === "import" ? "Importar plano" : startMode === "ai" ? "Gerar plano" : "Novo projeto"}</p>
+                <p className="eyebrow">{startMode === "import" ? "Importar plano" : startMode === "ai" ? "Gerar plano com IA" : "Novo projeto"}</p>
                 <h2>Transforme contexto em execução.</h2>
               </div>
               <button type="button" onClick={closeModal} aria-label="Fechar"><X size={20} /></button>
@@ -164,7 +169,7 @@ export function Portfolio({ projects, onOpenProject, onChanged }: PortfolioProps
                     <Sparkles size={21} />
                     <div>
                       <strong>{fileName ? `${fileName} recebido` : "Briefing recebido"}</strong>
-                      <span>Revise os dados antes de gerar a estrutura inicial.</span>
+                      <span>{usingAi ? "A IA vai transformar este contexto em um plano específico 3–9–36." : "Revise os dados antes de gerar a estrutura inicial."}</span>
                     </div>
                   </div>
                 )}
@@ -178,16 +183,21 @@ export function Portfolio({ projects, onOpenProject, onChanged }: PortfolioProps
                     name="description"
                     rows={5}
                     required
+                    minLength={usingAi ? 20 : undefined}
                     defaultValue={brief}
                     placeholder="O que precisa mudar, para quem e como saberemos que terminou?"
                   />
                 </label>
                 <label>Responsável<input name="owner" placeholder="Pessoa ou papel responsável" /></label>
-                <button className="import-drop" type="button" onClick={() => fileRef.current?.click()}>
-                  <UploadCloud size={20} />
-                  <span><strong>Ou importe project.json</strong><small>Formato canônico EXECUTA</small></span>
-                </button>
-                <input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={(event) => importFile(event.target.files?.[0])} />
+                {!usingAi && (
+                  <>
+                    <button className="import-drop" type="button" onClick={() => fileRef.current?.click()}>
+                      <UploadCloud size={20} />
+                      <span><strong>Ou importe project.json</strong><small>Formato canônico EXECUTA</small></span>
+                    </button>
+                    <input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={(event) => importFile(event.target.files?.[0])} />
+                  </>
+                )}
               </>
             )}
 
@@ -195,7 +205,9 @@ export function Portfolio({ projects, onOpenProject, onChanged }: PortfolioProps
             <div className="modal-actions">
               <button className="button button-quiet" type="button" onClick={closeModal}>Cancelar</button>
               <button className="button button-orange" type="submit" disabled={pending}>
-                {pending ? "Estruturando…" : importedProject ? "Importar projeto" : "Gerar estrutura"} <ArrowRight size={17} />
+                {pending
+                  ? usingAi ? "Gerando com IA…" : "Estruturando…"
+                  : importedProject ? "Importar projeto" : usingAi ? "Gerar plano com IA" : "Gerar estrutura"} <ArrowRight size={17} />
               </button>
             </div>
           </form>
