@@ -63,8 +63,6 @@ async function reserveAiGeneration(auth: AuthenticatedRequest): Promise<() => Pr
   };
 }
 
-const cache = new WeakMap<Request, Promise<AuthenticatedRequest | null>>();
-
 async function executarHandler(request: Request): Promise<Response> {
   const denied = await requireAdminJson(request);
   if (denied) return denied;
