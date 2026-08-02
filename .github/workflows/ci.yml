@@ -15,6 +15,8 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      - name: Verify Journal migration boundaries
+        run: npm run check:legacy-project
       - name: Type check
         run: npm run build
       - name: Unit and integration tests
