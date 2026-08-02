@@ -5,7 +5,6 @@ import {
   FolderKanban,
   Gauge,
   LayoutGrid,
-  LogOut,
   Newspaper,
   PanelsTopLeft,
 } from "lucide-react";
@@ -18,7 +17,6 @@ export type AppView = "overview" | "today" | "portfolio" | "project" | "board" |
 interface LayoutProps {
   active: AppView;
   onNavigate: (view: AppView) => void;
-  onLogout: () => void;
   projects: ProjectSummary[];
   selectedProjectId: string | null;
   onSelectProject: (projectId: string) => void;
@@ -39,7 +37,6 @@ const NAV: Array<{ id: AppView; label: string; icon: typeof Gauge }> = [
 export function Layout({
   active,
   onNavigate,
-  onLogout,
   projects,
   selectedProjectId,
   onSelectProject,
@@ -71,13 +68,10 @@ export function Layout({
           <div className="workspace-identity">
             <i>{workspace?.workspaceName?.slice(0, 1).toUpperCase() ?? "W"}</i>
             <span>
-              <strong>{workspace?.workspaceName ?? "Workspace"}</strong>
-              <small>{workspace?.role ?? "MEMBRO"}</small>
+              <strong>{workspace?.workspaceName ?? "Meu workspace"}</strong>
+              <small>ACESSO GRATUITO</small>
             </span>
           </div>
-          <button className="logout-button" type="button" onClick={onLogout} aria-label="Sair">
-            <LogOut size={17} />
-          </button>
         </div>
       </aside>
 
@@ -99,7 +93,7 @@ export function Layout({
               <ChevronDown size={15} aria-hidden="true" />
             </div>
           </div>
-          <span className="connection-state"><i /> Workspace público</span>
+          <span className="connection-state"><i /> Sessão privada</span>
         </header>
         <main className="app-content" id="main-content">{children}</main>
       </div>
