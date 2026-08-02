@@ -70,7 +70,7 @@ Artefatos:
 - `content/blog/homologacao-do-qr-semantico-p0.meta.json`;
 - `public/blog/homologacao-do-qr-semantico-p0/cover.svg`.
 
-Deployments de Preview:
+Deployments de Preview usados na homologação histórica:
 
 | Projeto | Deployment | Estado |
 |---|---|---|
@@ -91,18 +91,22 @@ A decisão `APPROVED` foi registrada para o SHA exato depois do smoke dos dois
 Previews. O PR #39 foi integrado por fast-forward, preservando o SHA aprovado
 como SHA da `main`.
 
-Deployments produtivos:
+Deployments produtivos usados na homologação histórica:
 
 | Projeto | Deployment | Estado |
 |---|---|---|
 | `executar-ai` | `dpl_2xQ9VHH6ot6Jp4XjSaBwQB1SgwJc` | `READY` |
 | `executa-journal-preview` | `dpl_EVn38FSETDtAfUBYVzbSGJGk2dFm` | `READY` |
 
-Artigo:
-[`https://executa-journal-preview.vercel.app/blog/homologacao-do-qr-semantico-p0`](https://executa-journal-preview.vercel.app/blog/homologacao-do-qr-semantico-p0)
+> **Nota de ciclo de vida — 2026-08-02:** o segundo projeto era uma duplicação
+> Vercel do mesmo repositório e foi descontinuado. A origem operacional única é
+> `executar-ai`; os IDs acima permanecem apenas como evidência histórica.
 
-Nenhum erro de runtime foi encontrado nos dois projetos no período
-pós-deploy.
+Artigo canônico:
+[`https://executar-ai.vercel.app/blog/homologacao-do-qr-semantico-p0`](https://executar-ai.vercel.app/blog/homologacao-do-qr-semantico-p0)
+
+Nenhum erro de runtime foi encontrado nos dois projetos durante a janela de
+verificação original da homologação.
 
 ## Evidência E4
 
@@ -146,10 +150,11 @@ Smoke:
 Em incidente:
 
 1. reverter os três commits editoriais terminando em `8ac77233` por PR;
-2. promover o deployment produtivo anterior do `executar-ai`
-   (`dpl_F3JKM52VmqTkhaaR1wMV4LeLpXZ9`) e o anterior do Journal
-   (`dpl_4nnL91KSQU2vGSFb27zNJduintL7`);
+2. promover o deployment produtivo anterior do projeto canônico `executar-ai`
+   (`dpl_F3JKM52VmqTkhaaR1wMV4LeLpXZ9`);
 3. revogar os quatro tokens no registro E4 se o material não puder continuar
    ativo;
 4. registrar a publicação como falha operacional sem apagar a trilha de
    auditoria.
+
+O projeto Journal descontinuado não participa mais do rollback operacional.
