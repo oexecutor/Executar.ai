@@ -1,145 +1,180 @@
-import { ArrowRight, Check, Layers3, LockKeyhole, Network, Sparkles } from "lucide-react";
-import { lazy, Suspense } from "react";
+import { ArrowRight, FileText, Sparkles, UploadCloud } from "lucide-react";
+import { useRef, useState, type DragEvent, type FormEvent } from "react";
 
-const Login = lazy(() => import("./pages/Login").then((module) => ({ default: module.Login })));
+const BRIEF_KEY = "executa.entry.brief";
+const IMPORT_KEY = "executa.entry.import";
+const FILE_NAME_KEY = "executa.entry.fileName";
+const SOURCE_KEY = "executa.entry.source";
 
 function Brand() {
   return <span className="brand-mark"><i aria-hidden="true" />EXECUTA.AI</span>;
 }
 
+function openWorkspace(mode: "ai" | "import") {
+  window.location.assign(`/app?start=${mode}`);
+}
+
 export function Landing() {
-  if (window.location.pathname.startsWith("/entrar")) {
-    return (
-      <Suspense fallback={<main className="boot-screen"><Brand /></main>}>
-        <Login />
-      </Suspense>
-    );
+  const [brief, setBrief] = useState("");
+  const [dragging, setDragging] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const value = brief.trim();
+    if (!value) {
+      setError("Descreva o que você quer transformar em plano.");
+      return;
+    }
+    sessionStorage.removeItem(IMPORT_KEY);
+    sessionStorage.removeItem(FILE_NAME_KEY);
+    sessionStorage.setItem(BRIEF_KEY, value);
+    sessionStorage.setItem(SOURCE_KEY, "prompt");
+    openWorkspace("ai");
   }
 
+  async function importPlan(file?: File) {
+    if (!file) return;
+    setError(null);
+    if (file.size > 5 * 1024 * 1024) {
+      setError("O arquivo deve ter no máximo 5 MB.");
+      return;
+    }
+
+    const extension = file.name.split(".").pop()?.toLowerCase();
+    if (!extension || !["json", "md", "txt"].includes(extension)) {
+      setError("Use um arquivo JSON, Markdown ou TXT.");
+      return;
+    }
+
+    const content = await file.text();
+    sessionStorage.setItem(FILE_NAME_KEY, file.name);
+    sessionStorage.setItem(SOURCE_KEY, "file");
+
+    if (extension === "json") {
+      try {
+        const parsed = JSON.parse(content) as { project?: unknown } | unknown;
+        const project = typeof parsed === "object" && parsed !== null && "project" in parsed
+          ? (parsed as { project: unknown }).project
+          : parsed;
+        sessionStorage.setItem(IMPORT_KEY, JSON.stringify(project));
+        sessionStorage.removeItem(BRIEF_KEY);
+        openWorkspace("import");
+        return;
+      } catch {
+        setError("O JSON não pôde ser lido. Revise o arquivo e tente novamente.");
+        return;
+      }
+    }
+
+    if (!content.trim()) {
+      setError("O arquivo está vazio.");
+      return;
+    }
+    sessionStorage.setItem(BRIEF_KEY, content.trim());
+    sessionStorage.removeItem(IMPORT_KEY);
+    openWorkspace("ai");
+  }
+
+  function drop(event: DragEvent<HTMLButtonElement>) {
+    event.preventDefault();
+    setDragging(false);
+    void importPlan(event.dataTransfer.files?.[0]);
+  }
+
+  const examples = [
+    "Lançar meu serviço em 30 dias",
+    "Organizar um projeto que já está atrasado",
+    "Transformar uma ideia em plano de execução",
+  ];
+
   return (
-    <main className="landing">
-      <nav className="landing-nav" aria-label="Principal">
+    <main className="entry-page">
+      <nav className="entry-nav" aria-label="Principal">
         <a href="/" aria-label="EXECUTA.AI — início"><Brand /></a>
-        <div className="landing-nav-actions">
-          <a href="#metodo">Método</a>
+        <div className="entry-nav-right">
+          <span className="entry-free">Grátis no lançamento</span>
           <a href="/blog">Blog</a>
-          <a className="button button-dark button-compact" href="/entrar">
-            Entrar <ArrowRight size={16} />
-          </a>
         </div>
       </nav>
 
-      <section className="landing-hero">
-        <div className="hero-copy">
-          <p className="eyebrow eyebrow-orange">Workspace de execução com IA</p>
-          <h1>Contexto complexo.<br /><span>Próxima ação clara.</span></h1>
-          <p className="hero-lead">
-            O EXECUTA.AI transforma objetivos em uma estrutura operacional de
-            3 fases, 9 áreas e 36 itens — com tarefas, checkpoints, evidências e progresso no mesmo lugar.
-          </p>
-          <div className="hero-actions">
-            <a className="button button-orange" href="/entrar">
-              Começar a executar <ArrowRight size={18} />
-            </a>
-            <a className="button button-dark" href="/blog">
-              Acessar o blog
-            </a>
-            <span><LockKeyhole size={16} /> Supabase + isolamento por workspace</span>
-          </div>
-        </div>
-
-        <div className="product-frame" aria-label="Prévia do workspace EXECUTA.AI">
-          <div className="frame-bar">
-            <Brand />
-            <span>PROJETO / LANÇAMENTO</span>
-          </div>
-          <div className="frame-body">
-            <aside>
-              <span className="active">Visão geral</span>
-              <span>Hoje</span>
-              <span>Portfólio</span>
-              <span>Documentos</span>
-            </aside>
-            <div className="frame-content">
-              <p className="eyebrow">Entrega dominante</p>
-              <h2>Lançar a primeira versão operável.</h2>
-              <div className="frame-progress"><i /></div>
-              <div className="frame-stats">
-                <article><strong>62%</strong><span>Ações</span></article>
-                <article><strong>18/27</strong><span>Tarefas</span></article>
-                <article><strong>5/9</strong><span>Checkpoints</span></article>
-              </div>
-              <div className="next-action">
-                <span>PRÓXIMA AÇÃO</span>
-                <strong>Validar fluxo de cadastro</strong>
-                <i><Check size={15} /></i>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="proof-strip" aria-label="Capacidades">
-        <span>PORTFÓLIO</span><i />
-        <span>HOJE</span><i />
-        <span>LISTA · TABELA · KANBAN</span><i />
-        <span>VAULT + MCP</span>
-      </section>
-
-      <section className="method-section" id="metodo">
-        <div className="section-intro">
-          <p className="eyebrow">Um sistema, não mais uma lista</p>
-          <h2>Da intenção à evidência.</h2>
+      <section className="entry-hero">
+        <div className="entry-heading">
+          <p className="eyebrow">COMECE SEM LOGIN</p>
+          <h1>O que você quer colocar em execução?</h1>
           <p>
-            Cada camada reduz ambiguidade sem aumentar a carga cognitiva.
-            O Cloud e você operam sobre a mesma fonte de dados.
+            Descreva o objetivo ou traga um plano existente. O EXECUTA organiza o contexto
+            e abre um workspace pronto para agir.
           </p>
         </div>
-        <div className="method-grid">
-          {[
-            { icon: Sparkles, n: "01", title: "Estruture", text: "Contexto vira fases, áreas, tarefas, ações e entregáveis." },
-            { icon: Layers3, n: "02", title: "Execute", text: "Hoje, Lista, Tabela e Kanban apresentam o mesmo estado." },
-            { icon: Network, n: "03", title: "Comprove", text: "Checkpoints, documentos e evidências registram a evolução." },
-          ].map(({ icon: Icon, n, title, text }) => (
-            <article key={n}>
-              <div><span>{n}</span><Icon size={22} strokeWidth={1.6} /></div>
-              <h3>{title}</h3>
-              <p>{text}</p>
-            </article>
+
+        <form className="entry-composer" onSubmit={submit}>
+          <label htmlFor="project-brief">Descreva seu projeto</label>
+          <textarea
+            id="project-brief"
+            value={brief}
+            onChange={(event) => {
+              setBrief(event.target.value);
+              setError(null);
+            }}
+            placeholder="Ex.: preciso lançar uma consultoria, definir oferta, validar clientes e publicar a primeira versão..."
+            rows={5}
+            autoFocus
+          />
+          <div className="entry-composer-foot">
+            <span><Sparkles size={16} /> Estrutura inicial 3 · 9 · 36</span>
+            <button className="entry-primary" type="submit">
+              Gerar plano com IA <ArrowRight size={18} />
+            </button>
+          </div>
+        </form>
+
+        <div className="entry-separator"><span>ou</span></div>
+
+        <button
+          className={`entry-dropzone${dragging ? " is-dragging" : ""}`}
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          onDragEnter={(event) => {
+            event.preventDefault();
+            setDragging(true);
+          }}
+          onDragOver={(event) => event.preventDefault()}
+          onDragLeave={() => setDragging(false)}
+          onDrop={drop}
+        >
+          <span className="entry-drop-icon"><UploadCloud size={23} /></span>
+          <span>
+            <strong>Arraste seu plano para cá</strong>
+            <small>ou toque para selecionar · JSON, Markdown ou TXT · até 5 MB</small>
+          </span>
+          <FileText size={19} />
+        </button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="application/json,.json,text/markdown,.md,text/plain,.txt"
+          hidden
+          onChange={(event) => void importPlan(event.target.files?.[0])}
+        />
+
+        {error && <p className="entry-error" role="alert">{error}</p>}
+
+        <div className="entry-examples" aria-label="Exemplos de início rápido">
+          {examples.map((example) => (
+            <button type="button" key={example} onClick={() => setBrief(example)}>{example}</button>
           ))}
         </div>
+
+        <p className="entry-trust">
+          Sem senha e sem cartão. Uma identidade anônima protege o workspace de cada visitante.
+        </p>
       </section>
 
-      <section className="architecture-section">
-        <p className="eyebrow eyebrow-orange">Arquitetura única</p>
-        <h2>Cloud, aplicativo e documentos.<br />Sempre sincronizados.</h2>
-        <div className="architecture-flow">
-          <span>CLOUD</span><ArrowRight />
-          <span>MCP EXECUTA</span><ArrowRight />
-          <span>SUPABASE</span><ArrowRight />
-          <span>PWA</span>
-        </div>
-      </section>
-
-      <section className="landing-cta">
-        <div>
-          <p className="eyebrow">Pronto para sair do contexto?</p>
-          <h2>Entre em modo de execução.</h2>
-        </div>
-        <div className="hero-actions">
-          <a className="button button-dark" href="/blog">Ler o blog</a>
-          <a className="button button-orange" href="/entrar">
-            Acessar workspace <ArrowRight size={18} />
-          </a>
-        </div>
-      </section>
-
-      <footer className="landing-footer">
-        <Brand />
-        <span>Projetos claros. Execução verificável.</span>
-        <a href="/blog">Blog</a>
-        <a href="/terms.html">Termos</a>
-        <a href="/privacy.html">Privacidade</a>
+      <footer className="entry-footer">
+        <span>EXECUTA.AI · contexto em ação</span>
+        <div><a href="/terms.html">Termos</a><a href="/privacy.html">Privacidade</a></div>
       </footer>
     </main>
   );
