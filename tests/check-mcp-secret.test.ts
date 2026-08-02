@@ -55,9 +55,10 @@ describe("MCP build secret guard", () => {
     expect(result.stderr).toContain("at least 32 bytes");
   });
 
-  it("does not block a Journal-only project without the MCP secret", () => {
+  it("does not block a noncanonical preview without the MCP secret", () => {
     const result = runGuard({
-      VERCEL_PROJECT_PRODUCTION_URL: "executa-journal-preview.vercel.app",
+      VERCEL_PROJECT_PRODUCTION_URL:
+        "executar-ai-git-feature-oexecutor-9118s-projects.vercel.app",
     });
 
     expect(result.status).toBe(0);
