@@ -103,7 +103,8 @@ export function Landing() {
       <section className="entry-hero">
         <div className="entry-heading">
           <p className="eyebrow">COMECE SEM LOGIN</p>
-          <h1>Contexto complexo. O que você quer colocar em execução?</h1>
+          <h2 className="entry-kicker">Contexto complexo. Próxima ação clara.</h2>
+          <h1>O que você quer colocar em execução?</h1>
           <p>
             Descreva o objetivo ou traga um plano existente. O EXECUTA organiza o contexto
             e abre um workspace pronto para agir.
