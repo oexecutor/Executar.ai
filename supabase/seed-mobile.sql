@@ -1,0 +1,2 @@
+-- Sem seed de usuário: identidades pertencem ao Supabase Auth.
+-- Após criar uma conta, o trigger cria automaticamente o workspace pessoal.

@@ -1,0 +1,2 @@
+import { Stack } from 'expo-router';
+export default function AppLayout() { return <Stack screenOptions={{ headerTitle: 'Executa.ai', headerTintColor: '#0A0A0A' }}><Stack.Screen name="index" options={{ title: 'Projetos' }} /><Stack.Screen name="project/[id]" options={{ title: 'Posição atual' }} /><Stack.Screen name="task/[id]" options={{ title: 'Três passos' }} /><Stack.Screen name="evidence/[taskId]" options={{ title: 'Evidência' }} /></Stack>; }
