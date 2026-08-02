@@ -95,6 +95,7 @@ export function Landing() {
         <a href="/" aria-label="EXECUTA.AI — início"><Brand /></a>
         <div className="entry-nav-right">
           <span className="entry-free">Grátis no lançamento</span>
+          <a href="/app">Entrar</a>
           <a href="/blog">Blog</a>
         </div>
       </nav>
@@ -102,7 +103,7 @@ export function Landing() {
       <section className="entry-hero">
         <div className="entry-heading">
           <p className="eyebrow">COMECE SEM LOGIN</p>
-          <h1>O que você quer colocar em execução?</h1>
+          <h1>Contexto complexo. O que você quer colocar em execução?</h1>
           <p>
             Descreva o objetivo ou traga um plano existente. O EXECUTA organiza o contexto
             e abre um workspace pronto para agir.
