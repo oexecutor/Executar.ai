@@ -30,8 +30,11 @@ begin
   select membership.workspace_id
     into personal_workspace_id
   from public.workspace_memberships as membership
+  join public.workspaces as workspace
+    on workspace.id = membership.workspace_id
   where membership.user_id = target_user_id
     and membership.status = 'ACTIVE'
+    and workspace.status = 'ACTIVE'
   order by
     case membership.role when 'OWNER' then 0 else 1 end,
     membership.created_at asc
@@ -59,6 +62,9 @@ begin
 
   -- The deterministic slug lets a retry recover an orphaned workspace that
   -- was created before its membership row, instead of creating a duplicate.
+  -- This path is only reached when the user has no active membership in an
+  -- active workspace, therefore reactivating that deterministic personal
+  -- workspace is safer than leaving the account locked out.
   insert into public.workspaces as workspace (name, slug, status)
   values (display_name, workspace_slug, 'ACTIVE')
   on conflict (slug) do update
@@ -66,10 +72,8 @@ begin
       when char_length(trim(workspace.name)) = 0 then excluded.name
       else workspace.name
     end,
-    status = case
-      when workspace.status = 'ARCHIVED' then workspace.status
-      else 'ACTIVE'
-    end
+    status = 'ACTIVE',
+    updated_at = now()
   returning workspace.id into personal_workspace_id;
 
   insert into public.workspace_memberships as membership (
@@ -128,8 +132,11 @@ begin
     where not exists (
       select 1
       from public.workspace_memberships as membership
+      join public.workspaces as workspace
+        on workspace.id = membership.workspace_id
       where membership.user_id = users.id
         and membership.status = 'ACTIVE'
+        and workspace.status = 'ACTIVE'
     )
   loop
     perform app.ensure_personal_workspace(
@@ -148,22 +155,20 @@ security definer
 set search_path = ''
 as $$
 declare
-  removing_active_owner boolean;
+  removing_active_owner boolean := false;
 begin
-  if tg_op = 'UPDATE'
-    and (new.workspace_id <> old.workspace_id or new.user_id <> old.user_id)
-  then
-    raise exception 'workspace_id and user_id are immutable for a membership';
-  end if;
+  if tg_op = 'UPDATE' then
+    if new.workspace_id <> old.workspace_id or new.user_id <> old.user_id then
+      raise exception 'workspace_id and user_id are immutable for a membership';
+    end if;
 
-  removing_active_owner :=
-    old.role = 'OWNER'
-    and old.status = 'ACTIVE'
-    and (
-      tg_op = 'DELETE'
-      or new.role <> 'OWNER'
-      or new.status <> 'ACTIVE'
-    );
+    removing_active_owner :=
+      old.role = 'OWNER'
+      and old.status = 'ACTIVE'
+      and (new.role <> 'OWNER' or new.status <> 'ACTIVE');
+  elsif tg_op = 'DELETE' then
+    removing_active_owner := old.role = 'OWNER' and old.status = 'ACTIVE';
+  end if;
 
   if removing_active_owner and not exists (
     select 1
