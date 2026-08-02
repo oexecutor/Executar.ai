@@ -6,7 +6,8 @@
 **Projeto canônico:** `executar-ai`  
 **ID Vercel canônico:** `prj_vA765A0ctnjhBILMEe9Mw5ClWuJu`  
 **Repositório canônico:** `oexecutor/P1.Executar.ai`  
-**Domínio canônico:** `https://executar-ai.vercel.app`
+**Domínio canônico:** `https://executar-ai.vercel.app`  
+**Gate de código validado:** `f5fd89e2ffddaf9851ee10fffdaec73f3173de5a`
 
 ## Decisão
 
