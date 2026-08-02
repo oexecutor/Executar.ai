@@ -7,14 +7,31 @@ function postgresConfigured(): boolean {
   return CONNECTION_STRING_VARS.some((name) => Boolean(process.env[name]));
 }
 
+function serviceRoleConfigured(): boolean {
+  return Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY?.trim());
+}
+
 async function healthHandler(): Promise<Response> {
+  const supabaseClient = supabaseConfigured();
+  const supabaseServer = serviceRoleConfigured();
+  const supabaseState = supabaseClient && supabaseServer
+    ? "configured"
+    : supabaseClient || supabaseServer
+      ? "partial"
+      : "not_configured";
+
   return json({
     service: "desk-os-obsidian-mcp",
     status: "ok",
     transport: "streamable-http",
     authentication: "oauth-2.1-pkce",
+    app_authentication: "supabase-auth+workspace-session",
     dependencies: {
-      supabase: supabaseConfigured() ? "configured" : "not_configured",
+      supabase: supabaseState,
+      supabase_checks: {
+        public_client: supabaseClient ? "configured" : "not_configured",
+        service_role: supabaseServer ? "configured" : "not_configured",
+      },
       postgres: postgresConfigured() ? "configured" : "not_configured",
     },
   });
