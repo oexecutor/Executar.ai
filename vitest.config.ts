@@ -5,7 +5,8 @@ export default defineConfig({
     exclude: [
       ...configDefaults.exclude,
       'apps/mobile/tests/**',
-      'packages/**/tests/**'
+      'packages/**/tests/**',
+      'web/**'
     ]
   }
 });
